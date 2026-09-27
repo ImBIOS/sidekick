@@ -1,0 +1,30 @@
+apiVersion: lim.openlim.dev/v1
+kind: SimulatorClaim
+metadata:
+  name: sim-abc
+spec:
+  device: iPhone16
+  os: "18.2"
+  ttl: 30m
+  tenant: tn_123
+status:
+  host: mac-mini-02
+  udid: ""
+  webrtcUrl: ""
+---
+apiVersion: lim.openlim.dev/v1
+kind: BuildClaim
+metadata:
+  name: build-abc
+spec:
+  scheme: MyApp
+  xcode: "16.2"
+  tenant: tn_123
+---
+apiVersion: lim.openlim.dev/v1
+kind: EmulatorClaim
+metadata:
+  name: emu-abc
+spec:
+  profile: Pixel_7_API_34
+  tenant: tn_123

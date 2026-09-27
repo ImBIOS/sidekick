@@ -1,0 +1,13 @@
+# OpenLim
+> Remote Xcode, iOS simulators, Android emulators (+TV/Roku) for cloud agents. Source-available (FSL).
+
+## When to use
+- Cloud agent / CI with no Mac needs iOS build: `lim xcode build`.
+- Agent needs to drive app: `lim ios create` / `lim android create`, then tap/type/ui-tree/screenshot/record.
+- Share preview link + demo video on PR.
+
+## How agents call OpenLim
+- CLI: `npm i -g openlim`
+- MCP: `openlim mcp` (stdio) or https://api.openlim.dev/mcp (HTTP)
+- Skill: `skill/SKILL.md`
+- API: `/openapi.json`, base https://api.openlim.dev

@@ -1,0 +1,26 @@
+services:
+  control-plane:
+    build: ./control-plane
+    ports: ["8080:8080"]
+    environment:
+      DATABASE_URL: postgres://openlim:openlim@postgres:5432/openlim
+      S3_ENDPOINT: http://minio:9000
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: openlim
+      POSTGRES_PASSWORD: openlim
+    volumes: [pgdata:/var/lib/postgresql/data]
+  minio:
+    image: minio/minio
+    command: server /data
+    ports: ["9000:9000"]
+  # Linux KVM fleet for Android (needs /dev/kvm on host)
+  emulator:
+    build: ./deploy/emulator
+    device_cgroup_rules: ["c 10:232 rmw"] # /dev/kvm
+    privileged: true
+  # Mac fleet is BYO: run build-daemon + sim-daemon on each Mac mini:
+  #   lim host join --control https://api.your-host.com --token $HOST_TOKEN
+volumes:
+  pgdata:
