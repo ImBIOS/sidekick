@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { COMPETITORS, score } from "../data/comparison";
 import { Container, CtaRow, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
 
@@ -15,6 +16,48 @@ const LOOP = `sidekick ui-tree                      # what's on screen? (@e refs
 sidekick tap @e7                        # keep going: tap through the flow
 sidekick screenshot --out ./check.png   # looks right? ship it
 sidekick record --stop                  # demo video for the PR`;
+
+const PLATFORMS = [
+  { tab: "iOS", device: "iPhone 17, iOS 26", rows: ["Destination detail", "Checkout flow", "Settings"], verb: "$ sidekick tap @e7 · screenshot · record — streamed at 60fps" },
+  { tab: "Android", device: "Pixel 9, API 35", rows: ["Explore", "Checkout flow", "Settings"], verb: "$ sidekick tap @e4 — local adb/Appium just work via tunnel" },
+  { tab: "Apple TV", device: "Apple TV 4K, tvOS 26", rows: ["Home screen", "Player", "Search"], verb: "$ sidekick press dpad_center · tap-focused — focus-walk verbs" },
+  { tab: "Android TV", device: "Android TV, API 34", rows: ["Launcher", "Player", "Settings"], verb: "$ sidekick press dpad_right — same verbs as phones" },
+  { tab: "Roku", device: "Roku Ultra (beta pool)", rows: ["Home", "Channel", "Search"], verb: "🛣️ In Roadmap: real-hardware pool, Q1 — watch it land in the open" },
+];
+
+function HeroSandbox() {
+  const [active, setActive] = useState(0);
+  const p = PLATFORMS[active];
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 shadow-xl">
+      <div className="flex flex-wrap gap-1.5 pb-3" role="tablist" aria-label="Platforms">
+        {PLATFORMS.map((t, i) => (
+          <button
+            key={t.tab}
+            role="tab"
+            aria-selected={i === active}
+            onClick={() => setActive(i)}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${i === active ? "bg-zinc-900 text-white" : "bg-white text-zinc-600 border border-zinc-200 hover:border-zinc-400"}`}
+          >
+            {t.tab}
+          </button>
+        ))}
+      </div>
+      <div className="mx-auto max-w-[280px] rounded-[2rem] border-8 border-zinc-900 bg-white p-4">
+        <div className="mx-auto mb-3 h-4 w-20 rounded-full bg-zinc-900" />
+        <p className="mb-2 text-center font-mono text-[10px] text-zinc-400">{p.device}</p>
+        <div className="space-y-2">
+          <div className="h-8 rounded-lg bg-zinc-900 text-[10px] text-white flex items-center px-3">Explore · @e1…@e9</div>
+          {p.rows.map((t) => (
+            <div key={t} className="rounded-lg border border-zinc-200 p-2 text-xs text-zinc-600">{t}</div>
+          ))}
+          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-xs text-emerald-800">✓ agent verified: tap @e7 → diff 3 elements</div>
+        </div>
+      </div>
+      <p className="pt-3 text-center font-mono text-xs text-zinc-500">{p.verb}</p>
+    </div>
+  );
+}
 
 function HomeComponent() {
   return (
@@ -37,25 +80,7 @@ function HomeComponent() {
             </p>
           </div>
           <div>
-            {/* CSS device mock in the spirit of competitor hero sandboxes */}
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 shadow-xl">
-              <div className="flex gap-1.5 pb-3">
-                {["iOS", "Android", "Apple TV", "Android TV", "Roku"].map((p, i) => (
-                  <span key={p} className={`rounded-full px-2.5 py-1 text-xs font-medium ${i === 0 ? "bg-zinc-900 text-white" : "bg-white text-zinc-600 border border-zinc-200"}`}>{p}</span>
-                ))}
-              </div>
-              <div className="mx-auto max-w-[280px] rounded-[2rem] border-8 border-zinc-900 bg-white p-4">
-                <div className="mx-auto mb-3 h-4 w-20 rounded-full bg-zinc-900" />
-                <div className="space-y-2">
-                  <div className="h-8 rounded-lg bg-zinc-900 text-[10px] text-white flex items-center px-3">Explore · @e1…@e9</div>
-                  {["Destination detail", "Checkout flow", "Settings"].map((t) => (
-                    <div key={t} className="rounded-lg border border-zinc-200 p-2 text-xs text-zinc-600">{t}</div>
-                  ))}
-                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-xs text-emerald-800">✓ agent verified: tap @e7 → diff 3 elements</div>
-                </div>
-              </div>
-              <p className="pt-3 text-center font-mono text-xs text-zinc-500">$ sidekick tap @e7 · screenshot · record — streamed at 60fps</p>
-            </div>
+            <HeroSandbox />
           </div>
         </div>
       </Container>
@@ -132,7 +157,7 @@ function HomeComponent() {
       <Container>
         <div className="mt-14 rounded-2xl border border-zinc-200 bg-zinc-50 p-8">
           <h2 className="text-2xl font-bold">Don't take our word for it. Take the table.</h2>
-          <p className="mt-2 text-zinc-600">Head-to-head comparisons with BrowserStack, EAS Build, Limrun, Appetize, AWS Device Farm, LambdaTest and Sauce Labs — sourced, dated, explicit about where each one beats us.</p>
+          <p className="mt-2 text-zinc-600">Head-to-head comparisons with VibeView, EAS Simulator, BrowserStack, EAS Build, Limrun, Appetize, AWS Device Farm, LambdaTest and Sauce Labs — sourced, dated, explicit about where each one beats us.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {COMPETITORS.map((c) => {
               const s = score(c.slug);

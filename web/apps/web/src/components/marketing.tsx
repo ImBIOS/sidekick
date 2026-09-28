@@ -12,7 +12,7 @@ export function cellLabel(c: Cell): { icon: string; text: string; cls: string } 
     case "yes":
       return { icon: "✅", text: "Yes", cls: "bg-emerald-50 text-emerald-800 border-emerald-200" };
     case "roadmap":
-      return { icon: "🛣️", text: "Roadmap", cls: "bg-sky-50 text-sky-800 border-sky-200" };
+      return { icon: "🛣️", text: "In Roadmap", cls: "bg-sky-50 text-sky-800 border-sky-200" };
     case "partial":
       return { icon: "➖", text: "Partial", cls: "bg-amber-50 text-amber-800 border-amber-200" };
     default:
@@ -148,6 +148,8 @@ export function Faq({ items }: { items: { q: string; a: string }[] }) {
 
 export function SiteFooter() {
   const alts: [string, string][] = [
+    ["VibeView alternative", "/alternatives/vibeview"],
+    ["EAS Simulator alternative", "/alternatives/eas-simulator"],
     ["BrowserStack alternative", "/alternatives/browserstack"],
     ["EAS Build alternative", "/alternatives/eas-build"],
     ["Limrun alternative", "/alternatives/limrun"],
@@ -175,7 +177,7 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold">Alternatives</p>
             <ul className="mt-2 space-y-1.5 text-sm text-zinc-600">
-              {alts.slice(0, 4).map(([l, to]) => (
+              {alts.slice(0, 5).map(([l, to]) => (
                 <li key={to}><Link to={to}>{l}</Link></li>
               ))}
             </ul>
@@ -183,7 +185,7 @@ export function SiteFooter() {
           <div>
             <p className="text-sm font-semibold">More comparisons</p>
             <ul className="mt-2 space-y-1.5 text-sm text-zinc-600">
-              {alts.slice(4).map(([l, to]) => (
+              {alts.slice(5).map(([l, to]) => (
                 <li key={to}><Link to={to}>{l}</Link></li>
               ))}
               <li><Link to="/alternatives">All alternatives</Link></li>

@@ -1,8 +1,10 @@
-// Comparison data: Sidekick vs the 7 incumbents. Checked Sep 2026.
+// Comparison data: Sidekick vs 9 rivals. Checked Sep 2026.
 // Cell: yes | no | partial | roadmap (roadmap = public, dated, on GitHub milestones)
 export type Cell = "yes" | "no" | "partial" | "roadmap";
 
 export type Slug =
+  | "vibeview"
+  | "eas-simulator"
   | "browserstack"
   | "eas-build"
   | "limrun"
@@ -34,6 +36,67 @@ export interface FeatureRow {
 }
 
 export const COMPETITORS: Competitor[] = [
+  {
+    slug: "vibeview",
+    name: "VibeView",
+    url: "https://vibeview.io",
+    price: "Free $0 · Dev $19/mo · Starter $49/mo · Pro $249/mo (+$0.04/min)",
+    checked: "28 Sep 2026",
+    tagline: "The rival we studied hardest — five platforms, cloud builds, agent skill plus MCP. We answer with any-stack builds, open source and self-host.",
+    cardBlurb: "The closest full-stack rival: cloud builds, iOS/Android/TV/Roku, agent skill + MCP, record-replay AI testing — closed, RN-only builds, no self-host.",
+    intro: [
+      "VibeView streams cloud iOS simulators, Android emulators, Apple TV, Android TV and Roku (beta) to the browser and to agents: vibeview agent-setup installs the skill and MCP server, vibeview build --cloud compiles React Native apps ($1.50 iOS / $0.75 Android extra on paid plans), and share links open with no install, no account, no Xcode.",
+      "It is the most complete closed product in this comparison — and the pricing page proves it: Free/Dev/Starter/Professional at $0/$19/$49/$249 with $0.04/min overage. What it isn't: open (no source, no self-host), any-stack (cloud builds are React Native only), or login-free at the API level. That is the whole gap Sidekick is built to fill.",
+    ],
+    strengths: [
+      { title: "Five platforms today, including Duo and Roku", body: "Apple's iPhone Duo foldable is live in the browser and Roku runs on beta hardware. Our Roku is a dated roadmap item and our foldable verbs are roadmap too — today this row is theirs." },
+      { title: "Record-replay where AI picks up changed steps", body: "Recorded steps replay exactly and an AI agent picks up only the steps where the screen actually changed. Our recorder is a beta roadmap item; their loop is shipping." },
+      { title: "Share links + guests + embed that need nothing", body: "Send a URL and the recipient uses the app with no account; paid tiers add live guests and site embeds. We match the shape — they have the years of polish." },
+    ],
+    decideGuide: [
+      { label: "You ship React Native and want the managed closed loop", winner: "them", body: "VibeView. Cloud builds, five platforms, AI testing and per-org pricing in one place with no infrastructure to think about." },
+      { label: "You need Roku beta or the iPhone Duo this week", winner: "them", body: "VibeView ships both today. Sidekick's Roku and foldable verbs are dated roadmap items." },
+      { label: "Your app isn't React Native", winner: "sidekick", body: "Sidekick builds any Xcode/Gradle project. VibeView cloud builds are RN-only by design." },
+      { label: "You must run it on your own Mac minis", winner: "sidekick", body: "Sidekick self-hosts free under FSL. VibeView is their cloud or nothing." },
+      { label: "You need the source to audit or extend the platform", winner: "sidekick", body: "Every Sidekick line is source-available (FSL → Apache-2.0). VibeView is closed." },
+    ],
+    faqs: [
+      { q: "How does VibeView price compare?", a: "Dev $19/mo (200 min, 15 builds) vs our Dev $15/mo (200 min, 25 builds); both charge overage per minute ($0.04 vs $0.03). Their Free caps sessions at 5 minutes; ours caps minutes, not length. Self-host is $0 only on our side." },
+      { q: "Does VibeView build non-RN apps?", a: "No — vibeview build --cloud compiles React Native apps; anything else arrives as an uploaded binary. Sidekick builds any Xcode or Gradle project from source." },
+      { q: "Can agents drive VibeView devices?", a: "Yes — skill plus MCP server with UI-tree refs, the same shape as Sidekick. The difference isn't the verbs, it's what surrounds them: any-stack builds, source access and self-hosting." },
+      { q: "Where is VibeView stronger?", a: "Roku hardware beta, iPhone Duo foldable, and the record-replay AI testing loop — all shipping today. We name each on this page with the roadmap dates for our answers." },
+    ],
+  },
+  {
+    slug: "eas-simulator",
+    name: "EAS Simulator",
+    url: "https://docs.expo.dev/preview/eas-simulator/introduction/",
+    price: "Waitlist preview — no published price; sessions draw plan compute allowance",
+    checked: "28 Sep 2026",
+    tagline: "Expo's cloud sim for RN teams — the verification half of EAS, waitlist-only, no TV, no sharing story, no public price.",
+    cardBlurb: "Remote iOS/Android on EAS infra with agent-device control and iOS browser preview — limited-access preview, Expo-centric, nothing for TV/Roku or non-RN stacks.",
+    intro: [
+      "EAS Simulator runs a remote iOS Simulator or Android Emulator on Expo infrastructure, driven from the CLI (eas simulator:start), a REST API, or an AI agent via agent-device, Argent (MCP) or Appium — with an eas-simulator skill as the front door. iOS sessions include a browser preview URL; Android preview is coming soon.",
+      "The catch is access and scope: it is a limited-access preview, not included with paid or free plans, open only to select partners via waitlist. It consumes EAS Build artifacts (or Expo Go), covers phones only, and session pages live behind expo.dev login. For Expo teams inside the preview it's the shortest path; for everyone else — non-RN stacks, TV apps, public sharing, self-hosting — Sidekick is the open equivalent.",
+    ],
+    strengths: [
+      { title: "Expo-native loop (Metro, Go, EAS Build)", body: "Fast Refresh from any OS, Expo Go version matched to your SDK, build fingerprints resolving to installable artifacts. Inside the Expo world this integration is deeper than ours." },
+      { title: "Three agent controllers + REST API", body: "agent-device, Argent with MCP, Appium, plus a REST API and PR session links. A serious programmatic surface for a preview-stage product." },
+    ],
+    decideGuide: [
+      { label: "You're an Expo shop already inside the preview", winner: "them", body: "EAS Simulator. Nothing beats the Metro-to-cloud path when your builds, Go runtime and dashboard already live on EAS." },
+      { label: "You can't get preview access", winner: "sidekick", body: "Sidekick is available now with public pricing — no waitlist, no partner gate." },
+      { label: "Your app isn't Expo / React Native", winner: "sidekick", body: "EAS Simulator installs EAS artifacts or Expo Go. Sidekick boots any Xcode/Gradle build." },
+      { label: "You need TV, Roku or a public share link", winner: "sidekick", body: "EAS Simulator is phones-only with expo.dev-authenticated session pages. Sidekick does TV today and share links need no login." },
+      { label: "You must self-host or audit the source", winner: "sidekick", body: "Sidekick is FSL source-available with $0 self-host. EAS Simulator runs on Expo's cloud only." },
+    ],
+    faqs: [
+      { q: "Is EAS Simulator generally available?", a: "No. Expo's docs (checked 28 Sep 2026) call it a limited-access preview for select partners — not included with paid or free plans. Join the waitlist; Sidekick needs no invite." },
+      { q: "What does EAS Simulator cost?", a: "There is no published simulator price — Expo says sessions use your plan's compute allowance. Sidekick publishes every plan (Free/Dev/Team/Scale) plus $0 self-hosting." },
+      { q: "Can agents control it?", a: "Yes — agent-device, Argent (MCP) and Appium, fronted by the eas-simulator skill. Sidekick offers the same agent shape (skill + MCP + UI-tree verbs) for any stack, not just Expo projects." },
+      { q: "Does it do TV or share links?", a: "No TV/Roku, and session pages require expo.dev login. Sidekick runs tvOS/Android TV today with login-free share links." },
+    ],
+  },
   {
     slug: "browserstack",
     name: "BrowserStack",
@@ -234,34 +297,34 @@ export const COMPETITORS: Competitor[] = [
 ];
 
 export const FEATURES: FeatureRow[] = [
-  { category: "Build", feature: "Remote Xcode build (no Mac needed)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "partial", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Build", feature: "Android / Gradle cloud build", sidekick: "yes", cells: { browserstack: "no", "eas-build": "yes", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Build", feature: "Signing handled (certs, profiles, keystores)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "yes", limrun: "partial", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Build", feature: "Store submit from terminal (TestFlight + Play)", sidekick: "roadmap", sidekickNote: "TestFlight today; Play roadmap Q1", cells: { browserstack: "no", "eas-build": "yes", limrun: "partial", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Devices", feature: "iOS simulators", sidekick: "yes", cells: { browserstack: "yes", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Devices", feature: "Android emulators + adb tunnel", sidekick: "yes", cells: { browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "partial" } },
-  { category: "Devices", feature: "Apple TV / tvOS + Android TV", sidekick: "yes", cells: { browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Devices", feature: "Roku (real hardware)", sidekick: "roadmap", sidekickNote: "Beta hardware pool Q1", cells: { browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Devices", feature: "Foldables (posture + rotate verbs)", sidekick: "roadmap", sidekickNote: "iPhone Duo-style hinge API", cells: { browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Devices", feature: "Real physical devices", sidekick: "no", cells: { browserstack: "yes", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Agent control", feature: "CLI with device verbs (tap, type, screenshot)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "partial" } },
-  { category: "Agent control", feature: "Agent skill file (skill install)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
-  { category: "Agent control", feature: "MCP server", sidekick: "yes", cells: { browserstack: "no", "eas-build": "yes", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "yes" } },
-  { category: "Agent control", feature: "UI / accessibility tree reads", sidekick: "yes", cells: { browserstack: "partial", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "partial" } },
-  { category: "Agent control", feature: "Batch actions (ms precision)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Agent control", feature: "Session video recording", sidekick: "roadmap", sidekickNote: "Per-step screenshots today; video roadmap", cells: { browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Agent control", feature: "App logs + network capture", sidekick: "roadmap", sidekickNote: "App logs today; network capture roadmap", cells: { browserstack: "yes", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Sharing", feature: "Live share links (no login needed)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
-  { category: "Sharing", feature: "Embeddable player (iframe / SDK)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Sharing", feature: "Live collaboration + human takeover", sidekick: "yes", cells: { browserstack: "partial", "eas-build": "no", limrun: "partial", appetize: "partial", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "partial" } },
-  { category: "Testing", feature: "Record once, replay everywhere", sidekick: "roadmap", sidekickNote: "Recorder beta Q1", cells: { browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "yes", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
-  { category: "Testing", feature: "Visual regression per step", sidekick: "roadmap", sidekickNote: "Ships with recorder", cells: { browserstack: "yes", "eas-build": "no", limrun: "no", appetize: "partial", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Testing", feature: "AI / plain-English testing", sidekick: "roadmap", sidekickNote: "Agent-fix on moved elements", cells: { browserstack: "partial", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "partial" } },
-  { category: "Testing", feature: "CI runner + GitHub checks", sidekick: "roadmap", sidekickNote: "Actions + checks Q1", cells: { browserstack: "yes", "eas-build": "yes", limrun: "partial", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
-  { category: "Platform", feature: "Self-hostable (BYO Mac minis)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
-  { category: "Platform", feature: "Source-available (FSL → Apache-2.0)", sidekick: "yes", cells: { browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Platform", feature: "Public pricing + free tier, no card", sidekick: "yes", cells: { browserstack: "partial", "eas-build": "yes", limrun: "no", appetize: "partial", "aws-device-farm": "partial", lambdatest: "partial", "sauce-labs": "no" } },
-  { category: "Platform", feature: "Per-instance sandbox tokens + region pin", sidekick: "roadmap", sidekickNote: "Tokens today; regions roadmap", cells: { browserstack: "partial", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "partial" } },
+  { category: "Build", feature: "Remote Xcode build (no Mac needed)", sidekick: "yes", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "no", "eas-build": "partial", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Build", feature: "Android / Gradle cloud build", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "yes", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Build", feature: "Signing handled (certs, profiles, keystores)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "yes", limrun: "partial", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Build", feature: "Store submit from terminal (TestFlight + Play)", sidekick: "roadmap", sidekickNote: "TestFlight today; Play roadmap Q1", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "yes", limrun: "partial", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Devices", feature: "iOS simulators", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "yes", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Devices", feature: "Android emulators + adb tunnel", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "partial" } },
+  { category: "Devices", feature: "Apple TV / tvOS + Android TV", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Devices", feature: "Roku (real hardware)", sidekick: "roadmap", sidekickNote: "Beta hardware pool Q1", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Devices", feature: "Foldables (posture + rotate verbs)", sidekick: "roadmap", sidekickNote: "iPhone Duo-style hinge API", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Devices", feature: "Real physical devices", sidekick: "no", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "yes", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Agent control", feature: "CLI with device verbs (tap, type, screenshot)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "partial" } },
+  { category: "Agent control", feature: "Agent skill file (skill install)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
+  { category: "Agent control", feature: "MCP server", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "no", "eas-build": "yes", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "yes" } },
+  { category: "Agent control", feature: "UI / accessibility tree reads", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "partial", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "partial" } },
+  { category: "Agent control", feature: "Batch actions (ms precision)", sidekick: "yes", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Agent control", feature: "Session video recording", sidekick: "roadmap", sidekickNote: "Per-step screenshots today; video roadmap", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Agent control", feature: "App logs + network capture", sidekick: "roadmap", sidekickNote: "App logs today; network capture roadmap", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Sharing", feature: "Live share links (no login needed)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "partial", browserstack: "no", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
+  { category: "Sharing", feature: "Embeddable player (iframe / SDK)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Sharing", feature: "Live collaboration + human takeover", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "partial", browserstack: "partial", "eas-build": "no", limrun: "partial", appetize: "partial", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "partial" } },
+  { category: "Testing", feature: "Record once, replay everywhere", sidekick: "roadmap", sidekickNote: "Recorder beta Q1", cells: { vibeview: "yes", "eas-simulator": "partial", browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "yes", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
+  { category: "Testing", feature: "Visual regression per step", sidekick: "roadmap", sidekickNote: "Ships with recorder", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "yes", "eas-build": "no", limrun: "no", appetize: "partial", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Testing", feature: "AI / plain-English testing", sidekick: "roadmap", sidekickNote: "Agent-fix on moved elements", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "partial", "eas-build": "no", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "yes", "sauce-labs": "partial" } },
+  { category: "Testing", feature: "CI runner + GitHub checks", sidekick: "roadmap", sidekickNote: "Actions + checks Q1", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "yes", limrun: "partial", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Platform", feature: "Self-hostable (BYO Mac minis)", sidekick: "yes", cells: { vibeview: "no", "eas-simulator": "no", browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
+  { category: "Platform", feature: "Source-available (FSL → Apache-2.0)", sidekick: "yes", cells: { vibeview: "no", "eas-simulator": "no", browserstack: "no", "eas-build": "partial", limrun: "no", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
+  { category: "Platform", feature: "Public pricing + free tier, no card", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "partial", browserstack: "partial", "eas-build": "yes", limrun: "no", appetize: "partial", "aws-device-farm": "partial", lambdatest: "partial", "sauce-labs": "no" } },
+  { category: "Platform", feature: "Per-instance sandbox tokens + region pin", sidekick: "roadmap", sidekickNote: "Tokens today; regions roadmap", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "partial", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "partial" } },
 ];
 
 export interface PriceTier {

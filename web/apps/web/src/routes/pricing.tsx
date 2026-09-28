@@ -1,7 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Container, PricingTable, SiteFooter } from "../components/marketing";
+import { CompareTable, Container, PricingTable, SiteFooter } from "../components/marketing";
 
 export const Route = createFileRoute("/pricing")({ component: Pricing });
+
+const PLAN_ROWS: [string, string[]][] = [
+  ["Monthly price", ["$0", "$15", "$39", "$149"]],
+  ["Streaming minutes / month", ["30", "200", "500", "3,000"]],
+  ["Cloud builds / month", ["10", "25", "50", "200"]],
+  ["Concurrent sessions", ["2", "2", "4", "25"]],
+  ["Members", ["3", "3", "10", "Unlimited"]],
+  ["Live guests per session", ["1", "1", "2", "5"]],
+  ["Embed on your site", ["—", "—", "1 domain", "Unlimited + SSO"]],
+  ["Streaming overage", ["$0.03/min", "$0.03/min", "$0.03/min", "$0.03/min"]],
+];
 
 function Pricing() {
   return (
@@ -15,8 +26,25 @@ function Pricing() {
           Self-hosting on your own Mac minis is $0 forever.
         </p>
         <div className="mt-8"><PricingTable /></div>
+        <h2 className="mt-10 text-2xl font-bold">Compare plans in detail</h2>
+        <div className="mt-4">
+          <CompareTable
+            columns={[
+              { key: "f", header: "Feature" },
+              { key: "free", header: "Free $0/mo" },
+              { key: "dev", header: "Dev $15/mo" },
+              { key: "team", header: "Team $39/mo" },
+              { key: "scale", header: "Scale $149/mo" },
+            ]}
+            rows={PLAN_ROWS.map(([feature, cells]) => ({
+              feature,
+              category: "Plans",
+              cells: cells.map((v, i) => <span key={i} className="text-zinc-700">{v}</span>),
+            }))}
+          />
+        </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3 text-sm">
-          <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">How rivals price it</h3><p className="mt-1 text-zinc-600">BrowserStack App Automate $199/mo per parallel · Sauce Real $199/mo · Appetize Starter $59/mo · AWS Device Farm $0.17/device-min (~$3,400/mo at 20k min). We price the org, not the seat or parallel.</p></div>
+          <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">How rivals price it</h3><p className="mt-1 text-zinc-600">VibeView Dev $19/mo + $0.04/min overage · BrowserStack App Automate $199/mo per parallel · Sauce Real $199/mo · Appetize Starter $59/mo · AWS Device Farm $0.17/device-min (~$3,400/mo at 20k min). We price the org, not the seat or parallel.</p></div>
           <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">What counts as usage</h3><p className="mt-1 text-zinc-600">Streaming minutes run while a device session is open (concurrent caps per plan). Builds are per cloud compile. Overage $0.03/min — under every legacy cloud's per-minute math.</p></div>
           <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">Self-host = $0</h3><p className="mt-1 text-zinc-600">BYO Mac minis + <span className="font-mono text-xs">docker compose up</span>. FSL license: internal use, research and services all permitted purposes.</p></div>
         </div>

@@ -58,7 +58,7 @@ function AlternativePage() {
               { key: "t", header: c.name },
             ]}
             rows={rows}
-            footnote={<>✅ Yes · 🛣️ Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. {c.name} claims checked {c.checked} at {c.url}. {c.name} pricing: {c.price}.</>}
+            footnote={<>✅ Yes · 🛣️ In Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. {c.name} claims checked {c.checked} at {c.url}. {c.name} pricing: {c.price}.</>}
           />
         </div>
 
