@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@hono/trpc-server": "^0.4.2",
-    "@openlim-web/api": "workspace:*",
-    "@openlim-web/auth": "workspace:*",
-    "@openlim-web/db": "workspace:*",
+    "@sidekick/api": "workspace:*",
+    "@sidekick/auth": "workspace:*",
+    "@sidekick/db": "workspace:*",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "hono": "^4.13.7",
@@ -23,7 +23,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@openlim-web/config": "workspace:*",
+    "@sidekick/config": "workspace:*",
     "@types/bun": "catalog:",
     "tsdown": "^0.23.0",
     "typescript": "catalog:"

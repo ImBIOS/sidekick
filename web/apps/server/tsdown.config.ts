@@ -6,6 +6,6 @@ export default defineConfig({
   outDir: "./dist",
   clean: true,
   deps: {
-    alwaysBundle: [/@openlim-web\/.*/],
+    alwaysBundle: [/@sidekick\/.*/],
   },
 });

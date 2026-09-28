@@ -1,4 +1,4 @@
-import { cn } from "@openlim-web/ui/lib/utils";
+import { cn } from "@sidekick/ui/lib/utils";
 import * as React from "react";
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {

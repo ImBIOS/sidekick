@@ -1,4 +1,4 @@
-import type { AppRouter } from "@openlim-web/api/routers/index";
+import type { AppRouter } from "@sidekick/api/routers/index";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";

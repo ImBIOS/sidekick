@@ -1,20 +1,20 @@
-# OpenLim — source-available Limrun alternative (FSL-1.1-ALv2)
+# Sidekick — source-available Limrun alternative (FSL-1.1-ALv2)
 
 Remote Xcode, iOS simulators, Android emulators for cloud agents. Your agent in E2B/Daytona/Docker builds mobile apps with no Mac.
 
-`lim xcode build .` → stream logs → `lim ios create` → tap/type/screenshot → preview link + demo video on PR. Same loop as Limrun, TV/Roku breadth borrowed from VibeView, self-hostable.
+`sidekick xcode build .` → stream logs → `sidekick ios create` → tap/type/screenshot → preview link + demo video on PR. Same loop as Limrun, TV/Roku breadth borrowed from VibeView, self-hostable.
 
 ## Why
 
-Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulator, no GPU Unity. OpenLim exposes them as remote services: one `lim` CLI + skill file, no sandbox change.
+Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulator, no GPU Unity. Sidekick exposes them as remote services: one `sidekick` CLI + skill file, no sandbox change.
 
 ## Limrun vs VibeView — what we copied, what we do better
 
-| | Limrun | VibeView | OpenLim |
+| | Limrun | VibeView | Sidekick |
 |---|---|---|---|
-| Xcode remote build | ✅ `lim xcode build`, warm S3 cache, idle/build split pricing | ✅ `build --cloud` RN only, $1.50 iOS / $0.75 Android | ✅ Limrun model (any Xcode + Gradle sandbox), warm NVMe + sccache, self-host BYO Mac |
+| Xcode remote build | ✅ `sidekick xcode build`, warm S3 cache, idle/build split pricing | ✅ `build --cloud` RN only, $1.50 iOS / $0.75 Android | ✅ Limrun model (any Xcode + Gradle sandbox), warm NVMe + sccache, self-host BYO Mac |
 | iOS / Android | ✅ sim + emu, AX tree, 60fps record, batch ms actions, adb tunnel | ✅ + Apple TV, Android TV, Roku HW, foldables (iPhone Duo posture/rotate) | ✅ both, plus TV verbs (`tap-focused`, d-pad) + foldable posture from VibeView |
-| Agent UX | ✅ `lim` npm/brew, per-instance MCP (HTTP+OAuth), skill index, llms.txt, openapi | ✅ `vibeview agent-setup`, skill git + MCP stdio, `.vibeview/` state, CLAUDE.md nudge | ✅ both: `lim` + skill + MCP stdio/HTTP, `llms.txt`, `/openapi.json` |
+| Agent UX | ✅ `sidekick` npm/brew, per-instance MCP (HTTP+OAuth), skill index, llms.txt, openapi | ✅ `vibeview agent-setup`, skill git + MCP stdio, `.vibeview/` state, CLAUDE.md nudge | ✅ both: `sidekick` + skill + MCP stdio/HTTP, `llms.txt`, `/openapi.json` |
 | Human UX | preview links, demo video, `<RemoteControl/>` embed | ✅ better: share links, live collab guests, iframe embed, record-replay, visual regression, AI testing, signing + TestFlight/Play submit | ✅ Limrun infra + VibeView human layer: share/embed/collab, signing/submit, record-replay + visual diff |
 | Platforms | 2 (iOS, Android) | 5 (iOS, Android, tvOS, Android TV, Roku) | 5, Roku via real HW or scrcpy bridge |
 | Pricing | usage (idle+build) | sub + metered: $0/$19/$49/$249, $0.04-0.06/min | same shape, cheaper self-host: $0 self-host, cloud mirrors VibeView tiers |
@@ -32,13 +32,13 @@ Verdict: copy Limrun's IA (agent-first, control/data plane split, per-instance t
 
 Mac fleet cost is the moat. Teams with office Mac minis must self-host; closed competitors can't serve them. FSL needs a deploy story for adoption → paid hosted conversion.
 - `docker compose -f docker-compose.selfhost.yml up` → control-plane + postgres + minio + Linux emulator.
-- BYO Mac: `lim host join` runs build-daemon + sim-daemon (Tart VMs, warm NVMe). No K8s required for MVP; K8s controller optional at scale.
+- BYO Mac: `sidekick host join` runs build-daemon + sim-daemon (Tart VMs, warm NVMe). No K8s required for MVP; K8s controller optional at scale.
 
 ## Layout
 
 ```
 web/               # better-t-stack: marketing + console + tRPC API + docs (fumadocs)
-cmd/lim/           # CLI (Go, cobra)
+cmd/sidekick/           # CLI (Go, cobra)
 control-plane/     # Go scheduler + REST (builds/sims/emus) + JWT/WireGuard
 build-daemon/      # Mac: xcodebuild + warm cache + SSE logs
 sim-daemon/        # Mac: simctl + ScreenCaptureKit->LiveKit + idb AX tree
@@ -51,11 +51,11 @@ deploy/            # docker + k8s + ansible for Mac minis
 ## Quickstart
 
 ```bash
-npm i -g openlim # or brew install ImBIOS/tap/lim
-lim login # or VIBEVIEW-style: export OPENLIM_TOKEN=...
-lim xcode build . --scheme MyApp
-lim ios create --device "iPhone 16, iOS 18.2"
-lim ios act sim_abc --tap @e5
+npm i -g sidekick # or brew install ImBIOS/tap/sidekick
+sidekick login # or VIBEVIEW-style: export SIDEKICK_TOKEN=...
+sidekick xcode build . --scheme MyApp
+sidekick ios create --device "iPhone 16, iOS 18.2"
+sidekick ios act sim_abc --tap @e5
 ```
 
 Self-host: `docker compose -f docker-compose.selfhost.yml up -d` then join a Mac.

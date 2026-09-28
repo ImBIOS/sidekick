@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@openlim-web/ui/components/button";
-import { Input } from "@openlim-web/ui/components/input";
-import { Textarea } from "@openlim-web/ui/components/textarea";
-import { cn } from "@openlim-web/ui/lib/utils";
+import { Button } from "@sidekick/ui/components/button";
+import { Input } from "@sidekick/ui/components/input";
+import { Textarea } from "@sidekick/ui/components/textarea";
+import { cn } from "@sidekick/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 

@@ -1,5 +1,5 @@
-import type { Session } from "@openlim-web/auth";
-import type { Database } from "@openlim-web/db";
+import type { Session } from "@sidekick/auth";
+import type { Database } from "@sidekick/db";
 
 export type Context = {
   session: Session | null;

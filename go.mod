@@ -1,4 +1,4 @@
-module github.com/ImBIOS/openlim
+module github.com/ImBIOS/sidekick
 
 go 1.24
 

@@ -21,7 +21,7 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@openlim-web/ui/*": ["../../packages/ui/src/*"]
+      "@sidekick/ui/*": ["../../packages/ui/src/*"]
     }
   }
 }

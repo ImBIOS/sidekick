@@ -1,6 +1,6 @@
-import { Button } from "@openlim-web/ui/components/button";
-import { Input } from "@openlim-web/ui/components/input";
-import { Label } from "@openlim-web/ui/components/label";
+import { Button } from "@sidekick/ui/components/button";
+import { Input } from "@sidekick/ui/components/input";
+import { Label } from "@sidekick/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";

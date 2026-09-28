@@ -1,5 +1,5 @@
 import { trpcServer } from "@hono/trpc-server";
-import { appRouter } from "@openlim-web/api/routers/index";
+import { appRouter } from "@sidekick/api/routers/index";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";

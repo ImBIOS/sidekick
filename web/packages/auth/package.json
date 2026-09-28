@@ -1,5 +1,5 @@
 {
-  "name": "@openlim-web/auth",
+  "name": "@sidekick/auth",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.5",
-    "@openlim-web/db": "workspace:*",
+    "@sidekick/db": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@openlim-web/config": "workspace:*",
+    "@sidekick/config": "workspace:*",
     "typescript": "catalog:"
   }
 }

@@ -1,11 +1,11 @@
 {
-  "extends": "@openlim-web/config/tsconfig.base.json",
+  "extends": "@sidekick/config/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": [],
     "paths": {
-      "@openlim-web/ui/*": ["./src/*"]
+      "@sidekick/ui/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

@@ -4,7 +4,9 @@ import UserMenu from "./user-menu";
 
 export default function Header() {
   const links = [
-    { to: "/", label: "Home" },
+    { to: "/", label: "Sidekick" },
+    { to: "/pricing", label: "Pricing" },
+    { to: "/alternatives", label: "Alternatives" },
     { to: "/dashboard", label: "Dashboard" },
   ] as const;
 

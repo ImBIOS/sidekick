@@ -1,4 +1,4 @@
-name: openlim-web
+name: sidekick-web
 
 services:
   server:
@@ -15,7 +15,7 @@ services:
       - path: apps/server/.env
         required: false
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/openlim-web
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/sidekick-web
     healthcheck:
       test:
         [
@@ -35,15 +35,15 @@ services:
 
   postgres:
     image: postgres:18
-    container_name: openlim-web-postgres
+    container_name: sidekick-web-postgres
     environment:
-      POSTGRES_DB: openlim-web
+      POSTGRES_DB: sidekick-web
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
       - "5432:5432"
     volumes:
-      - openlim-web_postgres_data:/var/lib/postgresql
+      - sidekick-web_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -52,7 +52,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  openlim-web_postgres_data:
+  sidekick-web_postgres_data:
 
 # BuildKit makes these available only while install/build commands run.
 secrets:

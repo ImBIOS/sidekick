@@ -1,4 +1,4 @@
-import { Button } from "@openlim-web/ui/components/button";
+import { Button } from "@sidekick/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,8 +7,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@openlim-web/ui/components/dropdown-menu";
-import { Skeleton } from "@openlim-web/ui/components/skeleton";
+} from "@sidekick/ui/components/dropdown-menu";
+import { Skeleton } from "@sidekick/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";

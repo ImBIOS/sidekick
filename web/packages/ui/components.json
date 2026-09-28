@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@openlim-web/ui/components",
-    "utils": "@openlim-web/ui/lib/utils",
-    "hooks": "@openlim-web/ui/hooks",
-    "lib": "@openlim-web/ui/lib",
-    "ui": "@openlim-web/ui/components"
+    "components": "@sidekick/ui/components",
+    "utils": "@sidekick/ui/lib/utils",
+    "hooks": "@sidekick/ui/hooks",
+    "lib": "@sidekick/ui/lib",
+    "ui": "@sidekick/ui/components"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

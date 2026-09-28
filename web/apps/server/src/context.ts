@@ -1,4 +1,4 @@
-import type { Context as ApiContext } from "@openlim-web/api/context";
+import type { Context as ApiContext } from "@sidekick/api/context";
 import type { Context as HonoContext } from "hono";
 
 import { db } from "./services";

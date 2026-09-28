@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var root = &cobra.Command{Use: "lim", Short: "OpenLim - remote Xcode, iOS, Android for cloud agents"}
+var root = &cobra.Command{Use: "sidekick", Short: "Sidekick - remote Xcode, iOS, Android for cloud agents"}
 
 func main() {
 	xcode := &cobra.Command{Use: "xcode", Short: "remote Xcode builds"}
@@ -22,7 +22,7 @@ func main() {
 
 	ios := &cobra.Command{Use: "ios", Short: "cloud iOS simulators"}
 	iosCreate := &cobra.Command{Use: "create", Short: "create simulator", RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(`{"id":"sim_abc","webrtc_url":"wss://stream.openlim.dev/sim_abc","ax_tree_url":"https://api.openlim.dev/v1/sims/sim_abc/tree"}`)
+		fmt.Println(`{"id":"sim_abc","webrtc_url":"wss://stream.sidekick.imbios.dev/sim_abc","ax_tree_url":"https://api.sidekick.imbios.dev/v1/sims/sim_abc/tree"}`)
 		return nil
 	}}
 	ios.AddCommand(iosCreate)
@@ -33,7 +33,7 @@ func main() {
 
 	android := &cobra.Command{Use: "android", Short: "cloud Android emulators"}
 	android.AddCommand(&cobra.Command{Use: "create", Short: "create emulator + adb tunnel", RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(`{"id":"emu_abc","adb":"localhost:5555 via lim adb forward"}`)
+		fmt.Println(`{"id":"emu_abc","adb":"localhost:5555 via sidekick adb forward"}`)
 		return nil
 	}})
 

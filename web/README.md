@@ -1,4 +1,4 @@
-# openlim-web
+# sidekick-web
 
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Hono, TRPC, and more.
 
@@ -66,7 +66,7 @@ npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
 Import shared components like this:
 
 ```tsx
-import { Button } from "@openlim-web/ui/components/button";
+import { Button } from "@sidekick/ui/components/button";
 ```
 
 ### Add app-specific blocks
@@ -121,7 +121,7 @@ For more details, see the guide on [Deploying to Vercel](https://www.better-t-st
 ## Project Structure
 
 ```
-openlim-web/
+sidekick-web/
 ├── apps/
 │   ├── web/         # Frontend application (React + TanStack Start)
 │   └── server/      # Backend API (Hono, TRPC)

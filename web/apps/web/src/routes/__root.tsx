@@ -1,5 +1,5 @@
-import type { AppRouter } from "@openlim-web/api/routers/index";
-import { Toaster } from "@openlim-web/ui/components/sonner";
+import type { AppRouter } from "@sidekick/api/routers/index";
+import { Toaster } from "@sidekick/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
@@ -25,7 +25,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "My App",
+        title: "Sidekick — every agent needs a sidekick to hold the phone",
       },
     ],
     links: [

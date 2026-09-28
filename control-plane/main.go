@@ -19,6 +19,6 @@ func main() {
 	http.HandleFunc("/v1/emus", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, `{"id":"emu_abc","status":"provisioning"}`)
 	})
-	fmt.Println("openlim control-plane :8080")
+	fmt.Println("sidekick control-plane :8080")
 	_ = http.ListenAndServe(":8080", nil)
 }

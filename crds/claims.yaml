@@ -1,4 +1,4 @@
-apiVersion: lim.openlim.dev/v1
+apiVersion: sidekick.imbios.dev/v1
 kind: SimulatorClaim
 metadata:
   name: sim-abc
@@ -12,7 +12,7 @@ status:
   udid: ""
   webrtcUrl: ""
 ---
-apiVersion: lim.openlim.dev/v1
+apiVersion: sidekick.imbios.dev/v1
 kind: BuildClaim
 metadata:
   name: build-abc
@@ -21,7 +21,7 @@ spec:
   xcode: "16.2"
   tenant: tn_123
 ---
-apiVersion: lim.openlim.dev/v1
+apiVersion: sidekick.imbios.dev/v1
 kind: EmulatorClaim
 metadata:
   name: emu-abc

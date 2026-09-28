@@ -1,4 +1,4 @@
-import { cn } from "@openlim-web/ui/lib/utils";
+import { cn } from "@sidekick/ui/lib/utils";
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (

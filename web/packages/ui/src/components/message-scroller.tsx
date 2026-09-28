@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@openlim-web/ui/components/button";
-import { cn } from "@openlim-web/ui/lib/utils";
+import { Button } from "@sidekick/ui/components/button";
+import { cn } from "@sidekick/ui/lib/utils";
 import {
   MessageScroller as MessageScrollerPrimitive,
   useMessageScroller,

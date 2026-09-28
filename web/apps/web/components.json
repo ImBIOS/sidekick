@@ -13,8 +13,8 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",
-    "utils": "@openlim-web/ui/lib/utils",
-    "ui": "@openlim-web/ui/components",
+    "utils": "@sidekick/ui/lib/utils",
+    "ui": "@sidekick/ui/components",
     "lib": "@/lib",
     "hooks": "@/hooks"
   },

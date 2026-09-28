@@ -1,5 +1,5 @@
-import { createAuth } from "@openlim-web/auth";
-import { createDb } from "@openlim-web/db";
+import { createAuth } from "@sidekick/auth";
+import { createDb } from "@sidekick/db";
 
 import { ENV } from "./env.server";
 
