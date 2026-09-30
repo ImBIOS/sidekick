@@ -10,7 +10,7 @@ export const Route = createFileRoute("/alternatives/$slug")({
   },
   component: AlternativePage,
   notFoundComponent: () => (
-    <div className="bg-white p-10 text-zinc-900">
+    <div className="bg-black p-10 text-zinc-100">
       Unknown comparison. <Link to="/alternatives" className="underline">All alternatives</Link>
     </div>
   ),
@@ -30,16 +30,16 @@ function AlternativePage() {
   }));
 
   return (
-    <div className="bg-white text-zinc-900">
+    <div className="bg-black text-zinc-100">
       <Container>
         <p className="pt-10 text-sm text-zinc-500">
           <Link to="/">Home</Link> / <Link to="/alternatives">Alternatives</Link> / {c.name}
         </p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight">{c.name} alternative: what Sidekick does differently</h1>
-        <p className="mt-3 max-w-3xl text-lg text-zinc-600">{c.tagline}</p>
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">{c.name} alternative: what Sidekick does differently</h1>
+        <p className="mt-3 max-w-3xl text-lg text-zinc-400">{c.tagline}</p>
         <div className="mt-5"><CtaRow /></div>
 
-        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-zinc-700">
+        <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-zinc-300">
           {c.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
@@ -47,8 +47,8 @@ function AlternativePage() {
 
         <Terminal lines={`$ sidekick agent-setup   # skill + MCP, one command\n$ sidekick xcode build . --scheme MyApp   # no Mac needed\n$ sidekick ios create   # agent drives, you watch in the browser`} />
 
-        <h2 className="mt-10 text-2xl font-bold">
-          Sidekick vs {c.name} <span className="ml-2 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-sm font-semibold text-emerald-800">{s.sidekick.toFixed(0)} – {s.them.toFixed(0)} across {s.rows} rows</span>
+        <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">
+          Sidekick vs {c.name} <span className="ml-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-300">{s.sidekick.toFixed(0)} – {s.them.toFixed(0)} across {s.rows} rows</span>
         </h2>
         <div className="mt-4">
           <CompareTable
@@ -62,31 +62,31 @@ function AlternativePage() {
           />
         </div>
 
-        <h2 className="mt-10 text-2xl font-bold">Where {c.name} is stronger</h2>
+        <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Where {c.name} is stronger</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {c.strengths.map((st) => (
-            <div key={st.title} className="rounded-xl border border-zinc-200 p-5">
-              <h3 className="font-semibold">{st.title}</h3>
-              <p className="mt-1.5 text-sm text-zinc-600">{st.body}</p>
+            <div key={st.title} className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
+              <h3 className="font-semibold text-white">{st.title}</h3>
+              <p className="mt-1.5 text-sm text-zinc-400">{st.body}</p>
             </div>
           ))}
         </div>
 
-        <h2 className="mt-10 text-2xl font-bold">Which is yours: a decision guide</h2>
+        <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Which is yours: a decision guide</h2>
         <div className="mt-4 space-y-3">
           {c.decideGuide.map((d) => (
-            <div key={d.label} className="flex gap-3 rounded-xl border border-zinc-200 p-4">
-              <span className={`h-fit rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${d.winner === "sidekick" ? "bg-emerald-100 text-emerald-800" : "bg-zinc-200 text-zinc-700"}`}>
+            <div key={d.label} className="flex gap-3 rounded-2xl border border-white/10 bg-zinc-950 p-4">
+              <span className={`h-fit rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${d.winner === "sidekick" ? "bg-emerald-400/15 text-emerald-300" : "bg-white/10 text-zinc-300"}`}>
                 {d.winner === "sidekick" ? "Sidekick" : c.name}
               </span>
-              <p className="text-sm text-zinc-700"><strong>{d.label}:</strong> {d.body}</p>
+              <p className="text-sm text-zinc-300"><strong className="text-white">{d.label}:</strong> {d.body}</p>
             </div>
           ))}
         </div>
 
-        <h2 className="mt-10 text-2xl font-bold">Frequently asked questions</h2>
+        <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Frequently asked questions</h2>
         <div className="mt-4"><Faq items={c.faqs} /></div>
-        <p className="mt-6 text-xs text-zinc-400">Published Sep 2026 · {c.name} homepage and docs verified {c.checked} ·t Scores count roadmap as delivered because every roadmap item is public, dated and source-available.</p>
+        <p className="mt-6 text-xs text-zinc-600">Published Sep 2026 · {c.name} homepage and docs verified {c.checked} ·t Scores count roadmap as delivered because every roadmap item is public, dated and source-available.</p>
       </Container>
       <SiteFooter />
     </div>

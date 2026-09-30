@@ -16,17 +16,17 @@ const PLAN_ROWS: [string, string[]][] = [
 
 function Pricing() {
   return (
-    <div className="bg-white text-zinc-900">
+    <div className="bg-black text-zinc-100">
       <Container>
         <p className="pt-10 text-sm text-zinc-500"><Link to="/">Home</Link> / Pricing</p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight">Test your app. Pick your plan.</h1>
-        <p className="mt-3 max-w-2xl text-zinc-600">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">Test your app. Pick your plan.</h1>
+        <p className="mt-3 max-w-2xl text-zinc-400">
           Upload your iOS, Android or TV build and drive it from your agent or browser.
           Every plan is monthly with streaming minutes and builds included — overage draws from credit at $0.03/min.
           Self-hosting on your own Mac minis is $0 forever.
         </p>
         <div className="mt-8"><PricingTable /></div>
-        <h2 className="mt-10 text-2xl font-bold">Compare plans in detail</h2>
+        <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Compare plans in detail</h2>
         <div className="mt-4">
           <CompareTable
             columns={[
@@ -39,14 +39,14 @@ function Pricing() {
             rows={PLAN_ROWS.map(([feature, cells]) => ({
               feature,
               category: "Plans",
-              cells: cells.map((v, i) => <span key={i} className="text-zinc-700">{v}</span>),
+              cells: cells.map((v, i) => <span key={i} className="text-zinc-300">{v}</span>),
             }))}
           />
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3 text-sm">
-          <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">How rivals price it</h3><p className="mt-1 text-zinc-600">VibeView Dev $19/mo + $0.04/min overage · BrowserStack App Automate $199/mo per parallel · Sauce Real $199/mo · Appetize Starter $59/mo · AWS Device Farm $0.17/device-min (~$3,400/mo at 20k min). We price the org, not the seat or parallel.</p></div>
-          <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">What counts as usage</h3><p className="mt-1 text-zinc-600">Streaming minutes run while a device session is open (concurrent caps per plan). Builds are per cloud compile. Overage $0.03/min — under every legacy cloud's per-minute math.</p></div>
-          <div className="rounded-xl border border-zinc-200 p-5"><h3 className="font-semibold">Self-host = $0</h3><p className="mt-1 text-zinc-600">BYO Mac minis + <span className="font-mono text-xs">docker compose up</span>. FSL license: internal use, research and services all permitted purposes.</p></div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5"><h3 className="font-semibold text-white">How rivals price it</h3><p className="mt-1 text-zinc-400">VibeView Dev $19/mo + $0.04/min overage · BrowserStack App Automate $199/mo per parallel · Sauce Real $199/mo · Appetize Starter $59/mo · AWS Device Farm $0.17/device-min (~$3,400/mo at 20k min). We price the org, not the seat or parallel.</p></div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5"><h3 className="font-semibold text-white">What counts as usage</h3><p className="mt-1 text-zinc-400">Streaming minutes run while a device session is open (concurrent caps per plan). Builds are per cloud compile. Overage $0.03/min — under every legacy cloud's per-minute math.</p></div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5"><h3 className="font-semibold text-white">Self-host = $0</h3><p className="mt-1 text-zinc-400">BYO Mac minis + <span className="font-mono text-xs">docker compose up</span>. FSL license: internal use, research and services all permitted purposes.</p></div>
         </div>
       </Container>
       <SiteFooter />
