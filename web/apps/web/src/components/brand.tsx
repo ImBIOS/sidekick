@@ -31,11 +31,12 @@ function mulberry32(seed: number) {
   };
 }
 
-type Ray = { angle: number; len: number; dots: { d: number; r: number; tw: number }[] };
+type Ray = { angle: number; len: number; dots: { d: number; r: number; a: number }[] };
 
 /**
- * Expo-style particle burst: fine rays radiating from center with drifting
- * dots. Static frame when prefers-reduced-motion; pauses offscreen.
+ * Expo-style particle burst: fine rays radiating from center with dots.
+ * Rendered once as a static frame (no animation loop): crisp at any size,
+ * zero repaint cost, and nothing that can blink.
  */
 export function BurstCanvas({ rays = 170, className }: { rays?: number; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -52,66 +53,47 @@ export function BurstCanvas({ rays = 170, className }: { rays?: number; classNam
       const len = 0.35 + rand() * 0.65;
       const dots = Array.from({ length: 2 + Math.floor(rand() * 4) }, () => ({
         d: rand(),
-        r: 0.6 + rand() * 1.4,
-        tw: rand() * Math.PI * 2,
+        r: 0.6 + rand() * 1.1,
+        a: 0.35 + rand() * 0.4,
       }));
       return { angle, len, dots };
     });
 
-    let raf = 0;
-    let running = true;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const draw = (t: number) => {
-      if (!running) return;
-      const { width: w, height: h } = canvas;
+    const draw = () => {
+      // NOTE: use clientWidth/Height (CSS size), never canvas.width/height
+      // (buffer size) — mixing them up blurs the whole field into grey mush.
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if (w === 0 || h === 0) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      if (canvas.width !== w * dpr) {
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-      }
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       const cx = w / 2;
       const cy = h / 2;
       const R = Math.min(w, h) / 2;
-      const spin = reduced ? 0 : t / 90000;
 
-      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.strokeStyle = "rgba(255,255,255,0.13)";
       ctx.lineWidth = 1;
       for (const ray of field) {
-        const a = ray.angle + spin;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * R * 0.12, cy + Math.sin(a) * R * 0.12);
-        ctx.lineTo(cx + Math.cos(a) * R * ray.len, cy + Math.sin(a) * R * ray.len);
+        ctx.moveTo(cx + Math.cos(ray.angle) * R * 0.12, cy + Math.sin(ray.angle) * R * 0.12);
+        ctx.lineTo(cx + Math.cos(ray.angle) * R * ray.len, cy + Math.sin(ray.angle) * R * ray.len);
         ctx.stroke();
         for (const dot of ray.dots) {
-          const twinkle = reduced ? 1 : 0.55 + 0.45 * Math.sin(t / 900 + dot.tw);
-          ctx.fillStyle = `rgba(255,255,255,${(0.75 * twinkle).toFixed(3)})`;
+          ctx.fillStyle = `rgba(255,255,255,${dot.a.toFixed(3)})`;
           ctx.beginPath();
-          ctx.arc(cx + Math.cos(a) * R * ray.len * dot.d, cy + Math.sin(a) * R * ray.len * dot.d, dot.r, 0, Math.PI * 2);
+          ctx.arc(cx + Math.cos(ray.angle) * R * ray.len * dot.d, cy + Math.sin(ray.angle) * R * ray.len * dot.d, dot.r, 0, Math.PI * 2);
           ctx.fill();
         }
       }
-      if (!reduced) raf = requestAnimationFrame(draw);
     };
 
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry?.isIntersecting) {
-        running = true;
-        raf = requestAnimationFrame(draw);
-      } else {
-        running = false;
-        cancelAnimationFrame(raf);
-      }
-    });
-    io.observe(canvas);
-    raf = requestAnimationFrame(draw);
-    return () => {
-      running = false;
-      cancelAnimationFrame(raf);
-      io.disconnect();
-    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    ro.observe(canvas);
+    return () => ro.disconnect();
   }, [rays]);
 
   return <canvas ref={ref} className={className} aria-hidden="true" />;
