@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-/** White rounded-square mark with a black "S" — the Expo-Λ slot in our hero. */
+/** Monochrome Sidekick mark: white rounded square, black "S". Matches the dark theme. */
 export function SidekickMark({ size = 112 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 112 112" role="img" aria-label="Sidekick">
