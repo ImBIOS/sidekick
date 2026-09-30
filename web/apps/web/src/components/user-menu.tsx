@@ -8,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@sidekick/ui/components/dropdown-menu";
-import { Skeleton } from "@sidekick/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -18,7 +17,8 @@ export default function UserMenu() {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
-    return <Skeleton className="h-9 w-24" />;
+    // Static placeholder: same footprint, no pulse (avoids a blinking grey box on every load).
+    return <span className="block h-9 w-24" aria-hidden="true" />;
   }
 
   if (!session) {

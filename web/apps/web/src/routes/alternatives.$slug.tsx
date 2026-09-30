@@ -48,7 +48,10 @@ function AlternativePage() {
         <Terminal lines={`$ sidekick agent-setup   # skill + MCP, one command\n$ sidekick xcode build . --scheme MyApp   # no Mac needed\n$ sidekick ios create   # agent drives, you watch in the browser`} />
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">
-          Sidekick vs {c.name} <span className="ml-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-300">{s.sidekick.toFixed(0)} – {s.them.toFixed(0)} across {s.rows} rows</span>
+          Sidekick vs {c.name}{" "}
+          <span className="ml-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-300">
+            Sidekick {s.sidekick.toFixed(0)}/{s.rows} rows · {c.name} {s.them.toFixed(0)}/{s.rows}
+          </span>
         </h2>
         <div className="mt-4">
           <CompareTable

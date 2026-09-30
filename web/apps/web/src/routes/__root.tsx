@@ -46,7 +46,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <div className="grid h-svh grid-rows-[auto_1fr]">
+        <div className="grid h-svh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr]">
           <Header />
           <Outlet />
         </div>
