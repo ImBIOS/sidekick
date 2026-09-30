@@ -3,6 +3,10 @@
 
 Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 
+## Auth (one time)
+- Get a key from console Settings → API keys (scoped to your default org, created at signup).
+- `sidekick login` (paste it) or `export SIDEKICK_TOKEN=sk_live_...`. `sidekick org` shows your org.
+
 ## Build iOS (no Mac needed)
 - `sidekick xcode build . --scheme MyApp` — syncs code, streams xcodebuild logs. Iterate on errors.
 - Warm cache is automatic (DerivedData + S3 asset storage). Upload `.app` once, reuse.

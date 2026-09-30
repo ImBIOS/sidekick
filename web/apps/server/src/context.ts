@@ -15,6 +15,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
   return {
     db,
     session,
+    headers: context.req.raw.headers,
+    auth,
   };
 }
 

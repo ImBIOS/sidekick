@@ -5,6 +5,11 @@ services:
     environment:
       DATABASE_URL: postgres://sidekick:sidekick@postgres:5432/sidekick
       S3_ENDPOINT: http://minio:9000
+      # Agent auth: either verify hosted sk_live_* keys via web, or use
+      # static org:key pairs (self-host without the web console).
+      # SIDEKICK_AUTH_URL: http://web:8000
+      # CONTROL_PLANE_SECRET: ${CONTROL_PLANE_SECRET}
+      SIDEKICK_API_KEYS: ${SIDEKICK_API_KEYS:-}
   postgres:
     image: postgres:16
     environment:

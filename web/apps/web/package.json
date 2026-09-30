@@ -10,6 +10,7 @@
     "env:generate": "varlock codegen"
   },
   "dependencies": {
+    "@better-auth/api-key": "1.7.5",
     "@sidekick/api": "workspace:*",
     "@sidekick/ui": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",

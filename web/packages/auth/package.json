@@ -9,6 +9,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/api-key": "1.7.5",
     "@better-auth/drizzle-adapter": "1.7.5",
     "@sidekick/db": "workspace:*",
     "better-auth": "catalog:",
@@ -16,6 +17,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@sidekick/config": "workspace:*",
     "typescript": "catalog:"
   }
