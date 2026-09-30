@@ -11,13 +11,16 @@ COPY web/packages/auth/package.json ./packages/auth/
 COPY web/packages/config/package.json ./packages/config/
 COPY web/packages/db/package.json ./packages/db/
 COPY web/packages/ui/package.json ./packages/ui/
-RUN bun install
+# --ignore-scripts: postinstall (varlock codegen) needs the full source +
+# .env files, which are copied below. Codegen runs explicitly after that.
+RUN bun install --ignore-scripts
 COPY web/apps ./apps
 COPY web/packages ./packages
 # Local-only env required by varlock at build time (gitignored upstream).
 # Points at the documented API host; marketing routes don't call it during SSR.
 ARG VITE_SERVER_URL=https://api.sidekick.imbios.dev
 RUN printf 'NODE_ENV=production\nVITE_SERVER_URL=%s\n' "$VITE_SERVER_URL" > ./apps/web/.env
+RUN touch ./apps/server/.env ./packages/db/.env && bun run env:generate
 RUN NODE_ENV=production ./node_modules/.bin/turbo run build --filter=web...
 
 FROM oven/bun:1-slim AS runtime
