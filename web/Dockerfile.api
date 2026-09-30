@@ -1,0 +1,33 @@
+# Sidekick API (Hono + tRPC + better-auth) for prod-0.
+# Build from repo root context: docker build -f web/Dockerfile.api .
+# Bun runs the TypeScript source directly — no build step.
+# Runtime config is env-only (no .env files needed): DATABASE_URL,
+# BETTER_AUTH_SECRET, BETTER_AUTH_URL, CORS_ORIGIN, CONTROL_PLANE_SECRET.
+FROM oven/bun:1 AS build
+WORKDIR /app
+COPY web/bun.lock web/package.json web/turbo.json ./
+COPY web/apps/server/package.json ./apps/server/
+COPY web/packages/api/package.json ./packages/api/
+COPY web/packages/auth/package.json ./packages/auth/
+COPY web/packages/config/package.json ./packages/config/
+COPY web/packages/db/package.json ./packages/db/
+COPY web/packages/ui/package.json ./packages/ui/
+# --ignore-scripts: root postinstall (varlock codegen) needs full source.
+RUN bun install --ignore-scripts
+COPY web/apps ./apps
+COPY web/packages ./packages
+# Empty .env files satisfy varlock codegen (types only); real values come
+# from the environment at runtime. Generated env.ts is gitignored upstream.
+RUN touch ./apps/server/.env ./packages/db/.env ./apps/web/.env && bun run env:generate && rm -f ./apps/server/.env ./packages/db/.env ./apps/web/.env
+# NOTE: placeholder .env files must NOT ship — varlock returns an empty
+# graph when they exist, shadowing real runtime environment variables.
+
+FROM oven/bun:1-slim AS runtime
+# NOTE: workdir MUST be apps/server — varlock resolves .env.schema from
+# the process working directory; anywhere else yields an empty env graph.
+ENV NODE_ENV=production
+COPY --from=build /app /app
+WORKDIR /app/apps/server
+EXPOSE 3000
+# Bun serves the default-exported Hono app on :3000.
+CMD ["bun", "./src/index.ts"]
