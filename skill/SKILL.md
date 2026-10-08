@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: Apache-2.0 | Copyright 2026 ImBIOS — see LICENSE-APACHE.md -->
 # Sidekick agent skill — drop into ~/.claude/skills/sidekick/ or .claude/skills/
 # Any agent that can run shell commands can use Sidekick. MCP optional.
 

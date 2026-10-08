@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: FSL-1.1-ALv2
+// Copyright 2026 ImBIOS — licensed under FSL-1.1-ALv2, see LICENSE.md.
 package main
 
 import "fmt"

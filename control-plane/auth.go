@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: FSL-1.1-ALv2
+// Copyright 2026 ImBIOS — licensed under FSL-1.1-ALv2, see LICENSE.md.
 // Package main implements the Sidekick control-plane: org-scoped scheduling
 // for remote Xcode builds, iOS simulators, and Android emulators.
 //

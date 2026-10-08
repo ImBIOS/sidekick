@@ -1,4 +1,4 @@
-# Sidekick — source-available Limrun alternative (FSL-1.1-ALv2)
+# Sidekick — source-available Limrun alternative (Apache-2.0 client + FSL server)
 
 Remote Xcode, iOS simulators, Android emulators for cloud agents. Your agent in E2B/Daytona/Docker builds mobile apps with no Mac.
 
@@ -18,7 +18,7 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Human UX | preview links, demo video, `<RemoteControl/>` embed | ✅ better: share links, live collab guests, iframe embed, record-replay, visual regression, AI testing, signing + TestFlight/Play submit | ✅ Limrun infra + VibeView human layer: share/embed/collab, signing/submit, record-replay + visual diff |
 | Platforms | 2 (iOS, Android) | 5 (iOS, Android, tvOS, Android TV, Roku) | 5, Roku via real HW or scrcpy bridge |
 | Pricing | usage (idle+build) | sub + metered: $0/$19/$49/$249, $0.04-0.06/min | same shape, cheaper self-host: $0 self-host, cloud mirrors VibeView tiers |
-| License | closed | closed | FSL-1.1-ALv2 → Apache-2.0 after 2y |
+| License | closed | closed | Apache-2.0 (CLI/skill/CRDs) + FSL-1.1-ALv2 → Apache-2.0 after 2y (server) |
 
 Verdict: copy Limrun's IA (agent-first, control/data plane split, per-instance tokens), steal VibeView's live device embed + pricing transparency + TV/foldable/testing sections. Beat both on self-host + open spec.
 
@@ -62,4 +62,7 @@ Self-host: `docker compose -f docker-compose.selfhost.yml up -d` then join a Mac
 
 ## License
 
-FSL-1.1-ALv2, converts to Apache-2.0 on 2nd anniversary per version. No competing-use SaaS. See LICENSE.md.
+Apache-2.0 for the distribution surface, FSL-1.1-ALv2 for the hosted infra. All in this repo, no closed `pro/` module.
+
+- `cmd/sidekick/`, `skill/SKILL.md`, `crds/` — Apache-2.0, see `LICENSE-APACHE.md`. Copy them anywhere, agents included.
+- `control-plane/`, `build-daemon/`, `sim-daemon/`, `adb-proxy/`, `deploy/`, `docker-compose.selfhost.yml`, `web/` — FSL-1.1-ALv2, converts to Apache-2.0 on 2nd anniversary per version. Self-host and internal use are fine, competing SaaS is not. See `LICENSE.md`.

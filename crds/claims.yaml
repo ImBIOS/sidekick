@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ImBIOS — licensed under Apache-2.0, see LICENSE-APACHE.md.
 apiVersion: sidekick.imbios.dev/v1
 kind: SimulatorClaim
 metadata:
