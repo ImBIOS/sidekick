@@ -24,6 +24,7 @@
     "@trpc/tanstack-react-query": "^11.18.0",
     "@varlock/vite-integration": "1.5.1",
     "better-auth": "catalog:",
+    "hls.js": "^1.7.3",
     "lucide-react": "catalog:",
     "motion": "^14.0.0",
     "next-themes": "catalog:",
