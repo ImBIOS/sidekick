@@ -172,6 +172,37 @@ function TeaserTable() {
   );
 }
 
+/** CodeNest-winning pattern, ported: oversized numerals + hairline dividers,
+ * proof-first band. Every number is our own published plan data. */
+const STATS: { value: string; label: string }[] = [
+  { value: "5", label: "Platforms — iOS, Android, tvOS, Android TV, Roku roadmap" },
+  { value: "200", label: "Streaming minutes / mo on Dev ($15)" },
+  { value: "25", label: "Cloud builds / mo on Dev ($15)" },
+  { value: "$0", label: "Self-host on your own Mac minis, forever" },
+];
+
+function StatBand() {
+  return (
+    <div className="mx-auto max-w-6xl">
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 md:grid-cols-4">
+        {STATS.map((s) => (
+          <div key={s.label} className="flex flex-col bg-black px-6 py-8 text-center md:py-10">
+            <dt className="order-2 mt-2 text-xs leading-relaxed font-medium tracking-wide text-zinc-500 uppercase">
+              {s.label}
+            </dt>
+            <dd className="order-1 text-5xl font-extrabold tracking-tighter text-white md:text-6xl">
+              {s.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-4 text-center text-xs text-zinc-600">
+        Dev-plan numbers — <Link to="/pricing" className="underline hover:text-zinc-300">full pricing</Link> · free tier: 30 min + 10 builds, no card
+      </p>
+    </div>
+  );
+}
+
 function HomeComponent() {  return (
     <div className="bg-black text-zinc-100">
       {/* HERO */}
@@ -206,6 +237,15 @@ function HomeComponent() {  return (
           <p className="mt-6 text-center text-sm text-zinc-500">
             From first build to final check · iOS · Android · Apple TV · Android TV · Roku (roadmap) · from Claude Code, Cursor, Codex or any MCP client
           </p>
+        </div>
+      </Container>
+
+      {/* STAT BAND — CodeNest proof pattern, our own numbers */}
+      <Container>
+        <div className="pt-16 md:pt-20">
+          <Reveal>
+            <StatBand />
+          </Reveal>
         </div>
       </Container>
 
