@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { COMPETITORS } from "../data/comparison";
-import { Container, CtaRow, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
+import { motion, useReducedMotion } from "motion/react";
+import { COMPETITORS, FEATURES } from "../data/comparison";
+import { CellBadge, CompareTable, Container, CtaRow, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
+import { Reveal } from "../components/reveal";
 import { BurstCanvas, SidekickMark } from "../components/brand";
 
 export const Route = createFileRoute("/")({ component: HomeComponent });
@@ -18,8 +20,18 @@ sidekick tap @e7         # drive the flow
 sidekick screenshot      # looks right? ship
 sidekick record --stop   # demo video for PR`;
 
-const PLATFORMS = [
-  { tab: "iOS", device: "iPhone 17 · iOS 26", rows: ["Destination detail", "Checkout flow", "Settings"], verb: "$ sidekick tap @e7 · screenshot · record — streamed at 60fps" },
+/** Condensed landing teaser: 6 rows × the two named rivals, read straight
+ * from the comparison engine so cells never drift from /alternatives. */
+const TEASER_FEATURES = [
+  "Remote Xcode build (no Mac needed)",
+  "Apple TV / tvOS + Android TV",
+  "Agent skill file (skill install)",
+  "Live share links (no login needed)",
+  "Self-hostable (BYO Mac minis)",
+  "Public pricing + free tier, no card",
+];
+
+const PLATFORMS = [  { tab: "iOS", device: "iPhone 17 · iOS 26", rows: ["Destination detail", "Checkout flow", "Settings"], verb: "$ sidekick tap @e7 · screenshot · record — streamed at 60fps" },
   { tab: "Android", device: "Pixel 9 · API 35", rows: ["Explore", "Checkout flow", "Settings"], verb: "$ sidekick tap @e4 — local adb/Appium just work via tunnel" },
   { tab: "Apple TV", device: "Apple TV 4K · tvOS 26", rows: ["Home screen", "Player", "Search"], verb: "$ sidekick press dpad_center · tap-focused — focus-walk verbs" },
   { tab: "Android TV", device: "Android TV · API 34", rows: ["Launcher", "Player", "Settings"], verb: "$ sidekick press dpad_right — same verbs as phones" },
@@ -38,6 +50,34 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2 className="mt-4 text-4xl font-bold tracking-tighter text-white md:text-5xl">{title}</h2>
       <p className="mt-4 text-lg text-zinc-400">{sub}</p>
+    </div>
+  );
+}
+
+/**
+ * Motionsites-inspired aurora: two soft radial washes drifting on the
+ * compositor (transform + opacity only, no blur filter, no canvas loop).
+ * Sits behind the static BurstCanvas, so the blink fix stays intact.
+ * Disabled when the user prefers reduced motion.
+ */
+function Aurora() {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  const base = "pointer-events-none absolute -inset-20";
+  return (
+    <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+      <motion.div
+        className={base}
+        style={{ background: "radial-gradient(40% 32% at 30% 28%, rgba(56,189,248,0.10), transparent 70%)" }}
+        animate={{ x: [0, 40, 0], y: [0, 24, 0] }}
+        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className={base}
+        style={{ background: "radial-gradient(36% 30% at 70% 66%, rgba(52,211,153,0.08), transparent 70%)" }}
+        animate={{ x: [0, -36, 0], y: [0, -20, 0] }}
+        transition={{ duration: 32, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }
@@ -77,7 +117,13 @@ function SessionPanel() {
           </button>
         ))}
       </div>
-      <div className="grid gap-6 p-6 md:grid-cols-2 md:p-8">
+      <motion.div
+        key={active}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="grid gap-6 p-6 md:grid-cols-2 md:p-8"
+      >
         <div>
           <p className="font-mono text-xs text-zinc-500">{p.device}</p>
           <ul className="mt-3 space-y-2.5">
@@ -93,16 +139,44 @@ function SessionPanel() {
           <p className="font-mono text-sm text-emerald-300">✓ agent verified: tap @e7 → diff 3 elements</p>
           <p className="mt-3 font-mono text-xs leading-relaxed text-zinc-500">{p.verb}</p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-function HomeComponent() {
+function TeaserTable() {
+  const rows = TEASER_FEATURES.map((name) => {
+    const r = FEATURES.find((f) => f.feature === name)!;
+    return {
+      feature: r.feature,
+      category: r.category,
+      note: undefined as string | undefined,
+      cells: [
+        <CellBadge key="s" cell={r.sidekick} note={r.sidekickNote} />,
+        <CellBadge key="v" cell={r.cells.vibeview} />,
+        <CellBadge key="l" cell={r.cells.limrun} />,
+      ],
+    };
+  });
   return (
+    <CompareTable
+      columns={[
+        { key: "f", header: "What you are deciding" },
+        { key: "s", header: "Sidekick" },
+        { key: "v", header: "VibeView" },
+        { key: "l", header: "Limrun" },
+      ]}
+      rows={rows}
+      footnote={<>6 of 28 rows — the full table with all 9 vendors, sources and check dates lives on <Link to="/alternatives" className="underline">/alternatives</Link>.</>}
+    />
+  );
+}
+
+function HomeComponent() {  return (
     <div className="bg-black text-zinc-100">
       {/* HERO */}
       <div className="relative overflow-hidden">
+        <Aurora />
         <BurstCanvas className="pointer-events-none absolute inset-0 h-full w-full opacity-50" />
         <Container>
           <div className="relative flex flex-col items-center px-4 pt-24 pb-20 text-center md:pt-32 md:pb-24">
@@ -138,12 +212,15 @@ function HomeComponent() {
       {/* BENTO — the loop as one grid */}
       <Container>
         <div className="py-24 md:py-32">
+          <Reveal>
           <SectionHead
             eyebrow="How it works"
             title="From first build to final check."
             sub="One loop for phones, tablets and TVs. Your agent drives, your team watches, your CI keeps the receipts."
           />
-          <div className="mt-14 grid gap-4 md:grid-cols-3">
+          </Reveal>
+          <Reveal delay={0.1} className="mt-14">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-3xl border border-white/10 bg-zinc-950 p-8 md:col-span-2">
               <Eyebrow>Preview</Eyebrow>
               <h3 className="mt-3 text-2xl font-bold tracking-tight text-white">One link puts the live app in anyone&apos;s browser.</h3>
@@ -171,6 +248,26 @@ function HomeComponent() {
               <p className="mt-2 text-zinc-600">BYO Mac fleet with <span className="font-mono text-sm">docker compose up</span>. Cloud plans just rent you ours.</p>
             </div>
           </div>
+          </Reveal>
+        </div>
+      </Container>
+
+      {/* TEASER TABLE — 6 rows from the engine, full 28 live on /alternatives */}
+      <Container>
+        <div className="pb-24 md:pb-32">
+          <Reveal>
+          <SectionHead
+            eyebrow="Comparison"
+            title="The short version."
+            sub="Six rows against the two names you'll ask about. The full 28-row table with all 9 vendors, sources and check dates is one click away — including the rows where they beat us."
+          />
+          </Reveal>
+          <Reveal delay={0.1} className="mx-auto mt-14 max-w-4xl">
+          <TeaserTable />
+          <p className="mt-6 text-center text-sm text-zinc-500">
+            <Link to="/alternatives" className="font-medium text-zinc-300 underline hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">All 28 rows, 9 vendors →</Link>
+          </p>
+          </Reveal>
         </div>
       </Container>
 

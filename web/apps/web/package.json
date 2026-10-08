@@ -25,6 +25,7 @@
     "@varlock/vite-integration": "1.5.1",
     "better-auth": "catalog:",
     "lucide-react": "catalog:",
+    "motion": "^14.0.0",
     "next-themes": "catalog:",
     "nitro": "3.0.260903-beta",
     "react": "catalog:",
