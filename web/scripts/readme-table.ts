@@ -15,8 +15,7 @@ function badge(cell: Cell, note?: string): string {
       return "✅ Yes";
     case "roadmap":
       return `🛣️ Roadmap${note ? ` (${note})` : ""}`;
-    case "indev":
-      return `🚧 Under Development${note ? ` (${note})` : ""}`;
+
     case "partial":
       return "➖ Partial";
     default:
@@ -45,7 +44,7 @@ const table = [
   sep,
   ...lines,
   "",
-  "Legend: ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.",
+  "Legend: ✅ Yes · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.",
   "</details>",
 ].join("\n");
 

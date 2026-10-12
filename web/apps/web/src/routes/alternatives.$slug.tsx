@@ -22,7 +22,7 @@ function AlternativePage() {
   const rows = FEATURES.map((r) => ({
     feature: r.feature,
     category: r.category,
-    note: r.sidekick === "roadmap" || r.sidekick === "indev" ? `Sidekick: ${r.sidekickNote}` : undefined,
+    note: r.sidekick === "roadmap" ? `Sidekick: ${r.sidekickNote}` : undefined,
     cells: [
       <CellBadge key="a" cell={r.sidekick} note={r.sidekickNote} />,
       <CellBadge key="b" cell={r.cells[c.slug]} />,
@@ -61,7 +61,7 @@ function AlternativePage() {
               { key: "t", header: c.name },
             ]}
             rows={rows}
-            footnote={<>Sidekick {cellCounts(FEATURES.map((r) => r.sidekick))} · {c.name} {cellCounts(FEATURES.map((r) => r.cells[c.slug]))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Last updated {c.checked} — {c.name} claims checked at {c.url}. {c.name} pricing: {c.price}.</>}
+            footnote={<>Sidekick {cellCounts(FEATURES.map((r) => r.sidekick))} · {c.name} {cellCounts(FEATURES.map((r) => r.cells[c.slug]))}. ✅ Yes · 🛣️ Roadmap = public, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Last updated {c.checked} — {c.name} claims checked at {c.url}. {c.name} pricing: {c.price}.</>}
           />
         </div>
 

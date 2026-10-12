@@ -13,8 +13,6 @@ export function cellLabel(c: Cell): { icon: string; text: string; cls: string } 
       return { icon: "✅", text: "Yes", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" };
     case "roadmap":
       return { icon: "🛣️", text: "Roadmap", cls: "border-sky-400/20 bg-sky-400/10 text-sky-300" };
-    case "indev":
-      return { icon: "🚧", text: "Under Development", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" };
     case "partial":
       return { icon: "➖", text: "Partial", cls: "border-amber-400/20 bg-amber-400/10 text-amber-300" };
     default:
@@ -33,7 +31,7 @@ export function CellBadge({ cell, note, size }: { cell: Cell; note?: string; siz
 
 export function cellCounts(cells: Cell[]): string {
   const n = (v: Cell) => cells.filter((c) => c === v).length;
-  return `${n("yes")} Yes · ${n("indev")} Under Development · ${n("roadmap")} Roadmap · ${n("partial")} Partial · ${n("no")} No`;
+  return `${n("yes")} Yes · ${n("roadmap")} Roadmap · ${n("partial")} Partial · ${n("no")} No`;
 }
 
 export interface TableColumn {

@@ -26,7 +26,7 @@ function FullTable() {
   const rows = FEATURES.map((r) => ({
     feature: r.feature,
     category: r.category,
-    note: r.sidekick === "roadmap" || r.sidekick === "indev" ? `Sidekick: ${r.sidekickNote}` : undefined,
+    note: r.sidekick === "roadmap" ? `Sidekick: ${r.sidekickNote}` : undefined,
     cells: [
       <CellBadge key="s" size="sm" cell={r.sidekick} note={r.sidekickNote} />,
       ...COMPETITORS.map((c) => <CellBadge key={c.slug} size="sm" cell={r.cells[c.slug]} />),
@@ -52,7 +52,7 @@ function FullTable() {
         })),
       ]}
       rows={rows}
-      footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
+      footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
     />
   );
 }

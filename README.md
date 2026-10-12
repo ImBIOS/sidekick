@@ -31,7 +31,7 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | MCP server | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes |
 | UI / accessibility tree reads | ✅ Yes | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
 | Batch actions (ms precision) | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
-| Session video recording | 🚧 Under Development (Per-step screenshots today; video in development) | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
+| Session video recording | 🛣️ Roadmap (Per-step screenshots today; video roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
 | App logs + network capture | 🛣️ Roadmap (App logs today; network capture roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | Live share links (no login needed) | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
 | Embeddable player (iframe / SDK) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No |
@@ -45,7 +45,7 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Public pricing + free tier, no card | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ➖ Partial | ➖ Partial | ➖ Partial | ❌ No |
 | Per-instance sandbox tokens + region pin | 🛣️ Roadmap (Tokens today; regions roadmap) | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
 
-Legend: ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.
+Legend: ✅ Yes · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.
 </details>
 <!-- COMPARISON-END -->
 
