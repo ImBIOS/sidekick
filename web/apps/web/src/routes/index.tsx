@@ -204,7 +204,7 @@ function HomeComponent() {  return (
 
       {/* LIVE SESSION */}
       <Container>
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl pt-14 md:pt-20">
           <SessionPanel />
           <p className="mt-6 text-center text-sm text-zinc-500">
             From first build to final check · iOS · Android · Apple TV · Android TV · Roku (roadmap) · from Claude Code, Cursor, Codex or any MCP client

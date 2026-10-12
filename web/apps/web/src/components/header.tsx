@@ -51,8 +51,21 @@ export function StarCounter() {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
+    <header
+      className={`sticky top-0 z-50 transition-colors duration-300 ${
+        scrolled
+          ? "border-b border-white/10 bg-black/80 backdrop-blur"
+          : "border-b border-transparent bg-transparent"
+      }`}
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Sidekick home">
           <SidekickMark size={28} />

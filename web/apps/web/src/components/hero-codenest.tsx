@@ -137,6 +137,7 @@ export function HeroCodenest(props: HeroCodenestCopy) {
           loop
           playsInline
           preload="auto"
+          poster="/hero-poster.jpg"
           aria-hidden="true"
         />
         <div
