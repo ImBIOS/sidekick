@@ -1,6 +1,6 @@
 // Comparison data: Sidekick vs 9 rivals. Checked Sep 2026.
 // Cell: yes | no | partial | roadmap (roadmap = public, dated, on GitHub milestones)
-export type Cell = "yes" | "no" | "partial" | "roadmap";
+export type Cell = "yes" | "no" | "partial" | "roadmap" | "indev";
 
 export type Slug =
   | "vibeview"
@@ -312,7 +312,7 @@ export const FEATURES: FeatureRow[] = [
   { category: "Agent control", feature: "MCP server", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "no", "eas-build": "yes", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "yes" } },
   { category: "Agent control", feature: "UI / accessibility tree reads", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "yes", browserstack: "partial", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "partial" } },
   { category: "Agent control", feature: "Batch actions (ms precision)", sidekick: "yes", cells: { vibeview: "partial", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "no", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
-  { category: "Agent control", feature: "Session video recording", sidekick: "roadmap", sidekickNote: "Per-step screenshots today; video roadmap", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
+  { category: "Agent control", feature: "Session video recording", sidekick: "indev", sidekickNote: "Per-step screenshots today; video in development", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "no", limrun: "yes", appetize: "partial", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
   { category: "Agent control", feature: "App logs + network capture", sidekick: "roadmap", sidekickNote: "App logs today; network capture roadmap", cells: { vibeview: "partial", "eas-simulator": "partial", browserstack: "yes", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "yes", lambdatest: "yes", "sauce-labs": "yes" } },
   { category: "Sharing", feature: "Live share links (no login needed)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "partial", browserstack: "no", "eas-build": "partial", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "partial", "sauce-labs": "no" } },
   { category: "Sharing", feature: "Embeddable player (iframe / SDK)", sidekick: "yes", cells: { vibeview: "yes", "eas-simulator": "no", browserstack: "no", "eas-build": "no", limrun: "yes", appetize: "yes", "aws-device-farm": "no", lambdatest: "no", "sauce-labs": "no" } },
@@ -347,7 +347,7 @@ export function score(slug: Slug): { sidekick: number; them: number; rows: numbe
   let s = 0;
   let t = 0;
   for (const r of FEATURES) {
-    const a = r.sidekick === "yes" || r.sidekick === "roadmap" ? 1 : r.sidekick === "partial" ? 0.5 : 0;
+    const a = r.sidekick === "yes" || r.sidekick === "roadmap" || r.sidekick === "indev" ? 1 : r.sidekick === "partial" ? 0.5 : 0;
     const b = r.cells[slug] === "yes" ? 1 : r.cells[slug] === "partial" ? 0.5 : 0;
     s += a;
     t += b;

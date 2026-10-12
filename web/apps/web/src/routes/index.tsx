@@ -26,14 +26,15 @@ function FullTable() {
   const rows = FEATURES.map((r) => ({
     feature: r.feature,
     category: r.category,
-    note: r.sidekick === "roadmap" ? `Sidekick: ${r.sidekickNote}` : undefined,
+    note: r.sidekick === "roadmap" || r.sidekick === "indev" ? `Sidekick: ${r.sidekickNote}` : undefined,
     cells: [
-      <CellBadge key="s" cell={r.sidekick} note={r.sidekickNote} />,
-      ...COMPETITORS.map((c) => <CellBadge key={c.slug} cell={r.cells[c.slug]} />),
+      <CellBadge key="s" size="sm" cell={r.sidekick} note={r.sidekickNote} />,
+      ...COMPETITORS.map((c) => <CellBadge key={c.slug} size="sm" cell={r.cells[c.slug]} />),
     ],
   }));
   return (
     <CompareTable
+      compact
       columns={[
         { key: "f", header: "What you are deciding" },
         { key: "s", header: "Sidekick" },
@@ -51,7 +52,7 @@ function FullTable() {
         })),
       ]}
       rows={rows}
-      footnote={<>✅ Yes · 🚧 Under Development = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
+      footnote={<>✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
     />
   );
 }

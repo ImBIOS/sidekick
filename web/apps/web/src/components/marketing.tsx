@@ -12,7 +12,9 @@ export function cellLabel(c: Cell): { icon: string; text: string; cls: string } 
     case "yes":
       return { icon: "✅", text: "Yes", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" };
     case "roadmap":
-      return { icon: "🚧", text: "Under Development", cls: "border-sky-400/20 bg-sky-400/10 text-sky-300" };
+      return { icon: "🛣️", text: "Roadmap", cls: "border-sky-400/20 bg-sky-400/10 text-sky-300" };
+    case "indev":
+      return { icon: "🚧", text: "Under Development", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" };
     case "partial":
       return { icon: "➖", text: "Partial", cls: "border-amber-400/20 bg-amber-400/10 text-amber-300" };
     default:
@@ -20,10 +22,10 @@ export function cellLabel(c: Cell): { icon: string; text: string; cls: string } 
   }
 }
 
-export function CellBadge({ cell, note }: { cell: Cell; note?: string }) {
+export function CellBadge({ cell, note, size }: { cell: Cell; note?: string; size?: "sm" }) {
   const l = cellLabel(cell);
   return (
-    <span title={note} className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${l.cls}`}>
+    <span title={note} className={`inline-flex items-center gap-1 rounded-full border font-medium whitespace-nowrap ${size === "sm" ? "gap-0.5 px-2 py-px text-[11px]" : "px-2.5 py-0.5 text-xs"} ${l.cls}`}>
       <span>{l.icon}</span> {l.text}
     </span>
   );
@@ -38,19 +40,21 @@ export function CompareTable({
   columns,
   rows,
   footnote,
+  compact,
 }: {
   columns: TableColumn[];
   rows: { feature: string; category: string; cells: ReactNode[]; note?: string }[];
   footnote?: ReactNode;
+  compact?: boolean;
 }) {
   let lastCat = "";
   return (
     <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-950">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
+      <table className={`w-full border-collapse ${compact ? "min-w-[1000px] text-xs" : "min-w-[720px] text-sm"}`}>
         <thead>
           <tr className="bg-white/[0.03] text-left">
             {columns.map((c) => (
-              <th key={c.key} className="border-b border-white/10 px-4 py-3 font-semibold text-white first:sticky first:left-0 first:bg-zinc-950 first:z-10">
+              <th key={c.key} className={`border-b border-white/10 font-semibold text-white first:sticky first:left-0 first:bg-zinc-950 first:z-10 ${compact ? "px-2.5 py-2.5 text-xs" : "px-4 py-3"}`}>
                 {c.header}
               </th>
             ))}
@@ -70,12 +74,12 @@ export function CompareTable({
                   </tr>
                 )}
                 <tr key={r.feature} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-2.5 font-medium text-zinc-100 sticky left-0 bg-zinc-950">
+                  <td className={`font-medium text-zinc-100 sticky left-0 bg-zinc-950 ${compact ? "max-w-[180px] px-3 py-2 text-[13px]" : "px-4 py-2.5"}`}>
                     {r.feature}
                     {r.note && <span className="block text-xs font-normal text-sky-400">{r.note}</span>}
                   </td>
                   {r.cells.map((cell, i) => (
-                    <td key={i} className="px-4 py-2.5 text-center text-zinc-300">{cell}</td>
+                    <td key={i} className={`text-center text-zinc-300 ${compact ? "px-1.5 py-2" : "px-4 py-2.5"}`}>{cell}</td>
                   ))}
                 </tr>
               </>
