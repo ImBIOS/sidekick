@@ -31,6 +31,11 @@ export function CellBadge({ cell, note, size }: { cell: Cell; note?: string; siz
   );
 }
 
+export function cellCounts(cells: Cell[]): string {
+  const n = (v: Cell) => cells.filter((c) => c === v).length;
+  return `${n("yes")} Yes · ${n("indev")} Under Development · ${n("roadmap")} Roadmap · ${n("partial")} Partial · ${n("no")} No`;
+}
+
 export interface TableColumn {
   key: string;
   header: ReactNode;

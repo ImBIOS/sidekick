@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { COMPETITORS, FEATURES, score } from "../data/comparison";
-import { CellBadge, CompareTable, Container, SiteFooter } from "../components/marketing";
+import { CellBadge, CompareTable, Container, SiteFooter, cellCounts } from "../components/marketing";
 
 export const Route = createFileRoute("/alternatives/")({ component: AlternativesHub });
 
@@ -8,7 +8,7 @@ function AlternativesHub() {
   const tableRows = FEATURES.map((r) => ({
     feature: r.feature,
     category: r.category,
-    note: r.sidekick === "roadmap" ? `Sidekick: ${r.sidekickNote}` : undefined,
+    note: r.sidekick === "roadmap" || r.sidekick === "indev" ? `Sidekick: ${r.sidekickNote}` : undefined,
     cells: [
       <CellBadge key="s" cell={r.sidekick} note={r.sidekickNote} />,
       ...COMPETITORS.map((c) => <CellBadge key={c.slug} cell={r.cells[c.slug]} />),
@@ -76,7 +76,7 @@ function AlternativesHub() {
               ...COMPETITORS.map((c) => ({ key: c.slug, header: c.name })),
             ]}
             rows={tableRows}
-            footnote={<>✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Competitor claims checked Sep 2026 — see each guide for sources, prices and check dates. Last updated 28 Sep 2026.</>}
+            footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Competitor claims checked Sep 2026 — see each guide for sources, prices and check dates. Last updated 28 Sep 2026.</>}
           />
         </div>
       </Container>

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { COMPETITORS, FEATURES } from "../data/comparison";
-import { CellBadge, CompareTable, Container, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
+import { CellBadge, CompareTable, Container, Faq, PricingTable, SiteFooter, Terminal, cellCounts } from "../components/marketing";
 import { Reveal } from "../components/reveal";
 import { HeroCodenest } from "../components/hero-codenest";
 
@@ -52,7 +52,7 @@ function FullTable() {
         })),
       ]}
       rows={rows}
-      footnote={<>✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
+      footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
     />
   );
 }
