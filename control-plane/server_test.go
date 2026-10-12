@@ -125,8 +125,8 @@ func TestBuildValidation(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &b); err != nil {
 		t.Fatal(err)
 	}
-	if b.Status != StatusRunning {
-		t.Errorf("status = %q, want running", b.Status)
+	if b.Status != StatusQueued {
+		t.Errorf("status = %q, want queued (a build host claims it next)", b.Status)
 	}
 }
 

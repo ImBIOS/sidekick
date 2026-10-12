@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"sync"
 	"time"
@@ -42,7 +43,28 @@ type Sim struct {
 	WebRTCURL string    `json:"webrtc_url,omitempty"`
 	AXTreeURL string    `json:"ax_tree_url,omitempty"`
 	Host      string    `json:"host,omitempty"`
+	Recording bool      `json:"recording"`
 	CreatedAt time.Time `json:"created_at"`
+	// Daemon-reported state, served via dedicated endpoints (never inlined).
+	Tree        json.RawMessage   `json:"-"`
+	TreeUpdated time.Time         `json:"-"`
+	Shot        []byte            `json:"-"`
+	ShotUpdated time.Time         `json:"-"`
+	SimLog      []string          `json:"-"`
+	Video       []byte            `json:"-"`
+	Actions     []*QueuedAction   `json:"-"`
+}
+
+// QueuedAction is one agent verb awaiting the sim-daemon that owns the sim's
+// pool. The control-plane never executes verbs; it queues, and the daemon
+// posts back a result the agent polls for.
+type QueuedAction struct {
+	ID        string            `json:"action_id"`
+	SimID     string            `json:"sim_id"`
+	Body      map[string]string `json:"body"`
+	Done      bool              `json:"done"`
+	Result    string            `json:"result,omitempty"`
+	CreatedAt time.Time         `json:"created_at"`
 }
 
 // Emu is a cloud Android emulator session with an adb tunnel.
@@ -54,6 +76,10 @@ type Emu struct {
 	ADBTarget string    `json:"adb_target,omitempty"`
 	Host      string    `json:"host,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
+	// Daemon-reported state, served via dedicated endpoints (never inlined).
+	Tree   json.RawMessage `json:"-"`
+	Shot   []byte          `json:"-"`
+	EmuLog []string        `json:"-"`
 }
 
 // Store is the in-memory scheduler state. Every lookup is org-scoped: a key
@@ -83,9 +109,8 @@ func (s *Store) nextID(prefix string) string {
 
 // --- builds ---
 
-// CreateBuild queues a build for org. Host assignment (least-loaded Mac with
-// warm cache) happens in claimNextBuild; MVP marks it running immediately so
-// agents get a live log stream without a fleet.
+// CreateBuild queues a build for org. A build-daemon claims it via
+// /v1/host/claims/next, streams logs, and marks it terminal.
 func (s *Store) CreateBuild(org OrgID, scheme, ref string) *Build {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -94,10 +119,9 @@ func (s *Store) CreateBuild(org OrgID, scheme, ref string) *Build {
 		Org:       org,
 		Scheme:    scheme,
 		Ref:       ref,
-		Status:    StatusRunning,
-		Host:      "mac-pool",
+		Status:    StatusQueued,
 		CreatedAt: time.Now().UTC(),
-		Log:       []string{"[sidekick] build claimed by mac-pool (warm cache)"},
+		Log:       []string{"[sidekick] queued; waiting for a build host"},
 	}
 	s.builds[b.ID] = b
 	return b
@@ -153,7 +177,8 @@ func (s *Store) FinishBuild(org OrgID, id, status string) bool {
 
 // --- sims ---
 
-// CreateSim provisions a simulator session for org.
+// CreateSim provisions a simulator session for org. It starts provisioning;
+// the sim-daemon binds it to a host and marks it running with live URLs.
 func (s *Store) CreateSim(org OrgID, device, runtime string) *Sim {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -162,11 +187,9 @@ func (s *Store) CreateSim(org OrgID, device, runtime string) *Sim {
 		Org:       org,
 		Device:    device,
 		Runtime:   runtime,
-		Status:    StatusRunning,
-		Host:      "mac-pool",
+		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}
-	sim.WebRTCURL = "wss://stream.sidekick.imbios.dev/" + sim.ID
 	sim.AXTreeURL = "/v1/sims/" + sim.ID + "/tree"
 	s.sims[sim.ID] = sim
 	return sim
@@ -210,7 +233,8 @@ func (s *Store) DeleteSim(org OrgID, id string) bool {
 
 // --- emus ---
 
-// CreateEmu provisions an emulator session for org.
+// CreateEmu provisions an emulator session for org. It starts provisioning;
+// the Linux host binds it and reports the adb target when running.
 func (s *Store) CreateEmu(org OrgID, profile string) *Emu {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -218,11 +242,9 @@ func (s *Store) CreateEmu(org OrgID, profile string) *Emu {
 		ID:        s.nextID("emu"),
 		Org:       org,
 		Profile:   profile,
-		Status:    StatusRunning,
-		Host:      "linux-pool",
+		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}
-	emu.ADBTarget = "adb-" + emu.ID + ".sidekick.imbios.dev:5555"
 	s.emus[emu.ID] = emu
 	return emu
 }

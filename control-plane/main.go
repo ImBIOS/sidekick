@@ -17,9 +17,10 @@ import (
 //	SIDEKICK_API_KEYS     static "org:key,..." pairs (self-host/dev)
 //	SIDEKICK_AUTH_URL     web server base URL for hosted key verification
 //	CONTROL_PLANE_SECRET  shared secret for /internal/verify-key
+//	SIDEKICK_HOST_TOKEN   shared bearer token for fleet daemons (/v1/host/*)
 //	PORT                  listen port (default 8080)
 func main() {
-	srv := NewServer(verifierFromEnv(), NewStore())
+	srv := NewServer(verifierFromEnv(), NewStore()).WithHostToken(os.Getenv("SIDEKICK_HOST_TOKEN"))
 	mux := http.NewServeMux()
 	srv.Routes(mux)
 
