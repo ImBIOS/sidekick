@@ -13,13 +13,14 @@ Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 - Warm cache is automatic (DerivedData + S3 asset storage). Upload `.app` once, reuse.
 
 ## Drive iOS simulator
-- `sidekick ios create --device "iPhone 16, iOS 18.2"` → returns id + webrtc_url + ax_tree_url. Share webrtc_url as preview link on PR.
-- `sidekick ios ax-tree <id>` first, then `sidekick ios act <id> --tap @e5` / `--type "hi"` / `--swipe up`. Batch file for ms precision: `--batch actions.json`.
-- `sidekick ios record <id> --stop` → mp4 demo video for PR. `sidekick ios logs <id> --tail 100` for crashes.
+- `sidekick ios create --device "iPhone 16, iOS 18.2"` → returns id (provisioning). Poll `sidekick ios get <id>` until `running`, then `webrtc_url` appears. Share webrtc_url as preview link on PR.
+- `sidekick ios ax-tree <id>` first, then `sidekick ios act <id> --tap @e5` / `--type "hi"` / `--swipe up`. Batch file for ms precision: `--batch actions.json`. Poll the returned `action_ids` via the API until `done` (the daemon posts each result).
+- `sidekick ios screenshot <id> --out shot.png`, `sidekick ios logs <id> --tail 100` for crashes.
+- `sidekick ios record <id>` to start, `sidekick ios record <id> --stop --out demo.mp4` → mp4 demo video for PR.
 
 ## Drive Android
-- `sidekick android create --profile Pixel_7` → adb tunnel on localhost:5555. Then plain `adb install app.apk`, `maestro test flow.yaml`, Appium, scrcpy all work.
-- Same verbs: ui-tree, screenshot, record, preview link.
+- `sidekick android create --profile Pixel_7` → id (provisioning). Poll `sidekick android get <id>` until `running`, then adb tunnel on localhost:5555: `adb-proxy --emu <id>` (uses SIDEKICK_TOKEN). Then plain `adb install app.apk`, `maestro test flow.yaml`, Appium, scrcpy all work.
+- Same verbs: `android ui-tree`, `android screenshot --out shot.png`, `android logs --tail 100`, preview link.
 
 ## Rules
 - Always build before creating a simulator. Always `ui-tree` before acting (refs go stale after each screen change).

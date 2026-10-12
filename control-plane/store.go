@@ -46,13 +46,13 @@ type Sim struct {
 	Recording bool      `json:"recording"`
 	CreatedAt time.Time `json:"created_at"`
 	// Daemon-reported state, served via dedicated endpoints (never inlined).
-	Tree        json.RawMessage   `json:"-"`
-	TreeUpdated time.Time         `json:"-"`
-	Shot        []byte            `json:"-"`
-	ShotUpdated time.Time         `json:"-"`
-	SimLog      []string          `json:"-"`
-	Video       []byte            `json:"-"`
-	Actions     []*QueuedAction   `json:"-"`
+	Tree        json.RawMessage `json:"-"`
+	TreeUpdated time.Time       `json:"-"`
+	Shot        []byte          `json:"-"`
+	ShotUpdated time.Time       `json:"-"`
+	SimLog      []string        `json:"-"`
+	Video       []byte          `json:"-"`
+	Actions     []*QueuedAction `json:"-"`
 }
 
 // QueuedAction is one agent verb awaiting the sim-daemon that owns the sim's

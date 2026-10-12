@@ -144,6 +144,49 @@ func printJSON(v any) {
 	fmt.Println(string(raw))
 }
 
+// callBytes performs an authenticated request and returns raw response bytes
+// (for PNG screenshots and MP4 recordings). Non-2xx becomes *apiError.
+func callBytes(cmd *cobra.Command, method, path string, body any) ([]byte, error) {
+	url, token := resolveConn(cmd)
+	if token == "" {
+		return nil, fmt.Errorf("not logged in: run `sidekick login` or set SIDEKICK_TOKEN")
+	}
+	var rdr io.Reader
+	if body != nil {
+		raw, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		rdr = bytes.NewReader(raw)
+	}
+	req, err := http.NewRequest(method, url+path, rdr)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("control-plane unreachable at %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		msg := strings.TrimSpace(string(raw))
+		var parsed map[string]string
+		if json.Unmarshal(raw, &parsed) == nil && parsed["error"] != "" {
+			msg = parsed["error"]
+		}
+		if msg == "" {
+			msg = http.StatusText(resp.StatusCode)
+		}
+		return nil, &apiError{Status: resp.StatusCode, Msg: msg}
+	}
+	return raw, nil
+}
+
 var root = &cobra.Command{Use: "sidekick", Short: "Sidekick - remote Xcode, iOS, Android for cloud agents"}
 
 func init() {
@@ -152,10 +195,77 @@ func init() {
 }
 
 func main() {
-	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), xcodeCmd(), iosCmd(), androidCmd())
+	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), xcodeCmd(), iosCmd(), androidCmd())
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+// --- hosts ---
+
+type hostProfile struct {
+	Control string `json:"control_plane_url"`
+	Token   string `json:"host_token"`
+	Pool    string `json:"pool"`
+	Joined  string `json:"joined_at"`
+}
+
+func hostPath() (string, error) {
+	base, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(base, "sidekick", "host.json"), nil
+}
+
+// hostCmd joins a Mac/Linux machine to the fleet: the daemons read this
+// profile (or --control/--token/--pool flags, or SIDEKICK_CONTROL/
+// SIDEKICK_HOST_TOKEN/SIDEKICK_POOL env) to poll for claims.
+func hostCmd() *cobra.Command {
+	host := &cobra.Command{Use: "host", Short: "fleet host enrollment"}
+	var control, token, pool string
+	join := &cobra.Command{
+		Use:   "join",
+		Short: "save this machine's pool credentials for the daemons",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if control == "" {
+				control = os.Getenv("SIDEKICK_CONTROL")
+			}
+			if token == "" {
+				token = os.Getenv("SIDEKICK_HOST_TOKEN")
+			}
+			if control == "" || token == "" {
+				return fmt.Errorf("give --control and --token (or SIDEKICK_CONTROL / SIDEKICK_HOST_TOKEN)")
+			}
+			if pool == "" {
+				pool = "mac-pool"
+			}
+			p, err := hostPath()
+			if err != nil {
+				return err
+			}
+			if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+				return err
+			}
+			prof := hostProfile{
+				Control: strings.TrimSuffix(control, "/"),
+				Token:   token,
+				Pool:    pool,
+				Joined:  time.Now().UTC().Format(time.RFC3339),
+			}
+			raw, _ := json.MarshalIndent(prof, "", "  ")
+			if err := os.WriteFile(p, raw, 0o600); err != nil {
+				return err
+			}
+			fmt.Printf("joined pool %s via %s (daemons: build-daemon, sim-daemon)\n", pool, prof.Control)
+			return nil
+		},
+	}
+	join.Flags().StringVar(&control, "control", "", "control-plane URL")
+	join.Flags().StringVar(&token, "token", "", "fleet host token (SIDEKICK_HOST_TOKEN)")
+	join.Flags().StringVar(&pool, "pool", "", "pool name (default mac-pool)")
+	host.AddCommand(join)
+	return host
 }
 
 // --- auth ---
@@ -323,6 +433,7 @@ func iosCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sim struct {
 				ID        string `json:"id"`
+				Status    string `json:"status"`
 				WebRTCURL string `json:"webrtc_url"`
 				AXTreeURL string `json:"ax_tree_url"`
 			}
@@ -331,6 +442,9 @@ func iosCmd() *cobra.Command {
 				return err
 			}
 			printJSON(sim)
+			if sim.Status == "provisioning" {
+				fmt.Println("provisioning: poll `sidekick ios get` until running, then `ax-tree` before acting")
+			}
 			return nil
 		},
 	}
@@ -343,6 +457,20 @@ func iosCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var out any
 			if err := call(cmd, http.MethodGet, "/v1/sims", nil, &out); err != nil {
+				return err
+			}
+			printJSON(out)
+			return nil
+		},
+	}
+
+	get := &cobra.Command{
+		Use:   "get <id>",
+		Short: "show one simulator (poll status until running)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out any
+			if err := call(cmd, http.MethodGet, "/v1/sims/"+args[0], nil, &out); err != nil {
 				return err
 			}
 			printJSON(out)
@@ -408,8 +536,123 @@ func iosCmd() *cobra.Command {
 	act.Flags().StringVar(&swipe, "swipe", "", "swipe direction")
 	act.Flags().StringVar(&batch, "batch", "", "JSON file of actions for ms precision")
 
-	ios.AddCommand(create, list, del, act)
+	ios.AddCommand(create, list, get, del, act, axTreeCmd(), shotCmd("/v1/sims/", "ios"), simLogsCmd(), recordCmd())
 	return ios
+}
+
+// axTreeCmd prints the daemon-reported accessibility tree. Refs go stale
+// after every screen change, so always re-read before acting.
+func axTreeCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "ax-tree <id>",
+		Short: "print the simulator's accessibility tree (@e refs)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out any
+			if err := call(cmd, http.MethodGet, "/v1/sims/"+args[0]+"/tree", nil, &out); err != nil {
+				return err
+			}
+			printJSON(out)
+			return nil
+		},
+	}
+}
+
+// shotCmd downloads the latest device screenshot. prefix selects sims/emus.
+func shotCmd(prefix, what string) *cobra.Command {
+	var out string
+	c := &cobra.Command{
+		Use:   "screenshot <id>",
+		Short: "save the latest " + what + " screenshot",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			raw, err := callBytes(cmd, http.MethodGet, prefix+args[0]+"/screenshot", nil)
+			if err != nil {
+				return err
+			}
+			if out == "" {
+				out = args[0] + ".png"
+			}
+			if err := os.WriteFile(out, raw, 0o644); err != nil {
+				return err
+			}
+			fmt.Printf("saved %d bytes to %s\n", len(raw), out)
+			return nil
+		},
+	}
+	c.Flags().StringVar(&out, "out", "", "output file (default <id>.png)")
+	return c
+}
+
+// simLogsCmd tails daemon device logs.
+func simLogsCmd() *cobra.Command {
+	var tail int
+	c := &cobra.Command{
+		Use:   "logs <id>",
+		Short: "print simulator logs (crashes live here)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out struct {
+				Lines []string `json:"lines"`
+			}
+			path := "/v1/sims/" + args[0] + "/logs"
+			if tail > 0 {
+				path += "?tail=" + itoaInt(tail)
+			}
+			if err := call(cmd, http.MethodGet, path, nil, &out); err != nil {
+				return err
+			}
+			for _, l := range out.Lines {
+				fmt.Println(l)
+			}
+			return nil
+		},
+	}
+	c.Flags().IntVar(&tail, "tail", 100, "last N lines")
+	return c
+}
+
+// recordCmd starts/stops session recording. Stop downloads the MP4 for PRs.
+func recordCmd() *cobra.Command {
+	var stop bool
+	var out string
+	c := &cobra.Command{
+		Use:   "record <id>",
+		Short: "record the session; --stop ends it and saves the mp4",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			op := "start"
+			if stop {
+				op = "stop"
+			}
+			var res struct {
+				Recording bool   `json:"recording"`
+				VideoURL  string `json:"video_url"`
+			}
+			if err := call(cmd, http.MethodPost, "/v1/sims/"+args[0]+"/record", map[string]string{"op": op}, &res); err != nil {
+				return err
+			}
+			if !stop {
+				fmt.Println("recording started")
+				return nil
+			}
+			raw, err := callBytes(cmd, http.MethodGet, res.VideoURL, nil)
+			if err != nil {
+				return fmt.Errorf("stopped, video not ready yet: %w", err)
+			}
+			if out == "" {
+				out = args[0] + ".mp4"
+			}
+			if err := os.WriteFile(out, raw, 0o644); err != nil {
+				return err
+			}
+			fmt.Printf("saved %d bytes to %s\n", len(raw), out)
+			return nil
+		},
+	}
+	c.Flags().BoolVar(&stop, "stop", false, "stop recording and download the mp4")
+	c.Flags().StringVar(&out, "out", "", "output file (default <id>.mp4)")
+	return c
 }
 
 // --- android ---
@@ -425,12 +668,16 @@ func androidCmd() *cobra.Command {
 			var emu struct {
 				ID        string `json:"id"`
 				ADBTarget string `json:"adb_target"`
+				Status    string `json:"status"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/emus",
 				map[string]string{"profile": profile}, &emu); err != nil {
 				return err
 			}
 			printJSON(emu)
+			if emu.Status == "provisioning" {
+				fmt.Println("provisioning: poll `sidekick android get` until running, then connect adb")
+			}
 			return nil
 		},
 	}
@@ -442,6 +689,20 @@ func androidCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var out any
 			if err := call(cmd, http.MethodGet, "/v1/emus", nil, &out); err != nil {
+				return err
+			}
+			printJSON(out)
+			return nil
+		},
+	}
+
+	get := &cobra.Command{
+		Use:   "get <id>",
+		Short: "show one emulator (poll status until running)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out any
+			if err := call(cmd, http.MethodGet, "/v1/emus/"+args[0], nil, &out); err != nil {
 				return err
 			}
 			printJSON(out)
@@ -462,8 +723,50 @@ func androidCmd() *cobra.Command {
 		},
 	}
 
-	android.AddCommand(create, list, del)
+	tree := &cobra.Command{
+		Use:   "ui-tree <id>",
+		Short: "print the emulator's UI tree",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out any
+			if err := call(cmd, http.MethodGet, "/v1/emus/"+args[0]+"/tree", nil, &out); err != nil {
+				return err
+			}
+			printJSON(out)
+			return nil
+		},
+	}
+
+	var tail int
+	logs := &cobra.Command{
+		Use:   "logs <id>",
+		Short: "print emulator logcat lines",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out struct {
+				Lines []string `json:"lines"`
+			}
+			path := "/v1/emus/" + args[0] + "/logs"
+			if tail > 0 {
+				path += "?tail=" + itoaInt(tail)
+			}
+			if err := call(cmd, http.MethodGet, path, nil, &out); err != nil {
+				return err
+			}
+			for _, l := range out.Lines {
+				fmt.Println(l)
+			}
+			return nil
+		},
+	}
+	logs.Flags().IntVar(&tail, "tail", 100, "last N lines")
+
+	android.AddCommand(create, list, get, del, tree, shotCmd("/v1/emus/", "android"), logs)
 	return android
+}
+
+func itoaInt(n int) string {
+	return fmt.Sprintf("%d", n)
 }
 
 func first(s []string, d string) string {
