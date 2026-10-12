@@ -10,19 +10,48 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 
 ## Limrun vs VibeView — what we copied, what we do better
 
-| | Limrun | VibeView | Sidekick |
-|---|---|---|---|
-| Xcode remote build | ✅ `sidekick xcode build`, warm S3 cache, idle/build split pricing | ✅ `build --cloud` RN only, $1.50 iOS / $0.75 Android | ✅ Limrun model (any Xcode + Gradle sandbox), warm NVMe + sccache, self-host BYO Mac |
-| iOS / Android | ✅ sim + emu, AX tree, 60fps record, batch ms actions, adb tunnel | ✅ + Apple TV, Android TV, Roku HW, foldables (iPhone Duo posture/rotate) | ✅ both, plus TV verbs (`tap-focused`, d-pad) + foldable posture from VibeView |
-| Agent UX | ✅ `sidekick` npm/brew, per-instance MCP (HTTP+OAuth), skill index, llms.txt, openapi | ✅ `vibeview agent-setup`, skill git + MCP stdio, `.vibeview/` state, CLAUDE.md nudge | ✅ both: `sidekick` + skill + MCP stdio/HTTP, `llms.txt`, `/openapi.json` |
-| Human UX | preview links, demo video, `<RemoteControl/>` embed | ✅ better: share links, live collab guests, iframe embed, record-replay, visual regression, AI testing, signing + TestFlight/Play submit | ✅ Limrun infra + VibeView human layer: share/embed/collab, signing/submit, record-replay + visual diff |
-| Platforms | 2 (iOS, Android) | 5 (iOS, Android, tvOS, Android TV, Roku) | 5, Roku via real HW or scrcpy bridge |
-| Pricing | usage (idle+build) | sub + metered: $0/$19/$49/$249, $0.04-0.06/min | same shape, cheaper self-host: $0 self-host, cloud mirrors VibeView tiers |
-| License | closed | closed | Apache-2.0 (CLI/skill/CRDs) + FSL-1.1-ALv2 → Apache-2.0 after 2y (server) |
+<!-- COMPARISON-START -->
+<details>
+<summary>Full 28-row comparison (all 9 vendors) — generated from <code>web/apps/web/src/data/comparison.ts</code>, last updated 28 Sep 2026</summary>
+
+| Feature | Sidekick | VibeView | EAS Simulator | BrowserStack | Expo EAS Build | Limrun | Appetize | AWS Device Farm | LambdaTest (TestMu AI) | Sauce Labs |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Remote Xcode build (no Mac needed) | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ➖ Partial | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
+| Android / Gradle cloud build | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
+| Signing handled (certs, profiles, keystores) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No |
+| Store submit from terminal (TestFlight + Play) | 🚧 Under Development (TestFlight today; Play roadmap Q1) | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No |
+| iOS simulators | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
+| Android emulators + adb tunnel | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial |
+| Apple TV / tvOS + Android TV | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Roku (real hardware) | 🚧 Under Development (Beta hardware pool Q1) | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Foldables (posture + rotate verbs) | 🚧 Under Development (iPhone Duo-style hinge API) | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Real physical devices | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes |
+| CLI with device verbs (tap, type, screenshot) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
+| Agent skill file (skill install) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No |
+| MCP server | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes |
+| UI / accessibility tree reads | ✅ Yes | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
+| Batch actions (ms precision) | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
+| Session video recording | 🚧 Under Development (Per-step screenshots today; video roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
+| App logs + network capture | 🚧 Under Development (App logs today; network capture roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| Live share links (no login needed) | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
+| Embeddable player (iframe / SDK) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No |
+| Live collaboration + human takeover | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
+| Record once, replay everywhere | 🚧 Under Development (Recorder beta Q1) | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
+| Visual regression per step | 🚧 Under Development (Ships with recorder) | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ✅ Yes |
+| AI / plain-English testing | 🚧 Under Development (Agent-fix on moved elements) | ✅ Yes | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ➖ Partial |
+| CI runner + GitHub checks | 🚧 Under Development (Actions + checks Q1) | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
+| Self-hostable (BYO Mac minis) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |
+| Source-available (FSL → Apache-2.0) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Public pricing + free tier, no card | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ➖ Partial | ➖ Partial | ➖ Partial | ❌ No |
+| Per-instance sandbox tokens + region pin | 🚧 Under Development (Tokens today; regions roadmap) | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
+
+Legend: ✅ Yes · 🚧 Under Development = public, dated, lands in the open · ➖ Partial · ❌ No.
+</details>
+<!-- COMPARISON-END -->
 
 Verdict: copy Limrun's IA (agent-first, control/data plane split, per-instance tokens), steal VibeView's live device embed + pricing transparency + TV/foldable/testing sections. Beat both on self-host + open spec.
 
-Full 28-row × 9-vendor table (same engine as the site): https://sidekick.imbios.dev/alternatives — sourced, dated, explicit about where each rival wins. The table above stays a readable summary; cells live in `web/apps/web/src/data/comparison.ts`.
+Regenerate the table above after editing cells: `cd web && bun scripts/readme-table.ts` (single source of truth: `web/apps/web/src/data/comparison.ts`).
 
 ## Web design decision
 

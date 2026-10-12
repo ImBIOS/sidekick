@@ -51,7 +51,7 @@ function FullTable() {
         })),
       ]}
       rows={rows}
-      footnote={<>✅ Yes · 🛣️ In Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>.</>}
+      footnote={<>✅ Yes · 🚧 Under Development = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
     />
   );
 }
@@ -326,7 +326,6 @@ function HomeComponent() {  return (
           <div className="mt-10"><Faq items={[
             { q: "Do I need a Mac to test an iOS app?", a: "No. The simulator runs on our fleet (or your self-hosted Mac mini). Your machine and your agent's sandbox only need the sidekick CLI." },
             { q: "Are these real phones?", a: "Simulators and emulators, like Appetize and Limrun. Roku runs on real hardware (roadmap). For sensor-grade real-device matrices, BrowserStack remains the answer — we say so on their page." },
-            { q: "How is this different from Limrun?", a: "Same high-level interface so migration is trivial — plus TV devices, post-agent testing, Play submission, public pricing, self-hosting, and a source-available license. Full breakdown on the Limrun alternative page." },
             { q: "What does the free tier include?", a: "30 streaming minutes and 10 cloud builds a month, no card. Self-hosting is unlimited and free." },
           ]} /></div>
         </div>
