@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { COMPETITORS, FEATURES } from "../data/comparison";
-import { CellBadge, CompareTable, Container, CtaRow, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
+import { CellBadge, CompareTable, Container, Faq, PricingTable, SiteFooter, Terminal } from "../components/marketing";
 import { Reveal } from "../components/reveal";
-import { BurstCanvas, SidekickMark } from "../components/brand";
+import { HeroCodenest } from "../components/hero-codenest";
 
 export const Route = createFileRoute("/")({ component: HomeComponent });
 
@@ -50,34 +50,6 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2 className="mt-4 text-4xl font-bold tracking-tighter text-white md:text-5xl">{title}</h2>
       <p className="mt-4 text-lg text-zinc-400">{sub}</p>
-    </div>
-  );
-}
-
-/**
- * Motionsites-inspired aurora: two soft radial washes drifting on the
- * compositor (transform + opacity only, no blur filter, no canvas loop).
- * Sits behind the static BurstCanvas, so the blink fix stays intact.
- * Disabled when the user prefers reduced motion.
- */
-function Aurora() {
-  const reduce = useReducedMotion();
-  if (reduce) return null;
-  const base = "pointer-events-none absolute -inset-20";
-  return (
-    <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
-      <motion.div
-        className={base}
-        style={{ background: "radial-gradient(40% 32% at 30% 28%, rgba(56,189,248,0.10), transparent 70%)" }}
-        animate={{ x: [0, 40, 0], y: [0, 24, 0] }}
-        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className={base}
-        style={{ background: "radial-gradient(36% 30% at 70% 66%, rgba(52,211,153,0.08), transparent 70%)" }}
-        animate={{ x: [0, -36, 0], y: [0, -20, 0] }}
-        transition={{ duration: 32, repeat: Infinity, ease: "easeInOut" }}
-      />
     </div>
   );
 }
@@ -205,30 +177,30 @@ function StatBand() {
 
 function HomeComponent() {  return (
     <div className="bg-black text-zinc-100">
-      {/* HERO */}
-      <div className="relative overflow-hidden">
-        <Aurora />
-        <BurstCanvas className="pointer-events-none absolute inset-0 h-full w-full opacity-50" />
-        <Container>
-          <div className="relative flex flex-col items-center px-4 pt-24 pb-20 text-center md:pt-32 md:pb-24">
-            <SidekickMark size={104} />
-            <p className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-zinc-400">
-              Source-available (FSL) · self-hostable · converts to Apache-2.0
-            </p>
-            <h1 className="mt-6 max-w-3xl text-5xl font-bold tracking-tighter text-white md:text-7xl">
-              Every agent needs a sidekick to hold the phone.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400 md:text-xl">
-              Cloud Xcode, iOS, Android and TV devices your coding agent builds, verifies and submits —
-              on a live device it can see and touch. You watch along in the browser and take over anytime.
-            </p>
-            <div className="mt-10"><CtaRow /></div>
-            <p className="mt-8 font-mono text-xs text-zinc-500">
-              skill: <span className="text-zinc-200">sidekick agent-setup</span> · MCP: <span className="text-zinc-200">sidekick mcp</span> · spec: <a className="underline hover:text-zinc-200" href="/llms.txt">llms.txt</a> · <a className="underline hover:text-zinc-200" href="/openapi.json">openapi.json</a>
-            </p>
-          </div>
-        </Container>
-      </div>
+      {/* HERO — CodeNest geometry, Sidekick words */}
+      <HeroCodenest
+        cardTag="[ 2026 ]"
+        cardTitle={
+          <>
+            Driven by <em style={{ fontFamily: "'Instrument Serif', serif" }}>Agents</em>, open to humans
+          </>
+        }
+        cardDesc="Cloud Xcode, simulators and emulators your agent taps, types and screenshots."
+        eyebrow="Remote builds · Live devices · Self-host"
+        headline={
+          <>
+            Every agent needs a sidekick to hold the phone<span style={{ color: "#5ed29c" }}>.</span>
+          </>
+        }
+        description="Cloud Xcode, iOS, Android and TV devices your coding agent builds, verifies and submits — on a live device it can see and touch. You watch along in the browser and take over anytime."
+        ctaLabel="Start free"
+        ctaTo="/pricing"
+        microcopy={
+          <p className="mt-8 font-mono text-xs text-zinc-500">
+            skill: <span className="text-zinc-200">sidekick agent-setup</span> · MCP: <span className="text-zinc-200">sidekick mcp</span> · spec: <a className="underline hover:text-zinc-200" href="/llms.txt">llms.txt</a> · <a className="underline hover:text-zinc-200" href="/openapi.json">openapi.json</a>
+          </p>
+        }
+      />
 
       {/* LIVE SESSION */}
       <Container>
