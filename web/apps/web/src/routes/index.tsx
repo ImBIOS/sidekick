@@ -20,16 +20,41 @@ sidekick tap @e7         # drive the flow
 sidekick screenshot      # looks right? ship
 sidekick record --stop   # demo video for PR`;
 
-/** Condensed landing teaser: 6 rows × the two named rivals, read straight
- * from the comparison engine so cells never drift from /alternatives. */
-const TEASER_FEATURES = [
-  "Remote Xcode build (no Mac needed)",
-  "Apple TV / tvOS + Android TV",
-  "Agent skill file (skill install)",
-  "Live share links (no login needed)",
-  "Self-hostable (BYO Mac minis)",
-  "Public pricing + free tier, no card",
-];
+/** Full 28-row engine table, same source as /alternatives. Column headers
+ * link to the per-vendor guides (sources, dates, where they beat us). */
+function FullTable() {
+  const rows = FEATURES.map((r) => ({
+    feature: r.feature,
+    category: r.category,
+    note: r.sidekick === "roadmap" ? `Sidekick: ${r.sidekickNote}` : undefined,
+    cells: [
+      <CellBadge key="s" cell={r.sidekick} note={r.sidekickNote} />,
+      ...COMPETITORS.map((c) => <CellBadge key={c.slug} cell={r.cells[c.slug]} />),
+    ],
+  }));
+  return (
+    <CompareTable
+      columns={[
+        { key: "f", header: "What you are deciding" },
+        { key: "s", header: "Sidekick" },
+        ...COMPETITORS.map((c) => ({
+          key: c.slug,
+          header: (
+            <Link
+              to="/alternatives/$slug"
+              params={{ slug: c.slug }}
+              className="underline decoration-white/30 underline-offset-4 hover:text-white hover:decoration-white"
+            >
+              {c.name}
+            </Link>
+          ),
+        })),
+      ]}
+      rows={rows}
+      footnote={<>✅ Yes · 🛣️ In Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>.</>}
+    />
+  );
+}
 
 const PLATFORMS = [  { tab: "iOS", device: "iPhone 17 · iOS 26", rows: ["Destination detail", "Checkout flow", "Settings"], verb: "$ sidekick tap @e7 · screenshot · record — streamed at 60fps" },
   { tab: "Android", device: "Pixel 9 · API 35", rows: ["Explore", "Checkout flow", "Settings"], verb: "$ sidekick tap @e4 — local adb/Appium just work via tunnel" },
@@ -113,34 +138,6 @@ function SessionPanel() {
         </div>
       </motion.div>
     </div>
-  );
-}
-
-function TeaserTable() {
-  const rows = TEASER_FEATURES.map((name) => {
-    const r = FEATURES.find((f) => f.feature === name)!;
-    return {
-      feature: r.feature,
-      category: r.category,
-      note: undefined as string | undefined,
-      cells: [
-        <CellBadge key="s" cell={r.sidekick} note={r.sidekickNote} />,
-        <CellBadge key="v" cell={r.cells.vibeview} />,
-        <CellBadge key="l" cell={r.cells.limrun} />,
-      ],
-    };
-  });
-  return (
-    <CompareTable
-      columns={[
-        { key: "f", header: "What you are deciding" },
-        { key: "s", header: "Sidekick" },
-        { key: "v", header: "VibeView" },
-        { key: "l", header: "Limrun" },
-      ]}
-      rows={rows}
-      footnote={<>6 of 28 rows — the full table with all 9 vendors, sources and check dates lives on <Link to="/alternatives" className="underline">/alternatives</Link>.</>}
-    />
   );
 }
 
@@ -264,21 +261,18 @@ function HomeComponent() {  return (
         </div>
       </Container>
 
-      {/* TEASER TABLE — 6 rows from the engine, full 28 live on /alternatives */}
-      <Container>
+      {/* FULL TABLE — every rival, every row, one table */}
+      <Container wide>
         <div className="pb-24 md:pb-32">
           <Reveal>
           <SectionHead
             eyebrow="Comparison"
-            title="The short version."
-            sub="Six rows against the two names you'll ask about. The full 28-row table with all 9 vendors, sources and check dates is one click away — including the rows where they beat us."
+            title="Every rival, every row, one table."
+            sub="All 28 rows against all 9 vendors, from the same engine as /alternatives. Column names link to the per-vendor guides — including the rows where they beat us."
           />
           </Reveal>
-          <Reveal delay={0.1} className="mx-auto mt-14 max-w-4xl">
-          <TeaserTable />
-          <p className="mt-6 text-center text-sm text-zinc-500">
-            <Link to="/alternatives" className="font-medium text-zinc-300 underline hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">All 28 rows, 9 vendors →</Link>
-          </p>
+          <Reveal delay={0.1} className="mt-14">
+          <FullTable />
           </Reveal>
         </div>
       </Container>
@@ -318,24 +312,6 @@ function HomeComponent() {  return (
           <p className="mt-8 text-center text-sm text-zinc-500">
             <Link to="/pricing" className="font-medium text-zinc-300 underline hover:text-white">Full pricing →</Link>
           </p>
-        </div>
-      </Container>
-
-      {/* SCOREBOARD TEASER */}
-      <Container>
-        <div className="rounded-3xl border border-white/10 bg-zinc-950 p-8 md:p-12">
-          <div className="mx-auto max-w-2xl text-center">
-            <Eyebrow>Comparisons</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tighter text-white md:text-4xl">Don&apos;t take our word for it. Take the table.</h2>
-            <p className="mt-4 text-zinc-400">Head-to-head comparisons with VibeView, EAS Simulator, BrowserStack, EAS Build, Limrun, Appetize, AWS Device Farm, LambdaTest and Sauce Labs — sourced, dated, explicit about where each one beats us.</p>
-          </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {COMPETITORS.map((c) => (
-              <Link key={c.slug} to="/alternatives/$slug" params={{ slug: c.slug }} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-zinc-200 hover:border-white/40 hover:text-white">
-                {c.name}
-              </Link>
-            ))}
-          </div>
         </div>
       </Container>
 

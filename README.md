@@ -22,6 +22,8 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 
 Verdict: copy Limrun's IA (agent-first, control/data plane split, per-instance tokens), steal VibeView's live device embed + pricing transparency + TV/foldable/testing sections. Beat both on self-host + open spec.
 
+Full 28-row × 9-vendor table (same engine as the site): https://sidekick.imbios.dev/alternatives — sourced, dated, explicit about where each rival wins. The table above stays a readable summary; cells live in `web/apps/web/src/data/comparison.ts`.
+
 ## Web design decision
 
 - Structure from Limrun: hero with CLI snippet + MCP/skill/llms.txt above fold, docs/console/demo CTAs, YC-style minimal dev-infra.
