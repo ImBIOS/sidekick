@@ -61,7 +61,7 @@ function AlternativePage() {
               { key: "t", header: c.name },
             ]}
             rows={rows}
-            footnote={<>Sidekick {cellCounts(FEATURES.map((r) => r.sidekick))} · {c.name} {cellCounts(FEATURES.map((r) => r.cells[c.slug]))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Last updated {c.checked} — {c.name} claims checked at {c.url}. {c.name} pricing: {c.price}.</>}
+            footnote={<>Sidekick {cellCounts(FEATURES.map((r) => r.sidekick))} · {c.name} {cellCounts(FEATURES.map((r) => r.cells[c.slug]))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Last updated {c.checked} — {c.name} claims checked at {c.url}. {c.name} pricing: {c.price}.</>}
           />
         </div>
 
@@ -89,7 +89,7 @@ function AlternativePage() {
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Frequently asked questions</h2>
         <div className="mt-4"><Faq items={c.faqs} /></div>
-        <p className="mt-6 text-xs text-zinc-600">Published Sep 2026 · {c.name} homepage and docs verified {c.checked} ·t Scores count roadmap as delivered because every roadmap item is public, dated and source-available.</p>
+        <p className="mt-6 text-xs text-zinc-600">Published Sep 2026 · {c.name} homepage and docs verified {c.checked} ·t Scores count roadmap as delivered because every roadmap item is public and source-available.</p>
       </Container>
       <SiteFooter />
     </div>

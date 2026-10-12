@@ -45,7 +45,7 @@ const table = [
   sep,
   ...lines,
   "",
-  "Legend: ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No.",
+  "Legend: ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.",
   "</details>",
 ].join("\n");
 

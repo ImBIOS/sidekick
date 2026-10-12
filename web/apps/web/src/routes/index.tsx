@@ -52,7 +52,7 @@ function FullTable() {
         })),
       ]}
       rows={rows}
-      footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
+      footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No. Claims checked Sep 2026 — <Link to="/alternatives" className="underline">per-vendor guides with sources and check dates</Link>. Last updated 28 Sep 2026.</>}
     />
   );
 }

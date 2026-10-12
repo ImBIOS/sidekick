@@ -29,7 +29,7 @@ function AlternativesHub() {
           <p className="font-semibold">What these pages are</p>
           <p className="mt-1">Head-to-head comparisons written by us. We are not a neutral party, so we make every claim checkable:
           each page carries sources with check dates, names the rows where the competitor wins, and never uses ratings or scores —
-          just a 28-row feature table where 🚧 marks the one item under active development and 🛣️ a public, dated roadmap item — all in the open source, so you can watch them land.</p>
+          just a 28-row feature table where 🚧 marks the one item under active development and 🛣️ a public roadmap item — all in the open source, so you can watch them land.</p>
         </div>
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Which one to read</h2>
@@ -66,7 +66,7 @@ function AlternativesHub() {
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Every rival, every row, one table</h2>
         <p className="mt-2 max-w-3xl text-[15px] text-zinc-400">
           The full 28-row comparison across all 9 vendors. Sidekick's column is ✅ Yes, 🚧 Under Development
-          (the one thing being built now), 🛣️ Roadmap (public, dated) or ❌ No — nothing else. Scroll sideways to audit every cell against the per-page sources.
+          (the one thing being built now), 🛣️ Roadmap (public) or ❌ No — nothing else. Scroll sideways to audit every cell against the per-page sources.
         </p>
         <div className="mt-4">
           <CompareTable
@@ -76,7 +76,7 @@ function AlternativesHub() {
               ...COMPETITORS.map((c) => ({ key: c.slug, header: c.name })),
             ]}
             rows={tableRows}
-            footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, dated, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Competitor claims checked Sep 2026 — see each guide for sources, prices and check dates. Last updated 28 Sep 2026.</>}
+            footnote={<>Sidekick total — {cellCounts(FEATURES.map((r) => r.sidekick))}. ✅ Yes · 🚧 Under Development = being built now · 🛣️ Roadmap = public, lands in the open (self-host nightlies available) · ➖ Partial · ❌ No. Competitor claims checked Sep 2026 — see each guide for sources, prices and check dates. Last updated 28 Sep 2026.</>}
           />
         </div>
       </Container>
