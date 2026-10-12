@@ -177,13 +177,7 @@ function HomeComponent() {  return (
     <div className="bg-black text-zinc-100">
       {/* HERO — CodeNest geometry, Sidekick words */}
       <HeroCodenest
-        cardTag="[ 2026 ]"
-        cardTitle={
-          <>
-            Driven by <em style={{ fontFamily: "'Instrument Serif', serif" }}>Agents</em>, open to humans
-          </>
-        }
-        cardDesc="Cloud Xcode, simulators and emulators your agent taps, types and screenshots."
+        card={null}
         eyebrow="Remote builds · Live devices · Self-host"
         headline={
           <>

@@ -80,9 +80,12 @@ function FallbackScene() {
 }
 
 export interface HeroCodenestCopy {
-  cardTag: string;
-  cardTitle: ReactNode;
-  cardDesc: string;
+  /** Glass card above the headline. Pass null to omit (hero stays full-screen). */
+  card: {
+    tag: string;
+    title: ReactNode;
+    desc: string;
+  } | null;
   eyebrow: string;
   headline: ReactNode;
   description: string;
@@ -173,18 +176,20 @@ export function HeroCodenest(props: HeroCodenestCopy) {
         {props.headerRow}
 
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 pt-32 pb-20">
+          {props.card && (
           <div className="liquid-card relative h-[200px] w-[200px] translate-y-[-50px] p-5">
             <p className="text-[14px] font-medium text-white/80" style={{ fontFamily: "Inter, sans-serif" }}>
-              {props.cardTag}
+              {props.card.tag}
             </p>
             <p className="mt-2 text-[18px] leading-snug font-semibold text-white" style={{ fontFamily: "Inter, sans-serif" }}>
-              {props.cardTitle}
+              {props.card.title}
             </p>
             <p className="mt-2 text-[11px] leading-relaxed text-white/60" style={{ fontFamily: "Inter, sans-serif" }}>
-              {props.cardDesc}
+              {props.card.desc}
             </p>
             <ArrowRight size={16} className="absolute right-5 bottom-5 text-white/70" aria-hidden="true" />
           </div>
+          )}
           <p
             className="text-[11px] font-bold tracking-[0.18em] text-[#5ed29c] uppercase"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
