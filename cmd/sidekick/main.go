@@ -4,10 +4,8 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/ImBIOS/sidekick/internal/api"
 )
 
 var (
@@ -95,48 +94,20 @@ func (e *apiError) Error() string { return fmt.Sprintf("sidekick: HTTP %d: %s", 
 // into out (nil to discard). Non-2xx responses become *apiError.
 func call(cmd *cobra.Command, method, path string, body any, out any) error {
 	url, token := resolveConn(cmd)
-	if token == "" {
-		return fmt.Errorf("not logged in: run `sidekick login` or set SIDEKICK_TOKEN")
+	return translate(api.New(url, token).Call(method, path, body, out), url)
+}
+
+// apiCall is call without the cobra wrapper so non-CLI frontends (the MCP
+// server) can share the exact same HTTP contract.
+func apiCall(url, token, method, path string, body any, out any) error {
+	return translate(api.New(url, token).Call(method, path, body, out), url)
+}
+
+func translate(err error, url string) error {
+	if ae, ok := err.(*api.APIError); ok {
+		return &apiError{Status: ae.Status, Msg: ae.Msg}
 	}
-	var rdr io.Reader
-	if body != nil {
-		raw, err := json.Marshal(body)
-		if err != nil {
-			return err
-		}
-		rdr = bytes.NewReader(raw)
-	}
-	req, err := http.NewRequest(method, url+path, rdr)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("control-plane unreachable at %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		msg := strings.TrimSpace(string(raw))
-		var parsed map[string]string
-		if json.Unmarshal(raw, &parsed) == nil && parsed["error"] != "" {
-			msg = parsed["error"]
-		}
-		if msg == "" {
-			msg = http.StatusText(resp.StatusCode)
-		}
-		return &apiError{Status: resp.StatusCode, Msg: msg}
-	}
-	if out != nil && len(raw) > 0 {
-		if err := json.Unmarshal(raw, out); err != nil {
-			return fmt.Errorf("bad response from control-plane: %w", err)
-		}
-	}
-	return nil
+	return err
 }
 
 func printJSON(v any) {
@@ -144,45 +115,33 @@ func printJSON(v any) {
 	fmt.Println(string(raw))
 }
 
+// Conn is the control-plane connection MCP and headless clients share.
+type Conn struct {
+	URL   string
+	Token string
+}
+
+func connFromCmd(cmd *cobra.Command) Conn {
+	url, token := resolveConn(cmd)
+	return Conn{URL: url, Token: token}
+}
+
 // callBytes performs an authenticated request and returns raw response bytes
 // (for PNG screenshots and MP4 recordings). Non-2xx becomes *apiError.
 func callBytes(cmd *cobra.Command, method, path string, body any) ([]byte, error) {
 	url, token := resolveConn(cmd)
-	if token == "" {
-		return nil, fmt.Errorf("not logged in: run `sidekick login` or set SIDEKICK_TOKEN")
-	}
-	var rdr io.Reader
-	if body != nil {
-		raw, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-		rdr = bytes.NewReader(raw)
-	}
-	req, err := http.NewRequest(method, url+path, rdr)
+	raw, err := api.New(url, token).CallBytes(method, path, body)
 	if err != nil {
-		return nil, err
+		return nil, translate(err, url)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	resp, err := httpClient.Do(req)
+	return raw, nil
+}
+
+// callBytesRaw is callBytes without the cobra wrapper.
+func callBytesRaw(url, token, method, path string, body any) ([]byte, error) {
+	raw, err := api.New(url, token).CallBytes(method, path, body)
 	if err != nil {
-		return nil, fmt.Errorf("control-plane unreachable at %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		msg := strings.TrimSpace(string(raw))
-		var parsed map[string]string
-		if json.Unmarshal(raw, &parsed) == nil && parsed["error"] != "" {
-			msg = parsed["error"]
-		}
-		if msg == "" {
-			msg = http.StatusText(resp.StatusCode)
-		}
-		return nil, &apiError{Status: resp.StatusCode, Msg: msg}
+		return nil, translate(err, url)
 	}
 	return raw, nil
 }
@@ -195,7 +154,7 @@ func init() {
 }
 
 func main() {
-	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), xcodeCmd(), iosCmd(), androidCmd())
+	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), agentSetupCmd(), devCmd(), mcpCmd(), xcodeCmd(), iosCmd(), androidCmd())
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
