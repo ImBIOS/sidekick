@@ -88,9 +88,12 @@ func (r execRunner) Shot(serial string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("screencap: %w", err)
 	}
-	// exec-out may prefix \r\n line endings on some transports; PNG magic first.
+	// exec-out may prefix transport noise; the PNG must start at its magic.
 	if i := bytesIndex(out, []byte{0x89, 0x50, 0x4E, 0x47}); i > 0 {
 		out = out[i:]
+	}
+	if len(out) < 8 || out[0] != 0x89 || out[1] != 0x50 {
+		return nil, fmt.Errorf("screencap: not a PNG (%d bytes)", len(out))
 	}
 	return out, nil
 }
