@@ -7,6 +7,8 @@ Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 ## Auth (one time)
 - Get a key from console Settings → API keys (scoped to your default org, created at signup).
 - `sidekick login` (paste it) or `export SIDEKICK_TOKEN=sk_live_...`. `sidekick org` shows your org.
+- New machine: `sidekick agent-setup` installs this skill into ~/.claude/skills, then registers MCP: `claude mcp add sidekick -- sidekick mcp`. No MCP client? The CLI alone covers every verb below.
+- Fastest live device: `sidekick dev` boots a sim and prints its share URL (add `--json` for scripts).
 
 ## Build iOS (no Mac needed)
 - `sidekick xcode build . --scheme MyApp` — syncs code, streams xcodebuild logs. Iterate on errors.

@@ -175,6 +175,30 @@ func (s *Store) FinishBuild(org OrgID, id, status string) bool {
 	return true
 }
 
+// HostAppendBuildLog appends daemon lines without org scoping (trusted host).
+func (s *Store) HostAppendBuildLog(id string, lines []string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b, ok := s.builds[id]
+	if !ok {
+		return false
+	}
+	b.Log = append(b.Log, lines...)
+	return true
+}
+
+// HostFinishBuild marks a build terminal without org scoping (trusted host).
+func (s *Store) HostFinishBuild(id, status string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b, ok := s.builds[id]
+	if !ok {
+		return false
+	}
+	b.Status = status
+	return true
+}
+
 // --- sims ---
 
 // CreateSim provisions a simulator session for org. It starts provisioning;

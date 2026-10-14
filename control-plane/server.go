@@ -13,12 +13,46 @@ import (
 // Server wires auth + store into the REST API.
 type Server struct {
 	verifier  Verifier
-	store     *Store
+	store     Scheduler
 	hostToken string
 }
 
+// Scheduler is the persistence surface both backends implement: the
+// in-memory Store (dev, tests) and PGStore (DATABASE_URL set).
+type Scheduler interface {
+	CreateBuild(org OrgID, scheme, ref string) *Build
+	GetBuild(org OrgID, id string) (*Build, bool)
+	ListBuilds(org OrgID) []*Build
+	AppendBuildLog(org OrgID, id string, lines []string) bool
+	FinishBuild(org OrgID, id, status string) bool
+	HostAppendBuildLog(id string, lines []string) bool
+	HostFinishBuild(id, status string) bool
+	CreateSim(org OrgID, device, runtime string) *Sim
+	GetSim(org OrgID, id string) (*Sim, bool)
+	ListSims(org OrgID) []*Sim
+	DeleteSim(org OrgID, id string) bool
+	HostSimReady(id, host, webrtcURL string) bool
+	SetSimTree(id string, raw json.RawMessage) bool
+	SetSimShot(id string, png []byte) bool
+	AppendSimLog(id string, lines []string) bool
+	SetSimRecording(id string, rec bool) bool
+	SetSimVideo(id string, mp4 []byte) bool
+	EnqueueSimAction(org OrgID, simID string, body map[string]string) (*QueuedAction, bool)
+	CompleteSimAction(id, result string) bool
+	GetSimAction(org OrgID, id string) (*QueuedAction, bool)
+	CreateEmu(org OrgID, profile string) *Emu
+	GetEmu(org OrgID, id string) (*Emu, bool)
+	ListEmus(org OrgID) []*Emu
+	DeleteEmu(org OrgID, id string) bool
+	HostEmuReady(id, host, adbTarget string) bool
+	SetEmuTree(id string, raw json.RawMessage) bool
+	SetEmuShot(id string, png []byte) bool
+	AppendEmuLog(id string, lines []string) bool
+	ClaimNext(pool string, kinds []string) *Claim
+}
+
 // NewServer builds the API with the given key verifier and scheduler.
-func NewServer(v Verifier, s *Store) *Server {
+func NewServer(v Verifier, s Scheduler) *Server {
 	return &Server{verifier: v, store: s}
 }
 

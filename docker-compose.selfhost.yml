@@ -12,6 +12,10 @@ services:
       # SIDEKICK_AUTH_URL: http://web:8000
       # CONTROL_PLANE_SECRET: ${CONTROL_PLANE_SECRET}
       SIDEKICK_API_KEYS: ${SIDEKICK_API_KEYS:-}
+      # Fleet auth: daemons present this bearer token on /v1/host/*.
+      # Generate once: openssl rand -hex 32. Same value goes into
+      # `sidekick host join --token` on every fleet Mac / Linux host.
+      SIDEKICK_HOST_TOKEN: ${SIDEKICK_HOST_TOKEN:-}
   postgres:
     image: postgres:16
     environment:

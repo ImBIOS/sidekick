@@ -76,17 +76,11 @@ func (s *Server) handleHostBuildLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
-	s.store.mu.Lock()
-	b, ok := s.store.builds[id]
-	if ok {
-		b.Log = append(b.Log, req.Lines...)
-	}
-	s.store.mu.Unlock()
-	if !ok {
+	if !s.store.HostAppendBuildLog(id, req.Lines) {
 		writeErr(w, http.StatusNotFound, "build not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "lines": len(b.Log)})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 type hostFinishReq struct {
@@ -103,17 +97,11 @@ func (s *Server) handleHostBuildFinish(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "status must be succeeded or failed")
 		return
 	}
-	s.store.mu.Lock()
-	b, ok := s.store.builds[r.PathValue("id")]
-	if ok {
-		b.Status = req.Status
-	}
-	s.store.mu.Unlock()
-	if !ok {
+	if !s.store.HostFinishBuild(r.PathValue("id"), req.Status) {
 		writeErr(w, http.StatusNotFound, "build not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "status": b.Status})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "status": req.Status})
 }
 
 type hostSimReadyReq struct {
