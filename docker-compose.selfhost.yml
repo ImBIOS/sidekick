@@ -26,11 +26,24 @@ services:
     image: minio/minio
     command: server /data
     ports: ["9000:9000"]
-  # Linux KVM fleet for Android (needs /dev/kvm on host)
+  # Linux KVM fleet for Android (needs /dev/kvm on host). One container runs
+  # emu-host, which boots AVDs per claimed emu (bake AVDs into the image or
+  # mount them; default profile Pixel_7_API_34).
   emulator:
-    build: ./deploy/emulator
+    build:
+      context: .
+      dockerfile: ./deploy/emulator.Dockerfile
     device_cgroup_rules: ["c 10:232 rmw"] # /dev/kvm
     privileged: true
+    # Agents reach adb through the target emu-host reports. Publish the
+    # emulator's adb port and set EMU_ADB_ADDR to this machine's LAN IP
+    # (agents are usually remote; a docker-internal IP won't dial).
+    ports: ["5555:5555"]
+    environment:
+      SIDEKICK_CONTROL: http://control-plane:8080
+      SIDEKICK_HOST_TOKEN: ${SIDEKICK_HOST_TOKEN:-}
+      SIDEKICK_POOL: linux-pool
+      EMU_ADB_ADDR: ${EMU_ADB_ADDR:-}
   # Mac fleet is BYO: run build-daemon + sim-daemon on each Mac mini:
   #   sidekick host join --control https://api.your-host.com --token $HOST_TOKEN
 volumes:

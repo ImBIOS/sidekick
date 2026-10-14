@@ -21,8 +21,9 @@ Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 - `sidekick ios record <id>` to start, `sidekick ios record <id> --stop --out demo.mp4` → mp4 demo video for PR.
 
 ## Drive Android
+- No Mac needed, ever: emus run on Linux KVM hosts (`emu-host` boots AVDs per claim, self-host via `docker-compose.selfhost.yml`).
 - `sidekick android create --profile Pixel_7` → id (provisioning). Poll `sidekick android get <id>` until `running`, then adb tunnel on localhost:5555: `adb-proxy --emu <id>` (uses SIDEKICK_TOKEN). Then plain `adb install app.apk`, `maestro test flow.yaml`, Appium, scrcpy all work.
-- Same verbs: `android ui-tree`, `android screenshot --out shot.png`, `android logs --tail 100`, preview link.
+- Same verbs: `android ui-tree` (@e refs from the on-device dump), `android screenshot --out shot.png`, `android logs --tail 100`, preview link.
 
 ## Rules
 - Always build before creating a simulator. Always `ui-tree` before acting (refs go stale after each screen change).
