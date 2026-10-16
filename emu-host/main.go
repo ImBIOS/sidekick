@@ -126,16 +126,30 @@ func (r execRunner) Tree(serial string) ([]byte, error) {
 	// Dump to a device file first: `dump /dev/stdout` mixes the status
 	// line into the stream on some API levels and exec-out swallows
 	// failures silently. A file round-trip is unambiguous either way.
-	out, err := r.adbCmd(serial, "shell", "uiautomator", "dump", "--compressed", devicePath).CombinedOutput()
-	if err != nil || !strings.Contains(string(out), "dumped to") {
-		return nil, fmt.Errorf("uiautomator dump: %w (%s)", err, firstLine(out))
+	// Freshly booted systems LMK the dump under dexopt pressure, so retry
+	// with backoff before giving up (callers already poll).
+	var last error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			time.Sleep(10 * time.Second)
+		}
+		out, err := r.adbCmd(serial, "shell", "uiautomator", "dump", "--compressed", devicePath).CombinedOutput()
+		if err != nil || !strings.Contains(string(out), "dumped to") {
+			last = fmt.Errorf("uiautomator dump: %w (%s)", err, firstLine(out))
+			continue
+		}
+		raw, err := r.adbCmd(serial, "exec-out", "cat", devicePath).CombinedOutput()
+		if err != nil {
+			last = fmt.Errorf("uiautomator pull: %w", err)
+			continue
+		}
+		if _, err := r.adbCmd(serial, "shell", "rm", "-f", devicePath).CombinedOutput(); err != nil {
+			last = fmt.Errorf("uiautomator cleanup: %w", err)
+			continue
+		}
+		return uiaToJSON(raw)
 	}
-	raw, err := r.adbCmd(serial, "exec-out", "cat", devicePath).CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("uiautomator pull: %w", err)
-	}
-	_, _ = r.adbCmd(serial, "shell", "rm", "-f", devicePath).CombinedOutput()
-	return uiaToJSON(raw)
+	return nil, last
 }
 
 func (r execRunner) Shot(serial string) ([]byte, error) {
