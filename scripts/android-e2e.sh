@@ -5,6 +5,12 @@
 set -eu
 export SIDEKICK_URL=http://localhost:8080 SIDEKICK_TOKEN=ci-key
 BIN="$GITHUB_WORKSPACE/bin"
+# emu-host and the CLI shell `adb`; the runner does not guarantee it on PATH.
+for d in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" /usr/local/lib/android/sdk /opt/android-sdk; do
+  if [ -n "$d" ] && [ -x "$d/platform-tools/adb" ]; then export PATH="$d/platform-tools:$d/emulator:$PATH"; break; fi
+done
+command -v adb
+adb version | head -1
 
 SIDEKICK_API_KEYS="org_ci:ci-key" SIDEKICK_HOST_TOKEN=ci-host PORT=8080 "$BIN/control-plane" > /tmp/cp.log 2>&1 &
 for i in $(seq 1 30); do
@@ -27,8 +33,10 @@ done
 [ "$STATUS" = "running" ]
 
 # Tree/screenshot arrive on the host refresh loop; poll until present.
+# Attempts stay visible: a silent tree is the failure we are hunting.
 for i in $(seq 1 18); do
-  "$BIN/sidekick" android ui-tree "$EID" > tree.json 2>/dev/null && break
+  echo "tree attempt $i"
+  if "$BIN/sidekick" android ui-tree "$EID" > tree.json; then break; fi
   sleep 10
 done
 grep -q "@e" tree.json
