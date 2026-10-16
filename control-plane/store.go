@@ -3,6 +3,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"sync"
@@ -91,6 +93,7 @@ type Store struct {
 	builds map[string]*Build
 	sims   map[string]*Sim
 	emus   map[string]*Emu
+	tokens map[string]*InstanceToken // by secret hash
 }
 
 // NewStore returns an empty scheduler.
@@ -99,6 +102,7 @@ func NewStore() *Store {
 		builds: map[string]*Build{},
 		sims:   map[string]*Sim{},
 		emus:   map[string]*Emu{},
+		tokens: map[string]*InstanceToken{},
 	}
 }
 
@@ -307,6 +311,82 @@ func (s *Store) DeleteEmu(org OrgID, id string) bool {
 	}
 	delete(s.emus, id)
 	return true
+}
+
+// --- instance tokens ---
+
+func hashSecret(secret string) string {
+	sum := sha256.Sum256([]byte(secret))
+	return hex.EncodeToString(sum[:])
+}
+
+// CreateInstanceToken mints a scoped, expiring token. The secret is returned
+// once and never stored; only its hash persists.
+func (s *Store) CreateInstanceToken(org OrgID, name string, scopes []string, ttl time.Duration) (*InstanceToken, string, bool) {
+	if name == "" || len(scopes) == 0 || ttl <= 0 || ttl > 30*24*time.Hour {
+		return nil, "", false
+	}
+	seen := map[string]bool{}
+	for _, sc := range scopes {
+		if !validScope(sc) || seen[sc] {
+			return nil, "", false
+		}
+		seen[sc] = true
+	}
+	secret, hash, err := mintSecret()
+	if err != nil {
+		return nil, "", false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	now := time.Now().UTC()
+	tok := &InstanceToken{
+		ID:        s.nextID("tok"),
+		Org:       org,
+		Name:      name,
+		Scopes:    scopes,
+		ExpiresAt: now.Add(ttl),
+		CreatedAt: now,
+	}
+	s.tokens[hash] = tok
+	return tok, secret, true
+}
+
+// LookupInstanceToken resolves a presented secret to its token.
+func (s *Store) LookupInstanceToken(secret string) (*InstanceToken, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tok, ok := s.tokens[hashSecret(secret)]
+	if !ok || tok.Revoked || time.Now().UTC().After(tok.ExpiresAt) {
+		return nil, false
+	}
+	return tok, true
+}
+
+// ListInstanceTokens returns org's tokens (secrets never leave Create).
+func (s *Store) ListInstanceTokens(org OrgID) []*InstanceToken {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var out []*InstanceToken
+	for _, tok := range s.tokens {
+		if tok.Org == org {
+			out = append(out, tok)
+		}
+	}
+	return out
+}
+
+// RevokeInstanceToken kills a token immediately.
+func (s *Store) RevokeInstanceToken(org OrgID, id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, tok := range s.tokens {
+		if tok.ID == id && tok.Org == org {
+			tok.Revoked = true
+			return true
+		}
+	}
+	return false
 }
 
 func itoa(n uint64) string {

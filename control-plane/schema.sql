@@ -55,3 +55,17 @@ CREATE TABLE IF NOT EXISTS emus (
   emu_log    TEXT[] NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS emus_org ON emus (org);
+
+-- Scoped instance tokens: only the sha256 hash persists; the secret itself
+-- is shown once at creation and never stored.
+CREATE TABLE IF NOT EXISTS instance_tokens (
+  id         TEXT PRIMARY KEY,
+  org        TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  scopes     TEXT[] NOT NULL,
+  hash       TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked    BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS instance_tokens_org ON instance_tokens (org);

@@ -376,6 +376,77 @@ func (s *PGStore) AppendEmuLog(id string, lines []string) bool {
 	return err == nil && n == 1
 }
 
+// --- instance tokens ---
+
+func (s *PGStore) CreateInstanceToken(org OrgID, name string, scopes []string, ttl time.Duration) (*InstanceToken, string, bool) {
+	if name == "" || len(scopes) == 0 || ttl <= 0 || ttl > 30*24*time.Hour {
+		return nil, "", false
+	}
+	seen := map[string]bool{}
+	for _, sc := range scopes {
+		if !validScope(sc) || seen[sc] {
+			return nil, "", false
+		}
+		seen[sc] = true
+	}
+	secret, hash, err := mintSecret()
+	if err != nil {
+		return nil, "", false
+	}
+	now := time.Now().UTC()
+	tok := &InstanceToken{
+		ID: s.nextID("tok"), Org: org, Name: name, Scopes: scopes,
+		ExpiresAt: now.Add(ttl), CreatedAt: now,
+	}
+	_, err = s.q.Exec(context.Background(),
+		`INSERT INTO instance_tokens (id, org, name, scopes, hash, expires_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+		tok.ID, string(org), name, scopes, hash, tok.ExpiresAt, tok.CreatedAt)
+	if err != nil {
+		return nil, "", false
+	}
+	return tok, secret, true
+}
+
+func (s *PGStore) LookupInstanceToken(secret string) (*InstanceToken, bool) {
+	var tok InstanceToken
+	var org string
+	err := s.q.QueryRow(context.Background(),
+		`SELECT id, org, name, scopes, expires_at, revoked, created_at FROM instance_tokens WHERE hash=$1`,
+		hashSecret(secret)).Scan(&tok.ID, &org, &tok.Name, &tok.Scopes, &tok.ExpiresAt, &tok.Revoked, &tok.CreatedAt)
+	if err != nil {
+		return nil, false
+	}
+	tok.Org = OrgID(org)
+	if tok.Revoked || time.Now().UTC().After(tok.ExpiresAt) {
+		return nil, false
+	}
+	return &tok, true
+}
+
+func (s *PGStore) ListInstanceTokens(org OrgID) []*InstanceToken {
+	rows, err := s.q.Query(context.Background(),
+		`SELECT id, name, scopes, expires_at, revoked, created_at FROM instance_tokens WHERE org=$1 ORDER BY created_at DESC`, string(org))
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var out []*InstanceToken
+	for rows.Next() {
+		var tok InstanceToken
+		if err := rows.Scan(&tok.ID, &tok.Name, &tok.Scopes, &tok.ExpiresAt, &tok.Revoked, &tok.CreatedAt); err == nil {
+			tok.Org = org
+			out = append(out, &tok)
+		}
+	}
+	return out
+}
+
+func (s *PGStore) RevokeInstanceToken(org OrgID, id string) bool {
+	n, err := s.q.Exec(context.Background(),
+		`UPDATE instance_tokens SET revoked=true WHERE id=$1 AND org=$2`, id, string(org))
+	return err == nil && n == 1
+}
+
 // --- claims ---
 
 // ClaimNext mirrors Store.ClaimNext with SKIP LOCKED atomicity: concurrent

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Server wires auth + store into the REST API.
@@ -49,6 +50,10 @@ type Scheduler interface {
 	SetEmuShot(id string, png []byte) bool
 	AppendEmuLog(id string, lines []string) bool
 	ClaimNext(pool string, kinds []string) *Claim
+	CreateInstanceToken(org OrgID, name string, scopes []string, ttl time.Duration) (*InstanceToken, string, bool)
+	LookupInstanceToken(secret string) (*InstanceToken, bool)
+	ListInstanceTokens(org OrgID) []*InstanceToken
+	RevokeInstanceToken(org OrgID, id string) bool
 }
 
 // NewServer builds the API with the given key verifier and scheduler.
@@ -76,24 +81,6 @@ func orgFromContext(r *http.Request) OrgID {
 	return org
 }
 
-// withAuth enforces `Authorization: Bearer <sk_live_...>` and resolves the
-// org before any handler runs. 401 on missing/invalid keys.
-func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		key := bearerKey(r.Header.Get("Authorization"))
-		if key == "" {
-			writeErr(w, http.StatusUnauthorized, "missing bearer API key")
-			return
-		}
-		org, err := s.verifier.Verify(key)
-		if err != nil {
-			writeErr(w, http.StatusUnauthorized, "invalid API key")
-			return
-		}
-		next(w, r.WithContext(withOrg(r.Context(), org)))
-	}
-}
-
 func bearerKey(h string) string {
 	if h == "" {
 		return ""
@@ -107,33 +94,37 @@ func bearerKey(h string) string {
 
 // Routes registers all endpoints on mux.
 func (s *Server) Routes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v1/whoami", s.withAuth(s.handleWhoami))
+	mux.HandleFunc("GET /v1/whoami", s.withAuthz(s.handleWhoami))
 
-	mux.HandleFunc("POST /v1/builds", s.withAuth(s.handleCreateBuild))
-	mux.HandleFunc("GET /v1/builds", s.withAuth(s.handleListBuilds))
-	mux.HandleFunc("GET /v1/builds/{id}", s.withAuth(s.handleGetBuild))
-	mux.HandleFunc("GET /v1/builds/{id}/logs", s.withAuth(s.handleBuildLogs))
+	mux.HandleFunc("POST /v1/tokens", s.withAuthz(s.handleCreateToken))
+	mux.HandleFunc("GET /v1/tokens", s.withAuthz(s.handleListTokens))
+	mux.HandleFunc("DELETE /v1/tokens/{id}", s.withAuthz(s.handleRevokeToken))
 
-	mux.HandleFunc("POST /v1/sims", s.withAuth(s.handleCreateSim))
-	mux.HandleFunc("GET /v1/sims", s.withAuth(s.handleListSims))
-	mux.HandleFunc("GET /v1/sims/{id}", s.withAuth(s.handleGetSim))
-	mux.HandleFunc("DELETE /v1/sims/{id}", s.withAuth(s.handleDeleteSim))
-	mux.HandleFunc("POST /v1/sims/{id}/actions", s.withAuth(s.handleSimAction))
-	mux.HandleFunc("GET /v1/sims/{id}/actions/{aid}", s.withAuth(s.handleGetSimAction))
-	mux.HandleFunc("GET /v1/sims/{id}/tree", s.withAuth(s.handleGetSimTree))
-	mux.HandleFunc("GET /v1/sims/{id}/screenshot", s.withAuth(s.handleGetSimShot))
-	mux.HandleFunc("GET /v1/sims/{id}/logs", s.withAuth(s.handleGetSimLogs))
-	mux.HandleFunc("POST /v1/sims/{id}/record", s.withAuth(s.handleSimRecord))
-	mux.HandleFunc("GET /v1/sims/{id}/recording", s.withAuth(s.handleGetSimRecording))
-	mux.HandleFunc("GET /v1/sims/{id}/recording/download", s.withAuth(s.handleGetSimVideo))
+	mux.HandleFunc("POST /v1/builds", s.withAuthz(s.handleCreateBuild))
+	mux.HandleFunc("GET /v1/builds", s.withAuthz(s.handleListBuilds))
+	mux.HandleFunc("GET /v1/builds/{id}", s.withAuthz(s.handleGetBuild))
+	mux.HandleFunc("GET /v1/builds/{id}/logs", s.withAuthz(s.handleBuildLogs))
 
-	mux.HandleFunc("POST /v1/emus", s.withAuth(s.handleCreateEmu))
-	mux.HandleFunc("GET /v1/emus", s.withAuth(s.handleListEmus))
-	mux.HandleFunc("GET /v1/emus/{id}", s.withAuth(s.handleGetEmu))
-	mux.HandleFunc("DELETE /v1/emus/{id}", s.withAuth(s.handleDeleteEmu))
-	mux.HandleFunc("GET /v1/emus/{id}/tree", s.withAuth(s.handleGetEmuTree))
-	mux.HandleFunc("GET /v1/emus/{id}/screenshot", s.withAuth(s.handleGetEmuShot))
-	mux.HandleFunc("GET /v1/emus/{id}/logs", s.withAuth(s.handleGetEmuLogs))
+	mux.HandleFunc("POST /v1/sims", s.withAuthz(s.handleCreateSim))
+	mux.HandleFunc("GET /v1/sims", s.withAuthz(s.handleListSims))
+	mux.HandleFunc("GET /v1/sims/{id}", s.withAuthz(s.handleGetSim))
+	mux.HandleFunc("DELETE /v1/sims/{id}", s.withAuthz(s.handleDeleteSim))
+	mux.HandleFunc("POST /v1/sims/{id}/actions", s.withAuthz(s.handleSimAction))
+	mux.HandleFunc("GET /v1/sims/{id}/actions/{aid}", s.withAuthz(s.handleGetSimAction))
+	mux.HandleFunc("GET /v1/sims/{id}/tree", s.withAuthz(s.handleGetSimTree))
+	mux.HandleFunc("GET /v1/sims/{id}/screenshot", s.withAuthz(s.handleGetSimShot))
+	mux.HandleFunc("GET /v1/sims/{id}/logs", s.withAuthz(s.handleGetSimLogs))
+	mux.HandleFunc("POST /v1/sims/{id}/record", s.withAuthz(s.handleSimRecord))
+	mux.HandleFunc("GET /v1/sims/{id}/recording", s.withAuthz(s.handleGetSimRecording))
+	mux.HandleFunc("GET /v1/sims/{id}/recording/download", s.withAuthz(s.handleGetSimVideo))
+
+	mux.HandleFunc("POST /v1/emus", s.withAuthz(s.handleCreateEmu))
+	mux.HandleFunc("GET /v1/emus", s.withAuthz(s.handleListEmus))
+	mux.HandleFunc("GET /v1/emus/{id}", s.withAuthz(s.handleGetEmu))
+	mux.HandleFunc("DELETE /v1/emus/{id}", s.withAuthz(s.handleDeleteEmu))
+	mux.HandleFunc("GET /v1/emus/{id}/tree", s.withAuthz(s.handleGetEmuTree))
+	mux.HandleFunc("GET /v1/emus/{id}/screenshot", s.withAuthz(s.handleGetEmuShot))
+	mux.HandleFunc("GET /v1/emus/{id}/logs", s.withAuthz(s.handleGetEmuLogs))
 
 	mux.HandleFunc("POST /v1/host/claims/next", s.withHost(s.handleHostClaim))
 	mux.HandleFunc("POST /v1/host/builds/{id}/logs", s.withHost(s.handleHostBuildLogs))
@@ -543,8 +534,7 @@ func (s *Server) handleGetEmuLogs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"lines": lines})
 }
 
-func atoiOr(s string, dflt int) int {
-	if s == "" {
+func atoiOr(s string, dflt int) int {	if s == "" {
 		return dflt
 	}
 	n := 0
