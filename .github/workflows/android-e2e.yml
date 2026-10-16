@@ -63,12 +63,7 @@ jobs:
             set -eu
             export SIDEKICK_URL=http://localhost:8080 SIDEKICK_TOKEN=ci-key
             SIDEKICK_POOL=linux-pool EMU_ADB_ADDR=127.0.0.1 /tmp/emu-host --control http://localhost:8080 --token ci-host --adopt --interval 10s > /tmp/emu-host.log 2>&1 &
-            for i in $(seq 1 60); do
-              STATUS=$(/tmp/sidekick android get "$EID" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
-              echo "emu status: $STATUS"
-              [ "$STATUS" = "running" ] && break
-              sleep 10
-            done
+            for i in $(seq 1 60); do STATUS=$(/tmp/sidekick android get "$EID" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"); echo "emu status: $STATUS"; if [ "$STATUS" = "running" ]; then break; fi; sleep 10; done
             [ "$STATUS" = "running" ]
             /tmp/sidekick android ui-tree "$EID" | tee tree.json
             grep -q "@e" tree.json
