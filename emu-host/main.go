@@ -330,6 +330,7 @@ func (h *host) provision(emuID, profile string) {
 		fmt.Fprintln(os.Stderr, "emu-host: boot:", err)
 		return
 	}
+	fmt.Println("emu-host: booted", emuID, "as", serial)
 	target := h.adbAddr + ":" + h.adbPort
 	if err := h.fc.EmuReady(emuID, h.pool, target); err != nil {
 		fmt.Fprintln(os.Stderr, "emu-host: ready:", err)
@@ -343,19 +344,24 @@ func (h *host) provision(emuID, profile string) {
 }
 
 // refresh reposts tree/shot/logs; a 404 from the plane means the agent
-// deleted the emu, so the local instance dies too.
+// deleted the emu, so the local instance dies too. Failures are logged:
+// a silent host is undebuggable in CI.
 func (h *host) refresh(emuID, serial string) {
 	dead := false
 	if tree, err := h.runner.Tree(serial); err == nil {
 		if err := h.fc.PutEmuTree(emuID, tree); err != nil {
 			dead = isNotFound(err)
 		}
+	} else {
+		fmt.Fprintln(os.Stderr, "emu-host: tree:", emuID, err)
 	}
 	if !dead {
 		if png, err := h.runner.Shot(serial); err == nil {
 			if err := h.fc.PutEmuShot(emuID, png); err != nil {
 				dead = isNotFound(err)
 			}
+		} else {
+			fmt.Fprintln(os.Stderr, "emu-host: shot:", emuID, err)
 		}
 	}
 	if !dead {
@@ -409,6 +415,7 @@ func main() {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "emu-host: claim:", err)
 		} else if ok {
+			fmt.Println("emu-host: claimed", claim.EmuID(), "profile", emuProfile(claim))
 			// Boot blocks for minutes; background it so refreshes continue.
 			go h.provision(claim.EmuID(), emuProfile(claim))
 		}
