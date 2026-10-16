@@ -57,6 +57,9 @@ type poster interface {
 type execRunner struct {
 	adb         string
 	bootTimeout time.Duration
+	// adopt attaches to an already-booted emulator instead of launching
+	// one (CI, dogfood rigs). The boot_completed poll is identical.
+	adopt bool
 }
 
 func (r execRunner) adbCmd(serial string, args ...string) *exec.Cmd {
@@ -64,7 +67,31 @@ func (r execRunner) adbCmd(serial string, args ...string) *exec.Cmd {
 	return exec.Command(r.adb, full...)
 }
 
+// waitForDevice polls adb for any emulator serial at boot_completed.
+func waitForDevice(adbBin string, timeout time.Duration) (string, error) {
+	deadline := time.Now().Add(timeout)
+	for {
+		if out, err := exec.Command(adbBin, "devices").CombinedOutput(); err == nil {
+			for _, line := range strings.Split(string(out), "\n") {
+				f := strings.Fields(line)
+				if len(f) == 2 && strings.HasPrefix(f[0], "emulator-") && f[1] == "device" {
+					if done, _ := exec.Command(adbBin, "-s", f[0], "shell", "getprop", "sys.boot_completed").CombinedOutput(); strings.TrimSpace(string(done)) == "1" {
+						return f[0], nil
+					}
+				}
+			}
+		}
+		if time.Now().After(deadline) {
+			return "", fmt.Errorf("no booted emulator appeared")
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func (r execRunner) Boot(profile string) (string, error) {
+	if r.adopt {
+		return waitForDevice(r.adb, r.bootTimeout)
+	}
 	if profile == "" {
 		return "", fmt.Errorf("refusing to boot: empty profile (claim carried no AVD name)")
 	}
@@ -358,6 +385,7 @@ func main() {
 	adbBin := flag.String("adb", "adb", "adb binary")
 	adbPort := flag.String("adb-port", "5555", "adb server port agents dial")
 	adbAddr := flag.String("adb-addr", os.Getenv("EMU_ADB_ADDR"), "public address agents dial (default: outbound IP)")
+	adopt := flag.Bool("adopt", false, "attach to an already-booted emulator instead of launching")
 	bootTimeout := flag.Duration("boot-timeout", 10*time.Minute, "max wait for sys.boot_completed")
 	interval := flag.Duration("interval", 20*time.Second, "claim poll + refresh interval")
 	flag.Parse()
@@ -371,7 +399,7 @@ func main() {
 	h := &host{
 		fc: fc, pool: pl,
 		adbAddr: publicAddr(*adbAddr), adbPort: *adbPort,
-		runner:   execRunner{adb: *adbBin, bootTimeout: *bootTimeout},
+		runner:   execRunner{adb: *adbBin, bootTimeout: *bootTimeout, adopt: *adopt},
 		serials:  map[string]string{},
 		interval: *interval,
 	}
