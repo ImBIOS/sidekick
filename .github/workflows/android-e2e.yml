@@ -37,13 +37,17 @@ jobs:
           SIDEKICK_API_KEYS: "org_ci:ci-key"
           SIDEKICK_HOST_TOKEN: ci-host
         run: |
+          set -eu
+          go version
           go run ./control-plane > /tmp/cp.log 2>&1 &
           for i in $(seq 1 30); do
             curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami && break
             sleep 2
           done
+          curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami
           go build -o /tmp/sidekick ./cmd/sidekick
           go build -o /tmp/emu-host ./emu-host
+          ls -la /tmp/sidekick /tmp/emu-host
 
       - name: Create emulator resource
         env:
