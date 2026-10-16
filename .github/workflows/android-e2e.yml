@@ -5,20 +5,13 @@
 # Green here is the witness behind the comparison-table Yes cells for
 # recording, replay, visual diff and network capture.
 name: android-e2e
+# Trigger notes: NO push trigger on purpose. The job needs a KVM-capable
+# runner and the public pool is roulette — a red push build proves nothing
+# about the code. Run on demand, plus a periodic roll of the dice.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "control-plane/**"
-      - "emu-host/**"
-      - "testrun/**"
-      - "cmd/**"
-      - "internal/**"
-      - "skill/**"
-      - ".github/workflows/android-e2e.yml"
-      - "go.mod"
-      - "go.sum"
+  schedule:
+    - cron: "0 3 * * 1"
 
 jobs:
   e2e:
