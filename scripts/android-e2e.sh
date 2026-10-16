@@ -31,6 +31,9 @@ for i in $(seq 1 60); do
   sleep 10
 done
 [ "$STATUS" = "running" ]
+echo "--- host memory ---"; free -m | head -2
+echo "--- device memory ---"; adb -s emulator-5554 shell cat /proc/meminfo | head -3
+echo "--- focused window ---"; adb -s emulator-5554 shell dumpsys window windows | grep -i mCurrentFocus | head -2 || true
 
 # Tree/screenshot arrive on the host refresh loop; poll until present.
 # Attempts stay visible: a silent tree is the failure we are hunting.
