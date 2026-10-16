@@ -40,12 +40,14 @@ jobs:
           ls -la $GITHUB_WORKSPACE/bin/
 
       - name: Require KVM
-        # Software-emulated Android (no /dev/kvm) boots in ~16min with a
+        # Software-emulated Android (no usable KVM) boots in ~16min with a
         # wedged accessibility stack and starves the host until the OOM
-        # killer takes our own shell (exit 137). Fail in seconds instead.
+        # killer takes our own shell (exit 137). Existence is not enough:
+        # the runner user must be able to OPEN /dev/kvm. Fail in seconds.
         run: |
-          test -c /dev/kvm || { echo "NO KVM on this runner - re-run for a nested-virt host"; exit 1; }
-          echo "KVM present"
+          ls -la /dev/kvm || { echo "NO KVM device on this runner - re-run for a nested-virt host"; exit 1; }
+          test -r /dev/kvm && test -w /dev/kvm || { echo "KVM present but not usable by $USER - re-run"; exit 1; }
+          echo "KVM usable"
 
       - name: Full loop on emulator
         uses: reactivecircus/android-emulator-runner@v2
