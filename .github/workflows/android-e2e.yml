@@ -38,6 +38,7 @@ jobs:
 
       - name: Create AVDs
         run: |
+          export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
           yes | sdkmanager --licenses > /dev/null
           sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64" "emulator"
           avdmanager list device 2>/dev/null | grep -i -A1 "pixel" | head -8
