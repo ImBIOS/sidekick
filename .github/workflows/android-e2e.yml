@@ -68,7 +68,7 @@ jobs:
           SIDEKICK_HOST_TOKEN: ci-host
         run: |
           export PATH="$HOME/Android/Sdk/emulator:$HOME/Android/Sdk/platform-tools:$PATH"
-          EID=$(/tmp/sidekick android create --profile Pixel_7_API_34 | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          EID=$(/tmp/sidekick android create --profile Pixel_7_API_34 | python3 -c "import json,sys; print(json.JSONDecoder().raw_decode(sys.stdin.read())[0]['id'])")
           echo "EID=$EID" >> "$GITHUB_ENV"
           SIDEKICK_POOL=linux-pool EMU_ADB_ADDR=127.0.0.1 /tmp/emu-host --boot-timeout 15m --interval 10s > /tmp/emu-host.log 2>&1 &
           for i in $(seq 1 90); do
