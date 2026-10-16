@@ -34,12 +34,15 @@ done
 echo "--- host memory ---"; free -m | head -2
 echo "--- device memory ---"; adb -s emulator-5554 shell cat /proc/meminfo | head -3
 echo "--- focused window ---"; adb -s emulator-5554 shell dumpsys window windows | grep -i mCurrentFocus | head -2 || true
+# Background vitals sampler: if something gets SIGKILLed later, this log
+# shows what grew. Harmless if it dies with the shell.
+( for i in $(seq 1 40); do echo "== $(date -u +%T) =="; free -m | head -2; ps aux --sort=-%mem 2>/dev/null | head -6 | awk '{print $4"% "$11}'; dmesg 2>/dev/null | grep -ci "out of memory"; sleep 30; done > /tmp/vitals.log 2>&1 & )
 # Fresh boots run background dexopt for many minutes; it starves big
 # transient processes (uiautomator gets LMK-killed). Cancel it: the image
 # is throwaway CI state, not a battery-powered phone.
 adb -s emulator-5554 shell cmd package bg-dexopt-job --cancel || true
-echo "--- direct uiautomator probe (bypass Go wrapper) ---"
-adb -s emulator-5554 shell uiautomator dump /sdcard/probe.xml; echo "dump exit=$?"
+echo "--- direct uiautomator probe (bypass Go wrapper, non-fatal) ---"
+adb -s emulator-5554 shell uiautomator dump /sdcard/probe.xml || echo "probe failed, continuing"
 adb -s emulator-5554 shell ls -l /sdcard/probe.xml || true
 adb -s emulator-5554 shell dumpsys power | grep -iE "wakefulness|screenon" | head -3 || true
 
@@ -73,6 +76,8 @@ echo "tapping $REF"
 "$BIN/sidekick" android delete "$EID"
 echo "--- emu-host log ---"
 tail -20 /tmp/emu-host.log || true
+echo "--- vitals ---"
+tail -40 /tmp/vitals.log || true
 echo "--- host OOM check ---"
 dmesg 2>/dev/null | grep -i "out of memory\|killed process" | tail -3 || true
 echo "E2E GREEN"
