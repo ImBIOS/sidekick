@@ -1,10 +1,9 @@
 # Android end-to-end: the whole Sidekick loop on a real emulator.
-# The emulator-runner boots a KVM Android; emu-host --adopt attaches to the
-# already-booted instance (no double boot), provisions it in the
-# control-plane, and the agent verbs (tree, tap replay, screenshot, record,
-# logs, netcap, rotate) run exactly as `skill/SKILL.md` prescribes. Green
-# here is the witness behind the comparison-table Yes cells for recording,
-# replay, visual diff and network capture.
+# Everything service-like runs INSIDE the emulator-runner script step:
+# GitHub does not guarantee background processes survive across steps, so
+# the control-plane, emu-host, and all verbs live in one shell sequence.
+# Green here is the witness behind the comparison-table Yes cells for
+# recording, replay, visual diff and network capture.
 name: android-e2e
 on:
   workflow_dispatch:
@@ -31,39 +30,14 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Start control-plane and build binaries
-        env:
-          PORT: "8080"
-          SIDEKICK_API_KEYS: "org_ci:ci-key"
-          SIDEKICK_HOST_TOKEN: ci-host
+      - name: Build Go binaries
         run: |
           set -eu
-          go version
-          go run ./control-plane > /tmp/cp.log 2>&1 &
-          for i in $(seq 1 30); do
-            curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami && break
-            sleep 2
-          done
-          curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami
           mkdir -p $GITHUB_WORKSPACE/bin
           go build -o $GITHUB_WORKSPACE/bin/sidekick ./cmd/sidekick
           go build -o $GITHUB_WORKSPACE/bin/emu-host ./emu-host
-          ls -la $GITHUB_WORKSPACE/bin/sidekick $GITHUB_WORKSPACE/bin/emu-host
-
-      - name: Create emulator resource
-        env:
-          SIDEKICK_URL: http://localhost:8080
-          SIDEKICK_TOKEN: ci-key
-        run: |
-          set -eu
-          echo "whoami=$(whoami) tmp=$(df /tmp | tail -1)"; ls -la $GITHUB_WORKSPACE/bin/sidekick $GITHUB_WORKSPACE/bin/emu-host || true
-          mount | grep -E " /tmp " || echo "no tmp mount"
-          test -x $GITHUB_WORKSPACE/bin/sidekick || { echo "sidekick binary missing"; exit 1; }
-          CREATE_OUT=$($GITHUB_WORKSPACE/bin/sidekick android create --profile Pixel_7_API_34)
-          echo "$CREATE_OUT"
-          EID=$(printf '%s' "$CREATE_OUT" | python3 -c "import json,sys; print(json.JSONDecoder().raw_decode(sys.stdin.read())[0]['id'])")
-          test -n "$EID"
-          echo "EID=$EID" >> "$GITHUB_ENV"
+          go build -o $GITHUB_WORKSPACE/bin/control-plane ./control-plane
+          ls -la $GITHUB_WORKSPACE/bin/
 
       - name: Full loop on emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -74,7 +48,12 @@ jobs:
           script: |
             set -eu
             export SIDEKICK_URL=http://localhost:8080 SIDEKICK_TOKEN=ci-key
-            SIDEKICK_POOL=linux-pool EMU_ADB_ADDR=127.0.0.1 $GITHUB_WORKSPACE/bin/emu-host --control http://localhost:8080 --token ci-host --adopt --interval 10s > $GITHUB_WORKSPACE/bin/emu-host.log 2>&1 &
+            SIDEKICK_API_KEYS="org_ci:ci-key" SIDEKICK_HOST_TOKEN=ci-host PORT=8080 $GITHUB_WORKSPACE/bin/control-plane > /tmp/cp.log 2>&1 &
+            for i in $(seq 1 30); do curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami && break; sleep 2; done
+            curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami
+            SIDEKICK_POOL=linux-pool EMU_ADB_ADDR=127.0.0.1 $GITHUB_WORKSPACE/bin/emu-host --control http://localhost:8080 --token ci-host --adopt --interval 10s > /tmp/emu-host.log 2>&1 &
+            EID=$($GITHUB_WORKSPACE/bin/sidekick android create --profile Pixel_7_API_34 | python3 -c "import json,sys; print(json.JSONDecoder().raw_decode(sys.stdin.read())[0]['id'])")
+            test -n "$EID"
             for i in $(seq 1 60); do STATUS=$($GITHUB_WORKSPACE/bin/sidekick android get "$EID" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"); echo "emu status: $STATUS"; if [ "$STATUS" = "running" ]; then break; fi; sleep 10; done
             [ "$STATUS" = "running" ]
             $GITHUB_WORKSPACE/bin/sidekick android ui-tree "$EID" | tee tree.json
@@ -95,4 +74,4 @@ jobs:
             $GITHUB_WORKSPACE/bin/sidekick test replay --in t.json --emu "$EID" --adb-serial emulator-5554 --threshold 0.5
             $GITHUB_WORKSPACE/bin/sidekick test diff shot.png shot.png --threshold 0.01
             $GITHUB_WORKSPACE/bin/sidekick android delete "$EID"
-            echo "--- emu-host log ---"; tail -20 $GITHUB_WORKSPACE/bin/emu-host.log || true
+            echo "--- emu-host log ---"; tail -20 /tmp/emu-host.log || true
