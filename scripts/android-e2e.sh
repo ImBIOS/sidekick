@@ -26,9 +26,16 @@ for i in $(seq 1 60); do
 done
 [ "$STATUS" = "running" ]
 
-"$BIN/sidekick" android ui-tree "$EID" | tee tree.json
+# Tree/screenshot arrive on the host refresh loop; poll until present.
+for i in $(seq 1 18); do
+  "$BIN/sidekick" android ui-tree "$EID" > tree.json 2>/dev/null && break
+  sleep 10
+done
 grep -q "@e" tree.json
-"$BIN/sidekick" android screenshot "$EID" --out shot.png
+for i in $(seq 1 18); do
+  "$BIN/sidekick" android screenshot "$EID" --out shot.png 2>/dev/null && break
+  sleep 10
+done
 test -s shot.png
 "$BIN/sidekick" android logs "$EID" --tail 5 | tee logs.txt
 test -s logs.txt
