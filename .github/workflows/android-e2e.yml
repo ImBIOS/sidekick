@@ -50,7 +50,12 @@ jobs:
           SIDEKICK_URL: http://localhost:8080
           SIDEKICK_TOKEN: ci-key
         run: |
-          EID=$(/tmp/sidekick android create --profile Pixel_7_API_34 | python3 -c "import json,sys; print(json.JSONDecoder().raw_decode(sys.stdin.read())[0]['id'])")
+          set -eu
+          test -x /tmp/sidekick || { echo "sidekick binary missing"; exit 1; }
+          CREATE_OUT=$(/tmp/sidekick android create --profile Pixel_7_API_34)
+          echo "$CREATE_OUT"
+          EID=$(printf '%s' "$CREATE_OUT" | python3 -c "import json,sys; print(json.JSONDecoder().raw_decode(sys.stdin.read())[0]['id'])")
+          test -n "$EID"
           echo "EID=$EID" >> "$GITHUB_ENV"
 
       - name: Full loop on emulator
