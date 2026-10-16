@@ -38,6 +38,10 @@ echo "--- focused window ---"; adb -s emulator-5554 shell dumpsys window windows
 # transient processes (uiautomator gets LMK-killed). Cancel it: the image
 # is throwaway CI state, not a battery-powered phone.
 adb -s emulator-5554 shell cmd package bg-dexopt-job --cancel || true
+echo "--- direct uiautomator probe (bypass Go wrapper) ---"
+adb -s emulator-5554 shell uiautomator dump /sdcard/probe.xml; echo "dump exit=$?"
+adb -s emulator-5554 shell ls -l /sdcard/probe.xml || true
+adb -s emulator-5554 shell dumpsys power | grep -iE "wakefulness|screenon" | head -3 || true
 
 # Tree/screenshot arrive on the host refresh loop; poll until present.
 # Attempts stay visible: a silent tree is the failure we are hunting.
