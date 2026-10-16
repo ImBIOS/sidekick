@@ -122,11 +122,20 @@ func (r execRunner) Boot(profile string) (string, error) {
 }
 
 func (r execRunner) Tree(serial string) ([]byte, error) {
-	out, err := r.adbCmd(serial, "exec-out", "uiautomator", "dump", "/dev/stdout").CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("uiautomator: %w (%s)", err, firstLine(out))
+	const devicePath = "/sdcard/sidekick-ui.xml"
+	// Dump to a device file first: `dump /dev/stdout` mixes the status
+	// line into the stream on some API levels and exec-out swallows
+	// failures silently. A file round-trip is unambiguous either way.
+	out, err := r.adbCmd(serial, "shell", "uiautomator", "dump", devicePath).CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "dumped to") {
+		return nil, fmt.Errorf("uiautomator dump: %w (%s)", err, firstLine(out))
 	}
-	return uiaToJSON(out)
+	raw, err := r.adbCmd(serial, "exec-out", "cat", devicePath).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("uiautomator pull: %w", err)
+	}
+	_, _ = r.adbCmd(serial, "shell", "rm", "-f", devicePath).CombinedOutput()
+	return uiaToJSON(raw)
 }
 
 func (r execRunner) Shot(serial string) ([]byte, error) {
