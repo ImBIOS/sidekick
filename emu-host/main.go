@@ -126,7 +126,7 @@ func (r execRunner) Tree(serial string) ([]byte, error) {
 	// Dump to a device file first: `dump /dev/stdout` mixes the status
 	// line into the stream on some API levels and exec-out swallows
 	// failures silently. A file round-trip is unambiguous either way.
-	out, err := r.adbCmd(serial, "shell", "uiautomator", "dump", devicePath).CombinedOutput()
+	out, err := r.adbCmd(serial, "shell", "uiautomator", "dump", "--compressed", devicePath).CombinedOutput()
 	if err != nil || !strings.Contains(string(out), "dumped to") {
 		return nil, fmt.Errorf("uiautomator dump: %w (%s)", err, firstLine(out))
 	}
