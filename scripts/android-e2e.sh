@@ -34,6 +34,10 @@ done
 echo "--- host memory ---"; free -m | head -2
 echo "--- device memory ---"; adb -s emulator-5554 shell cat /proc/meminfo | head -3
 echo "--- focused window ---"; adb -s emulator-5554 shell dumpsys window windows | grep -i mCurrentFocus | head -2 || true
+# Fresh boots run background dexopt for many minutes; it starves big
+# transient processes (uiautomator gets LMK-killed). Cancel it: the image
+# is throwaway CI state, not a battery-powered phone.
+adb -s emulator-5554 shell cmd package bg-dexopt-job --cancel || true
 
 # Tree/screenshot arrive on the host refresh loop; poll until present.
 # Attempts stay visible: a silent tree is the failure we are hunting.
