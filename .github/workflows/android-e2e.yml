@@ -55,6 +55,8 @@ jobs:
           SIDEKICK_TOKEN: ci-key
         run: |
           set -eu
+          echo "whoami=$(whoami) tmp=$(df /tmp | tail -1)"; ls -la /tmp/sidekick /tmp/emu-host || true
+          mount | grep -E " /tmp " || echo "no tmp mount"
           test -x /tmp/sidekick || { echo "sidekick binary missing"; exit 1; }
           CREATE_OUT=$(/tmp/sidekick android create --profile Pixel_7_API_34)
           echo "$CREATE_OUT"
