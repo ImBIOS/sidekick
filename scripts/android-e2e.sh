@@ -73,4 +73,6 @@ echo "tapping $REF"
 "$BIN/sidekick" android delete "$EID"
 echo "--- emu-host log ---"
 tail -20 /tmp/emu-host.log || true
+echo "--- host OOM check ---"
+dmesg 2>/dev/null | grep -i "out of memory\|killed process" | tail -3 || true
 echo "E2E GREEN"
