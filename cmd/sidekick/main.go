@@ -154,7 +154,7 @@ func init() {
 }
 
 func main() {
-	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), tokenCmd(), agentSetupCmd(), devCmd(), mcpCmd(), testCmd(), xcodeCmd(), iosCmd(), androidCmd())
+	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), tokenCmd(), agentSetupCmd(), devCmd(), mcpCmd(), testCmd(), playCmd(), xcodeCmd(), iosCmd(), androidCmd())
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -720,7 +720,7 @@ func androidCmd() *cobra.Command {
 	}
 	logs.Flags().IntVar(&tail, "tail", 100, "last N lines")
 
-	android.AddCommand(create, list, get, del, tree, shotCmd("/v1/emus/", "android"), logs)
+	android.AddCommand(create, list, get, del, tree, shotCmd("/v1/emus/", "android"), logs, netcapCmd(), droidRecordCmd(), rotateCmd(), postureCmd())
 	return android
 }
 

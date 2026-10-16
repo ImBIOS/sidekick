@@ -1,0 +1,122 @@
+# Android end-to-end: the whole Sidekick loop on a real emulator.
+# Boots control-plane + emu-host + a KVM Android emulator, then drives the
+# agent verbs (tree, tap replay, screenshot, record, logs, netcap, rotate)
+# exactly as `skill/SKILL.md` prescribes. Green here is the witness behind
+# the comparison-table Yes cells for recording, replay, visual diff and
+# network capture.
+name: android-e2e
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "control-plane/**"
+      - "emu-host/**"
+      - "testrun/**"
+      - "cmd/**"
+      - "internal/**"
+      - "skill/**"
+      - ".github/workflows/android-e2e.yml"
+      - "go.mod"
+      - "go.sum"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: android-actions/setup-android@v3
+
+      - name: Create AVDs
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64" "emulator"
+          avdmanager list device 2>/dev/null | grep -i -A1 "pixel" | head -8
+          echo "no" | avdmanager create avd -n Pixel_7_API_34 -k "system-images;android-34;google_apis;x86_64" --force
+
+      - name: Start control-plane
+        env:
+          PORT: "8080"
+          SIDEKICK_API_KEYS: "org_ci:ci-key"
+          SIDEKICK_HOST_TOKEN: ci-host
+        run: |
+          go run ./control-plane > /tmp/cp.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf -H "Authorization: Bearer ci-key" http://localhost:8080/v1/whoami && break
+            sleep 2
+          done
+
+      - name: Build CLI and emu-host
+        run: |
+          go build -o /tmp/sidekick ./cmd/sidekick
+          go build -o /tmp/emu-host ./emu-host
+
+      - name: Provision emulator via Sidekick
+        env:
+          SIDEKICK_URL: http://localhost:8080
+          SIDEKICK_TOKEN: ci-key
+          SIDEKICK_CONTROL: http://localhost:8080
+          SIDEKICK_HOST_TOKEN: ci-host
+        run: |
+          export PATH="$HOME/Android/Sdk/emulator:$HOME/Android/Sdk/platform-tools:$PATH"
+          EID=$(/tmp/sidekick android create --profile Pixel_7_API_34 | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          echo "EID=$EID" >> "$GITHUB_ENV"
+          SIDEKICK_POOL=linux-pool EMU_ADB_ADDR=127.0.0.1 /tmp/emu-host --boot-timeout 15m --interval 10s > /tmp/emu-host.log 2>&1 &
+          for i in $(seq 1 90); do
+            STATUS=$(/tmp/sidekick android get "$EID" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+            echo "emu status: $STATUS"
+            [ "$STATUS" = "running" ] && break
+            sleep 10
+          done
+          [ "$STATUS" = "running" ]
+
+      - name: Agent verbs (tree, shot, logs, record, netcap, rotate)
+        env:
+          SIDEKICK_URL: http://localhost:8080
+          SIDEKICK_TOKEN: ci-key
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/Android/Sdk/platform-tools:$PATH"
+          /tmp/sidekick android ui-tree "$EID" | tee tree.json
+          grep -q "@e" tree.json
+          /tmp/sidekick android screenshot "$EID" --out shot.png
+          test -s shot.png
+          /tmp/sidekick android logs "$EID" --tail 5 | tee logs.txt
+          test -s logs.txt
+          /tmp/sidekick android record "$EID"
+          sleep 20
+          /tmp/sidekick android record "$EID" --stop --out demo.mp4
+          test -s demo.mp4
+          /tmp/sidekick android netcap --out cap.pcap --duration 15 --adb-serial emulator-5554
+          test -s cap.pcap
+          /tmp/sidekick android rotate "$EID" 90 --adb-serial emulator-5554
+          /tmp/sidekick android rotate "$EID" 0 --adb-serial emulator-5554
+
+      - name: Record, replay, visual diff
+        env:
+          SIDEKICK_URL: http://localhost:8080
+          SIDEKICK_TOKEN: ci-key
+        run: |
+          set -euo pipefail
+          REF=$(python3 -c "import json; d=json.load(open('tree.json')); print(d['nodes'][0]['children'][0]['ref'] if d['nodes'][0].get('children') else d['nodes'][0]['ref'])")
+          echo "tapping $REF"
+          /tmp/sidekick test record --out t.json tap "$REF"
+          /tmp/sidekick test replay --in t.json --emu "$EID" --adb-serial emulator-5554 --threshold 0.5
+          /tmp/sidekick test diff shot.png shot.png --threshold 0.01
+
+      - name: Teardown
+        if: always()
+        env:
+          SIDEKICK_URL: http://localhost:8080
+          SIDEKICK_TOKEN: ci-key
+        run: |
+          /tmp/sidekick android delete "$EID" || true
+          echo "--- emu-host log ---"; tail -20 /tmp/emu-host.log || true
+          echo "--- control-plane log ---"; tail -20 /tmp/cp.log || true
