@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/ImBIOS/sidekick/internal/api"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -154,7 +154,7 @@ func init() {
 }
 
 func main() {
-	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), agentSetupCmd(), devCmd(), mcpCmd(), xcodeCmd(), iosCmd(), androidCmd())
+	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), tokenCmd(), agentSetupCmd(), devCmd(), mcpCmd(), testCmd(), xcodeCmd(), iosCmd(), androidCmd())
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}

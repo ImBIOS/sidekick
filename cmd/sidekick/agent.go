@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/ImBIOS/sidekick/internal/api"
 	"github.com/ImBIOS/sidekick/mcp"
+	"github.com/spf13/cobra"
 )
 
 //go:embed skill-embed/SKILL.md
@@ -86,6 +86,7 @@ func agentSetupCmd() *cobra.Command {
 	c.Flags().StringVar(&dir, "dir", "", "also install into a project dir (.claude/skills + AGENTS.md nudge)")
 	return c
 }
+
 const agentsNudge = "\n## Sidekick\nThis repo builds a mobile app. Your sandbox has no Xcode or emulator: use the `sidekick` skill for all builds, simulators, and device verification (preview link + demo video on every PR).\n"
 
 // appendNudge adds the Sidekick paragraph to AGENTS.md once (idempotent).

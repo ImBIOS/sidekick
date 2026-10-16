@@ -31,6 +31,17 @@ type Runner interface {
 	Logs(serial string) ([]string, error)
 	// Destroy kills the emulator.
 	Destroy(serial string) error
+	// StartVideo begins an MP4 capture (adb screenrecord); StopVideo ends
+	// it and returns the bytes.
+	StartVideo(serial string) error
+	StopVideo(serial string) ([]byte, error)
+	// Rotate sets the display rotation (0|90|180|270).
+	Rotate(serial string, degrees int) error
+	// SetPosture requests a foldable posture (open|half-open|closed).
+	SetPosture(serial, posture string) error
+	// StartNetcap begins a pcap capture; StopNetcap ends it and returns bytes.
+	StartNetcap(serial string) error
+	StopNetcap(serial string) ([]byte, error)
 }
 
 // poster is the fleet surface the host loop needs (memPoster in tests).
@@ -118,6 +129,106 @@ func (r execRunner) Destroy(serial string) error {
 		return fmt.Errorf("emu kill: %w (%s)", err, firstLine(out))
 	}
 	return nil
+}
+
+// captures tracks background on-device recordings per serial (video + pcap).
+type capture struct {
+	cmd  *exec.Cmd
+	path string
+	kind string // "video" | "pcap"
+}
+
+var captures = map[string]*capture{}
+
+// StartVideo begins `screenrecord` on the device (time-limit 180s, the
+// platform cap; agents stop earlier via record --stop).
+func (r execRunner) StartVideo(serial string) error {
+	return startCapture(r, serial, "video", "/sdcard/sidekick-rec.mp4",
+		"shell", "screenrecord", "--time-limit", "180", "/sdcard/sidekick-rec.mp4")
+}
+
+// StopVideo ends the capture and pulls the MP4.
+func (r execRunner) StopVideo(serial string) ([]byte, error) {
+	return stopCapture(r, serial, "video", "/sdcard/sidekick-rec.mp4")
+}
+
+// Rotate locks rotation off and sets 0/90/180/270 (user_rotation index).
+func (r execRunner) Rotate(serial string, degrees int) error {
+	idx := map[int]string{0: "0", 90: "1", 180: "2", 270: "3"}[degrees]
+	if idx == "" {
+		return fmt.Errorf("degrees must be one of 0, 90, 180, 270")
+	}
+	for _, args := range [][]string{
+		{"shell", "settings", "put", "system", "accelerometer_rotation", "0"},
+		{"shell", "settings", "put", "system", "user_rotation", idx},
+	} {
+		if out, err := r.adbCmd(serial, args...).CombinedOutput(); err != nil {
+			return fmt.Errorf("rotate: %w (%s)", err, firstLine(out))
+		}
+	}
+	return nil
+}
+
+// SetPosture requests a foldable posture. It drives the platform
+// device_state controller when present; otherwise it fails loudly instead
+// of pretending (foldables without posture control are just phones).
+func (r execRunner) SetPosture(serial, posture string) error {
+	id := map[string]string{"closed": "0", "half-open": "1", "open": "2"}[posture]
+	if id == "" {
+		return fmt.Errorf(`posture must be one of "closed", "half-open", "open"`)
+	}
+	out, err := r.adbCmd(serial, "shell", "cmd", "device_state", "state", id).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("posture %q unsupported on this device (%s)", posture, firstLine(out))
+	}
+	return nil
+}
+
+// StartNetcap begins a pcap capture (needs adb root; emulator images allow
+// `adb root`). Agents analyze traffic for the app under test.
+func (r execRunner) StartNetcap(serial string) error {
+	if out, err := r.adbCmd(serial, "root").CombinedOutput(); err != nil {
+		return fmt.Errorf("adb root (needed for capture): %w (%s)", err, firstLine(out))
+	}
+	return startCapture(r, serial, "pcap", "/sdcard/sidekick-net.pcap",
+		"shell", "tcpdump", "-w", "/sdcard/sidekick-net.pcap", "-s", "0")
+}
+
+// StopNetcap ends the capture and pulls the pcap.
+func (r execRunner) StopNetcap(serial string) ([]byte, error) {
+	return stopCapture(r, serial, "pcap", "/sdcard/sidekick-net.pcap")
+}
+
+func startCapture(r execRunner, serial, kind, devicePath string, args ...string) error {
+	if _, active := captures[serial+"/"+kind]; active {
+		return fmt.Errorf("%s capture already running", kind)
+	}
+	cmd := r.adbCmd(serial, args...)
+	cmd.Stdout, cmd.Stderr = nil, nil
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("%s start: %w", kind, err)
+	}
+	captures[serial+"/"+kind] = &capture{cmd: cmd, path: devicePath, kind: kind}
+	return nil
+}
+
+func stopCapture(r execRunner, serial, kind, devicePath string) ([]byte, error) {
+	key := serial + "/" + kind
+	c, ok := captures[key]
+	if !ok {
+		return nil, fmt.Errorf("no active %s capture", kind)
+	}
+	delete(captures, key)
+	if c.cmd.Process != nil {
+		_ = c.cmd.Process.Kill()
+	}
+	_ = c.cmd.Wait()
+	out, err := r.adbCmd(serial, "exec-out", "cat", devicePath).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("%s pull: %w", kind, err)
+	}
+	_, _ = r.adbCmd(serial, "shell", "rm", "-f", devicePath).CombinedOutput()
+	return out, nil
 }
 
 func firstLine(b []byte) string {

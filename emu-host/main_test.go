@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -98,6 +99,27 @@ func (f *fakeRunner) Destroy(serial string) error {
 	return nil
 }
 
+func (f *fakeRunner) StartVideo(serial string) error { return nil }
+func (f *fakeRunner) StopVideo(serial string) ([]byte, error) {
+	return []byte("mp4bytes"), nil
+}
+func (f *fakeRunner) StartNetcap(serial string) error { return nil }
+func (f *fakeRunner) StopNetcap(serial string) ([]byte, error) {
+	return []byte("pcapbytes"), nil
+}
+func (f *fakeRunner) Rotate(serial string, degrees int) error {
+	if degrees != 0 && degrees != 90 && degrees != 180 && degrees != 270 {
+		return fmt.Errorf("degrees must be one of 0, 90, 180, 270")
+	}
+	return nil
+}
+func (f *fakeRunner) SetPosture(serial, posture string) error {
+	if posture != "open" && posture != "half-open" && posture != "closed" {
+		return fmt.Errorf("bad posture")
+	}
+	return nil
+}
+
 // memPoster records control-plane posts; notFoundIDs simulate deleted emus.
 type memPoster struct {
 	ready       map[string]string
@@ -148,6 +170,31 @@ func TestProvisionPublishes(t *testing.T) {
 	}
 	if h.serials["emu_1"] != "emulator-5554" {
 		t.Errorf("serial not tracked")
+	}
+}
+
+func TestRotatePostureValidation(t *testing.T) {
+	r := execRunner{adb: "adb"}
+	// Pure validation runs before any adb call: no device needed.
+	if err := r.Rotate("s", 45); err == nil {
+		t.Error("bad degrees should fail fast")
+	}
+	if err := r.SetPosture("s", "inside-out"); err == nil {
+		t.Error("bad posture should fail fast")
+	}
+}
+
+func TestVideoOrdering(t *testing.T) {
+	// stopCapture with no active capture fails instead of pulling garbage.
+	r := execRunner{adb: "adb"}
+	if _, err := stopCapture(r, "nosuch", "video", "/sdcard/x.mp4"); err == nil {
+		t.Error("stop without start should fail")
+	}
+	// Double start is rejected (would orphan the first capture).
+	captures["s/video"] = &capture{kind: "video"}
+	defer delete(captures, "s/video")
+	if err := r.StartVideo("s"); err == nil {
+		t.Error("double start should fail")
 	}
 }
 
