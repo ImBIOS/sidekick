@@ -42,6 +42,8 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-34" "system-images;android-34;google_apis;x86_64" "emulator"
           avdmanager list device 2>/dev/null | grep -i -A1 "pixel" | head -8
           echo "no" | avdmanager create avd -n Pixel_7_API_34 -k "system-images;android-34;google_apis;x86_64" --force
+          emulator -list-avds | tee avds.txt
+          grep -q "Pixel_7_API_34" avds.txt
 
       - name: Start control-plane
         env:

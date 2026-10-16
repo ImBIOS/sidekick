@@ -65,6 +65,14 @@ func (r execRunner) adbCmd(serial string, args ...string) *exec.Cmd {
 }
 
 func (r execRunner) Boot(profile string) (string, error) {
+	if profile == "" {
+		return "", fmt.Errorf("refusing to boot: empty profile (claim carried no AVD name)")
+	}
+	if out, err := exec.Command("emulator", "-list-avds").CombinedOutput(); err != nil {
+		return "", fmt.Errorf("emulator -list-avds: %w (%s)", err, firstLine(out))
+	} else {
+		fmt.Printf("emu-host: available AVDs:\n%s\n", string(out))
+	}
 	cmd := exec.Command("emulator", "-avd", profile,
 		"-no-window", "-no-audio", "-no-snapshot", "-gpu", "swiftshader_indirect")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
@@ -286,6 +294,10 @@ type host struct {
 
 // provision boots one claimed emu and publishes its first state.
 func (h *host) provision(emuID, profile string) {
+	if profile == "" {
+		fmt.Fprintln(os.Stderr, "emu-host: refusing claim with empty profile for", emuID)
+		return
+	}
 	serial, err := h.runner.Boot(profile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "emu-host: boot:", err)
