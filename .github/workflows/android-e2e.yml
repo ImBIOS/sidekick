@@ -33,6 +33,8 @@ jobs:
         with:
           go-version-file: go.mod
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Create AVDs
         run: |
