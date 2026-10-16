@@ -37,6 +37,7 @@ done
 for i in $(seq 1 18); do
   echo "tree attempt $i"
   if "$BIN/sidekick" android ui-tree "$EID" > tree.json; then break; fi
+  if [ $((i % 6)) -eq 0 ]; then echo "--- emu-host log ---"; tail -10 /tmp/emu-host.log || true; fi
   sleep 10
 done
 grep -q "@e" tree.json
