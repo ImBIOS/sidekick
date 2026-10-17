@@ -205,11 +205,12 @@ func main() {
 	control := flag.String("control", "", "control-plane URL (or SIDEKICK_CONTROL)")
 	token := flag.String("token", "", "fleet host token (or SIDEKICK_HOST_TOKEN)")
 	pool := flag.String("pool", "", "pool name (or SIDEKICK_POOL)")
+	regionflag := flag.String("region", "", "region pin, e.g. asia-southeast1 (or SIDEKICK_REGION)")
 	stream := flag.String("stream", "", "WebRTC base URL agents open (default <control>/webrtc)")
 	interval := flag.Duration("interval", time.Second, "claim poll interval")
 	flag.Parse()
 
-	ctrl, tok, pl, err := fleet.Resolve(*control, *token, *pool)
+	ctrl, tok, pl, region, err := fleet.Resolve(*control, *token, *pool, *regionflag)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "sim-daemon:", err)
 		os.Exit(1)
@@ -225,7 +226,7 @@ func main() {
 	udids := map[string]string{}
 	fmt.Printf("sim-daemon: pool %s via %s\n", pl, ctrl)
 	for {
-		claim, ok, err := fc.ClaimNext(pl, []string{"sim", "sim-action"})
+		claim, ok, err := fc.ClaimNext(pl, region, []string{"sim", "sim-action"})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "sim-daemon: claim:", err)
 			time.Sleep(*interval)

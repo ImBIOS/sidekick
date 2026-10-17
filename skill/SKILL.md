@@ -25,9 +25,11 @@ Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 - `sidekick android create --profile Pixel_7` → id (provisioning). Poll `sidekick android get <id>` until `running`, then adb tunnel on localhost:5555: `adb-proxy --emu <id>` (uses SIDEKICK_TOKEN). Then plain `adb install app.apk`, `maestro test flow.yaml`, Appium, scrcpy all work.
 - Same verbs: `android ui-tree` (@e refs from the on-device dump), `android screenshot --out shot.png`, `android logs --tail 100`, preview link.
 - Media + posture over the tunnel: `android record --out demo.mp4 --duration 30s`, `android netcap --out cap.pcap --duration 30s`, `android rotate 90`, `android posture half-open` (foldables only).
+- Pin work to a fleet region: `android create --region asia-northeast1` (hosts join with `--region`; unpinned work goes anywhere).
 
 ## Rules
 - Always build before creating a simulator. Always `ui-tree` before acting (refs go stale after each screen change).
+- Plain-English tests: `sidekick test nl --emu <id> "tap the Send button" "expect Inbox visible"` — verbs ground against the live tree, failures name candidates.
 - Screenshot when checking look (tree has no color/stacking). Logs when app crashes.
 - Stop sessions when done: `sidekick ios delete <id>` / `sidekick android delete <id>` — streaming minutes bill until stopped.
 - If asked only to "implement X", still verify on device and post preview link + video.

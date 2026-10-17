@@ -38,12 +38,12 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Live collaboration + human takeover | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
 | Record once, replay everywhere | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
 | Visual regression per step | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ✅ Yes |
-| AI / plain-English testing | 🛣️ Roadmap (Agent-fix on moved elements) | ✅ Yes | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ➖ Partial |
+| AI / plain-English testing | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ➖ Partial |
 | CI runner + GitHub checks | 🛣️ Roadmap (Actions + checks) | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
 | Self-hostable (BYO Mac minis) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |
 | Source-available (FSL → Apache-2.0) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Public pricing + free tier, no card | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ➖ Partial | ➖ Partial | ➖ Partial | ❌ No |
-| Per-instance sandbox tokens + region pin | 🛣️ Roadmap (Scoped tokens shipped; regions need a second region) | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
+| Per-instance sandbox tokens + region pin | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
 
 Legend: ✅ Yes · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.
 </details>

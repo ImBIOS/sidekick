@@ -86,8 +86,55 @@ func tokenCmd() *cobra.Command {
 // refs, diff screenshots, exit nonzero on failure (CI-ready).
 func testCmd() *cobra.Command {
 	tst := &cobra.Command{Use: "test", Short: "record, replay and verify UI tests"}
-	tst.AddCommand(testRecordCmd(), testReplayCmd(), testDiffCmd())
+	tst.AddCommand(testRecordCmd(), testReplayCmd(), testDiffCmd(), testNlCmd())
 	return tst
+}
+
+// testNlCmd runs plain-English steps grounded against the live tree:
+// sidekick test nl --emu ID "tap the Send button" "expect Inbox visible".
+func testNlCmd() *cobra.Command {
+	var sim, emu, serial, adbBin string
+	var timeout time.Duration
+	c := &cobra.Command{
+		Use:   "nl --emu ID \"tap the Send button\" ...",
+		Short: "run plain-English test steps",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var steps []testrun.NLStep
+			for _, raw := range args {
+				s, err := testrun.ParseNLStep(raw)
+				if err != nil {
+					return fmt.Errorf("step %q: %w", raw, err)
+				}
+				steps = append(steps, s)
+			}
+			url, token := resolveConn(cmd)
+			fetch := &apiFetcher{url: url, token: token, sim: sim, emu: emu}
+			r := &adbRunner{adb: adbBin, serial: serial, conn: fetch}
+			done := make(chan *testrun.Report, 1)
+			go func() {
+				done <- testrun.RunNL(steps, r)
+			}()
+			select {
+			case rep := <-done:
+				raw, _ := json.MarshalIndent(rep, "", "  ")
+				fmt.Println(string(raw))
+				if rep.Failed {
+					return fmt.Errorf("plain-English test failed")
+				}
+				fmt.Printf("passed %d steps\n", len(rep.Steps))
+				return nil
+			case <-time.After(timeout):
+				return fmt.Errorf("test timed out after %s", timeout)
+			}
+		},
+	}
+	c.Flags().StringVar(&sim, "sim", "", "sim id for tree")
+	c.Flags().StringVar(&emu, "emu", "", "emu id for tree")
+	c.Flags().StringVar(&serial, "adb-serial", "localhost:5555", "adb target")
+	c.Flags().StringVar(&adbBin, "adb", "adb", "adb binary")
+	c.Flags().DurationVar(&timeout, "timeout", 10*time.Minute, "max run time")
+	return c
 }
 
 // testRecordCmd builds a recording from CLI verbs:
@@ -281,11 +328,25 @@ func findTapBounds(v any, ref string) (string, bool) {
 		stack = stack[:len(stack)-1]
 		if r, _ := f.node["ref"].(string); r == ref {
 			chain := append(f.ancestry, f.node)
+			// Prefer the nearest clickable ancestor-or-self (real touch
+			// targets), but fall back to the nearest bounds available:
+			// dumpers often omit clickable flags, and a tap at some
+			// ancestor bounds beats failing the step.
+			fallback := ""
 			for i := len(chain) - 1; i >= 0; i-- {
 				b, _ := chain[i]["bounds"].(string)
-				if b != "" && isTruthy(chain[i]["clickable"]) {
+				if b == "" {
+					continue
+				}
+				if fallback == "" {
+					fallback = b
+				}
+				if isTruthy(chain[i]["clickable"]) {
 					return b, true
 				}
+			}
+			if fallback != "" {
+				return fallback, true
 			}
 			return "", false
 		}

@@ -166,6 +166,7 @@ type hostProfile struct {
 	Control string `json:"control_plane_url"`
 	Token   string `json:"host_token"`
 	Pool    string `json:"pool"`
+	Region  string `json:"region"`
 	Joined  string `json:"joined_at"`
 }
 
@@ -182,7 +183,7 @@ func hostPath() (string, error) {
 // SIDEKICK_HOST_TOKEN/SIDEKICK_POOL env) to poll for claims.
 func hostCmd() *cobra.Command {
 	host := &cobra.Command{Use: "host", Short: "fleet host enrollment"}
-	var control, token, pool string
+	var control, token, pool, joinRegion string
 	join := &cobra.Command{
 		Use:   "join",
 		Short: "save this machine's pool credentials for the daemons",
@@ -210,6 +211,7 @@ func hostCmd() *cobra.Command {
 				Control: strings.TrimSuffix(control, "/"),
 				Token:   token,
 				Pool:    pool,
+				Region:  joinRegion,
 				Joined:  time.Now().UTC().Format(time.RFC3339),
 			}
 			raw, _ := json.MarshalIndent(prof, "", "  ")
@@ -223,6 +225,7 @@ func hostCmd() *cobra.Command {
 	join.Flags().StringVar(&control, "control", "", "control-plane URL")
 	join.Flags().StringVar(&token, "token", "", "fleet host token (SIDEKICK_HOST_TOKEN)")
 	join.Flags().StringVar(&pool, "pool", "", "pool name (default mac-pool)")
+	join.Flags().StringVar(&joinRegion, "region", "", "region pin, e.g. asia-southeast1")
 	host.AddCommand(join)
 	return host
 }
@@ -322,7 +325,7 @@ func orgCmd() *cobra.Command {
 
 func xcodeCmd() *cobra.Command {
 	xcode := &cobra.Command{Use: "xcode", Short: "remote Xcode builds"}
-	var scheme, ref string
+	var scheme, ref, region string
 	var wait bool
 	build := &cobra.Command{
 		Use:   "build [path]",
@@ -339,7 +342,7 @@ func xcodeCmd() *cobra.Command {
 				Status string `json:"status"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/builds",
-				map[string]string{"scheme": scheme, "ref": ref}, &b); err != nil {
+				map[string]string{"scheme": scheme, "ref": ref, "region": region}, &b); err != nil {
 				return err
 			}
 			fmt.Printf("build %s (%s)\n", b.ID, b.Status)
@@ -375,6 +378,7 @@ func xcodeCmd() *cobra.Command {
 	}
 	build.Flags().StringVar(&scheme, "scheme", "", "Xcode scheme (required)")
 	build.Flags().StringVar(&ref, "ref", "", "git ref to build (default: working copy)")
+	build.Flags().StringVar(&region, "region", "", "pin to a fleet region (default: any)")
 	build.Flags().BoolVar(&wait, "wait", true, "stream logs until the build finishes")
 	xcode.AddCommand(build)
 	return xcode
@@ -385,7 +389,7 @@ func xcodeCmd() *cobra.Command {
 func iosCmd() *cobra.Command {
 	ios := &cobra.Command{Use: "ios", Short: "cloud iOS simulators"}
 
-	var device, runtime string
+	var device, runtime, simRegion string
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "create simulator, print id + webrtc/ax-tree URLs",
@@ -397,7 +401,7 @@ func iosCmd() *cobra.Command {
 				AXTreeURL string `json:"ax_tree_url"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/sims",
-				map[string]string{"device": device, "runtime": runtime}, &sim); err != nil {
+				map[string]string{"device": device, "runtime": runtime, "region": simRegion}, &sim); err != nil {
 				return err
 			}
 			printJSON(sim)
@@ -409,6 +413,7 @@ func iosCmd() *cobra.Command {
 	}
 	create.Flags().StringVar(&device, "device", "iPhone 16", "device name")
 	create.Flags().StringVar(&runtime, "runtime", "", "iOS runtime (default: latest)")
+	create.Flags().StringVar(&simRegion, "region", "", "pin to a fleet region (default: any)")
 
 	list := &cobra.Command{
 		Use:   "list",
@@ -619,7 +624,7 @@ func recordCmd() *cobra.Command {
 func androidCmd() *cobra.Command {
 	android := &cobra.Command{Use: "android", Short: "cloud Android emulators"}
 
-	var profile string
+	var profile, emuRegion string
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "create emulator + print adb target",
@@ -630,7 +635,7 @@ func androidCmd() *cobra.Command {
 				Status    string `json:"status"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/emus",
-				map[string]string{"profile": profile}, &emu); err != nil {
+				map[string]string{"profile": profile, "region": emuRegion}, &emu); err != nil {
 				return err
 			}
 			printJSON(emu)
@@ -641,6 +646,7 @@ func androidCmd() *cobra.Command {
 		},
 	}
 	create.Flags().StringVar(&profile, "profile", "Pixel_7_API_34", "emulator profile")
+	create.Flags().StringVar(&emuRegion, "region", "", "pin to a fleet region (default: any)")
 
 	list := &cobra.Command{
 		Use:   "list",

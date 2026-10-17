@@ -21,14 +21,14 @@ type Server struct {
 // Scheduler is the persistence surface both backends implement: the
 // in-memory Store (dev, tests) and PGStore (DATABASE_URL set).
 type Scheduler interface {
-	CreateBuild(org OrgID, scheme, ref string) *Build
+	CreateBuild(org OrgID, scheme, ref, region string) *Build
 	GetBuild(org OrgID, id string) (*Build, bool)
 	ListBuilds(org OrgID) []*Build
 	AppendBuildLog(org OrgID, id string, lines []string) bool
 	FinishBuild(org OrgID, id, status string) bool
 	HostAppendBuildLog(id string, lines []string) bool
 	HostFinishBuild(id, status string) bool
-	CreateSim(org OrgID, device, runtime string) *Sim
+	CreateSim(org OrgID, device, runtime, region string) *Sim
 	GetSim(org OrgID, id string) (*Sim, bool)
 	ListSims(org OrgID) []*Sim
 	DeleteSim(org OrgID, id string) bool
@@ -41,7 +41,7 @@ type Scheduler interface {
 	EnqueueSimAction(org OrgID, simID string, body map[string]string) (*QueuedAction, bool)
 	CompleteSimAction(id, result string) bool
 	GetSimAction(org OrgID, id string) (*QueuedAction, bool)
-	CreateEmu(org OrgID, profile string) *Emu
+	CreateEmu(org OrgID, profile, region string) *Emu
 	GetEmu(org OrgID, id string) (*Emu, bool)
 	ListEmus(org OrgID) []*Emu
 	DeleteEmu(org OrgID, id string) bool
@@ -49,7 +49,7 @@ type Scheduler interface {
 	SetEmuTree(id string, raw json.RawMessage) bool
 	SetEmuShot(id string, png []byte) bool
 	AppendEmuLog(id string, lines []string) bool
-	ClaimNext(pool string, kinds []string) *Claim
+	ClaimNext(pool, region string, kinds []string) *Claim
 	CreateInstanceToken(org OrgID, name string, scopes []string, ttl time.Duration) (*InstanceToken, string, bool)
 	LookupInstanceToken(secret string) (*InstanceToken, bool)
 	ListInstanceTokens(org OrgID) []*InstanceToken
@@ -149,6 +149,7 @@ func (s *Server) handleWhoami(w http.ResponseWriter, r *http.Request) {
 type createBuildReq struct {
 	Scheme string `json:"scheme"`
 	Ref    string `json:"ref"`
+	Region string `json:"region"`
 }
 
 // POST /v1/builds — queue a remote Xcode/Gradle build for the caller's org.
@@ -162,7 +163,7 @@ func (s *Server) handleCreateBuild(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "scheme is required")
 		return
 	}
-	writeJSON(w, http.StatusCreated, s.store.CreateBuild(orgFromContext(r), req.Scheme, req.Ref))
+	writeJSON(w, http.StatusCreated, s.store.CreateBuild(orgFromContext(r), req.Scheme, req.Ref, req.Region))
 }
 
 // GET /v1/builds — list the caller's org builds.
@@ -211,6 +212,7 @@ func (s *Server) handleBuildLogs(w http.ResponseWriter, r *http.Request) {
 type createSimReq struct {
 	Device  string `json:"device"`
 	Runtime string `json:"runtime"`
+	Region  string `json:"region"`
 }
 
 // POST /v1/sims — provision an iOS simulator session.
@@ -224,7 +226,7 @@ func (s *Server) handleCreateSim(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "device is required")
 		return
 	}
-	writeJSON(w, http.StatusCreated, s.store.CreateSim(orgFromContext(r), req.Device, req.Runtime))
+	writeJSON(w, http.StatusCreated, s.store.CreateSim(orgFromContext(r), req.Device, req.Runtime, req.Region))
 }
 
 // GET /v1/sims — list the caller's org sims.
@@ -443,6 +445,7 @@ func (s *Server) handleGetSimVideo(w http.ResponseWriter, r *http.Request) {
 
 type createEmuReq struct {
 	Profile string `json:"profile"`
+	Region  string `json:"region"`
 }
 
 // POST /v1/emus — provision an Android emulator session.
@@ -456,7 +459,7 @@ func (s *Server) handleCreateEmu(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "profile is required")
 		return
 	}
-	writeJSON(w, http.StatusCreated, s.store.CreateEmu(orgFromContext(r), req.Profile))
+	writeJSON(w, http.StatusCreated, s.store.CreateEmu(orgFromContext(r), req.Profile, req.Region))
 }
 
 // GET /v1/emus — list the caller's org emus.

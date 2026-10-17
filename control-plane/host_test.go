@@ -294,3 +294,38 @@ func TestEmuProvisionAndVerbs(t *testing.T) {
 		t.Fatalf("emu logs: got %d", rec.Code)
 	}
 }
+
+func TestRegionPinning(t *testing.T) {
+	srv := testHostServer()
+	// One emu pinned to Tokyo, one unpinned.
+	rec := authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P","region":"asia-northeast1"}`)
+	var tokyo Emu
+	if err := json.Unmarshal(rec.Body.Bytes(), &tokyo); err != nil {
+		t.Fatal(err)
+	}
+	rec = authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P"}`)
+	var anywhere Emu
+	if err := json.Unmarshal(rec.Body.Bytes(), &anywhere); err != nil {
+		t.Fatal(err)
+	}
+
+	// Singapore host sees only the unpinned emu.
+	rec = hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"linux-pool","region":"asia-southeast1","kinds":["emu"]}`)
+	var c1 Claim
+	if err := json.Unmarshal(rec.Body.Bytes(), &c1); err != nil || c1.Emu.ID != anywhere.ID {
+		t.Fatalf("sg claim: %+v %v", c1, err)
+	}
+	if c1.Emu.Region != "asia-southeast1" {
+		t.Errorf("unpinned emu should stick to claiming region, got %q", c1.Emu.Region)
+	}
+	// Tokyo host gets the pinned emu (and nothing else is left).
+	rec = hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"linux-pool","region":"asia-northeast1","kinds":["emu"]}`)
+	var c2 Claim
+	if err := json.Unmarshal(rec.Body.Bytes(), &c2); err != nil || c2.Emu.ID != tokyo.ID {
+		t.Fatalf("tokyo claim: %+v %v", c2, err)
+	}
+	// Nothing left for anyone.
+	if rec := hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"linux-pool","region":"asia-northeast1","kinds":["emu"]}`); rec.Code != http.StatusNoContent {
+		t.Errorf("drained pool: got %d, want 204", rec.Code)
+	}
+}

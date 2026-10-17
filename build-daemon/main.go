@@ -124,12 +124,13 @@ func main() {
 	control := flag.String("control", "", "control-plane URL (or SIDEKICK_CONTROL)")
 	token := flag.String("token", "", "fleet host token (or SIDEKICK_HOST_TOKEN)")
 	pool := flag.String("pool", "", "pool name (or SIDEKICK_POOL)")
+	regionflag := flag.String("region", "", "region pin, e.g. asia-southeast1 (or SIDEKICK_REGION)")
 	workdir := flag.String("workdir", ".", "project checkout xcodebuild runs in")
 	derived := flag.String("derived", "", "warm DerivedData path (empty = xcodebuild default)")
 	interval := flag.Duration("interval", 2*time.Second, "claim poll interval")
 	flag.Parse()
 
-	ctrl, tok, pl, err := fleet.Resolve(*control, *token, *pool)
+	ctrl, tok, pl, region, err := fleet.Resolve(*control, *token, *pool, *regionflag)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "build-daemon:", err)
 		os.Exit(1)
@@ -138,7 +139,7 @@ func main() {
 	fmt.Printf("build-daemon: pool %s via %s (workdir %s)\n", pl, ctrl, *workdir)
 	r := execRunner{derivedData: *derived}
 	for {
-		claim, ok, err := fc.ClaimNext(pl, []string{"build"})
+		claim, ok, err := fc.ClaimNext(pl, region, []string{"build"})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "build-daemon: claim:", err)
 			time.Sleep(*interval)

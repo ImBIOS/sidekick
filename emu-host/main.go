@@ -474,6 +474,7 @@ func main() {
 	control := flag.String("control", "", "control-plane URL (or SIDEKICK_CONTROL)")
 	token := flag.String("token", "", "fleet host token (or SIDEKICK_HOST_TOKEN)")
 	pool := flag.String("pool", "linux-pool", "pool name (or SIDEKICK_POOL)")
+	regionflag := flag.String("region", "", "region pin, e.g. asia-southeast1 (or SIDEKICK_REGION)")
 	adbBin := flag.String("adb", "adb", "adb binary")
 	adbPort := flag.String("adb-port", "5555", "adb server port agents dial")
 	adbAddr := flag.String("adb-addr", os.Getenv("EMU_ADB_ADDR"), "public address agents dial (default: outbound IP)")
@@ -482,7 +483,7 @@ func main() {
 	interval := flag.Duration("interval", 20*time.Second, "claim poll + refresh interval")
 	flag.Parse()
 
-	ctrl, tok, pl, err := fleet.Resolve(*control, *token, *pool)
+	ctrl, tok, pl, region, err := fleet.Resolve(*control, *token, *pool, *regionflag)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "emu-host:", err)
 		os.Exit(1)
@@ -497,7 +498,7 @@ func main() {
 	}
 	fmt.Printf("emu-host: pool %s via %s (adb %s:%s)\n", pl, ctrl, h.adbAddr, h.adbPort)
 	for {
-		claim, ok, err := fc.ClaimNext(pl, []string{"emu"})
+		claim, ok, err := fc.ClaimNext(pl, region, []string{"emu"})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "emu-host: claim:", err)
 		} else if ok {

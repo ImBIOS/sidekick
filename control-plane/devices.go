@@ -22,10 +22,12 @@ type Claim struct {
 	Action *QueuedAction `json:"action,omitempty"`
 }
 
-// ClaimNext returns the oldest actionable claim for pool, preferring queued
-// builds, then sims/emus awaiting provisioning, then pending sim actions.
-// kinds filters (empty = all). Claimed resources bind to pool.
-func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
+// ClaimNext returns the oldest actionable claim for a host in pool+region,
+// preferring queued builds, then sims/emus awaiting provisioning, then
+// pending sim actions. kinds filters (empty = all). A resource pinned to a
+// region is only claimable there; unpinned resources go to whoever claims
+// first and stick to that region. Claimed resources bind to pool.
+func (s *Store) ClaimNext(pool, region string, kinds []string) *Claim {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	want := func(k string) bool {
@@ -42,7 +44,7 @@ func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
 	if want("build") {
 		var oldest *Build
 		for _, b := range s.builds {
-			if b.Status != StatusQueued {
+			if b.Status != StatusQueued || !regionMatch(b.Region, region) {
 				continue
 			}
 			if oldest == nil || b.CreatedAt.Before(oldest.CreatedAt) {
@@ -52,6 +54,7 @@ func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
 		if oldest != nil {
 			oldest.Status = StatusRunning
 			oldest.Host = pool
+			oldest.Region = region
 			oldest.Log = append(oldest.Log, "[sidekick] build claimed by "+pool)
 			return &Claim{Kind: "build", Build: oldest}
 		}
@@ -59,7 +62,7 @@ func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
 	if want("sim") {
 		var oldest *Sim
 		for _, sim := range s.sims {
-			if sim.Status != StatusProvisioning || sim.Host != "" {
+			if sim.Status != StatusProvisioning || sim.Host != "" || !regionMatch(sim.Region, region) {
 				continue
 			}
 			if oldest == nil || sim.CreatedAt.Before(oldest.CreatedAt) {
@@ -68,13 +71,14 @@ func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
 		}
 		if oldest != nil {
 			oldest.Host = pool
+			oldest.Region = region
 			return &Claim{Kind: "sim", Sim: oldest}
 		}
 	}
 	if want("emu") {
 		var oldest *Emu
 		for _, emu := range s.emus {
-			if emu.Status != StatusProvisioning || emu.Host != "" {
+			if emu.Status != StatusProvisioning || emu.Host != "" || !regionMatch(emu.Region, region) {
 				continue
 			}
 			if oldest == nil || emu.CreatedAt.Before(oldest.CreatedAt) {
@@ -83,13 +87,14 @@ func (s *Store) ClaimNext(pool string, kinds []string) *Claim {
 		}
 		if oldest != nil {
 			oldest.Host = pool
+			oldest.Region = region
 			return &Claim{Kind: "emu", Emu: oldest}
 		}
 	}
 	if want("sim-action") {
 		var oldest *QueuedAction
 		for _, sim := range s.sims {
-			if sim.Host != pool {
+			if sim.Host != pool || !regionMatch(sim.Region, region) {
 				continue
 			}
 			for _, a := range sim.Actions {
@@ -287,4 +292,10 @@ func (s *Store) AppendEmuLog(id string, lines []string) bool {
 	}
 	emu.EmuLog = append(emu.EmuLog, lines...)
 	return true
+}
+
+// regionMatch: unpinned resources ("") are claimable anywhere; pinned ones
+// only in their region.
+func regionMatch(resource, host string) bool {
+	return resource == "" || resource == host
 }

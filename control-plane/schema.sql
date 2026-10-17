@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS builds (
   ref        TEXT NOT NULL DEFAULT '',
   status     TEXT NOT NULL,
   host       TEXT NOT NULL DEFAULT '',
+  region     TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL,
   log        TEXT[] NOT NULL DEFAULT '{}'
 );
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS sims (
   webrtc_url  TEXT NOT NULL DEFAULT '',
   ax_tree_url TEXT NOT NULL DEFAULT '',
   host        TEXT NOT NULL DEFAULT '',
+  region      TEXT NOT NULL DEFAULT '',
   recording   BOOLEAN NOT NULL DEFAULT FALSE,
   created_at  TIMESTAMPTZ NOT NULL,
   tree        JSONB,
@@ -49,6 +51,7 @@ CREATE TABLE IF NOT EXISTS emus (
   status     TEXT NOT NULL,
   adb_target TEXT NOT NULL DEFAULT '',
   host       TEXT NOT NULL DEFAULT '',
+  region     TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL,
   tree       JSONB,
   shot       BYTEA,
@@ -69,3 +72,8 @@ CREATE TABLE IF NOT EXISTS instance_tokens (
   created_at TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX IF NOT EXISTS instance_tokens_org ON instance_tokens (org);
+
+-- Evolve older databases: region pinning landed after the initial schema.
+ALTER TABLE builds ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
+ALTER TABLE sims ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
+ALTER TABLE emus ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';

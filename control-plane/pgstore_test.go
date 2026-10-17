@@ -50,16 +50,16 @@ var testTime = time.Date(2026, 10, 14, 0, 0, 0, 0, time.UTC)
 
 func TestPGCreateGetBuild(t *testing.T) {
 	s, mock := newMockStore(t)
-	mock.ExpectExec(qm(`INSERT INTO builds (id, org, scheme, ref, status, created_at, log) VALUES ($1,$2,$3,$4,$5,$6,$7)`)).
-		WithArgs(pgxmock.AnyArg(), "org_a", "MyApp", "", StatusQueued, pgxmock.AnyArg(), pgxmock.AnyArg()).
+	mock.ExpectExec(qm(`INSERT INTO builds (id, org, scheme, ref, status, region, created_at, log) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`)).
+		WithArgs(pgxmock.AnyArg(), "org_a", "MyApp", "", StatusQueued, "", pgxmock.AnyArg(), pgxmock.AnyArg()).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
-	b := s.CreateBuild("org_a", "MyApp", "")
+	b := s.CreateBuild("org_a", "MyApp", "", "")
 	if b.Status != StatusQueued {
 		t.Errorf("status = %q", b.Status)
 	}
-	rows := pgxmock.NewRows([]string{"id", "org", "scheme", "ref", "status", "host", "created_at", "log"}).
-		AddRow(b.ID, "org_a", "MyApp", "", StatusQueued, "", testTime, []string{"l1"})
-	mock.ExpectQuery(qm(`SELECT id, org, scheme, ref, status, host, created_at, log FROM builds WHERE id=$1 AND org=$2`)).
+	rows := pgxmock.NewRows([]string{"id", "org", "scheme", "ref", "status", "host", "region", "created_at", "log"}).
+		AddRow(b.ID, "org_a", "MyApp", "", StatusQueued, "", "", testTime, []string{"l1"})
+	mock.ExpectQuery(qm(`SELECT id, org, scheme, ref, status, host, region, created_at, log FROM builds WHERE id=$1 AND org=$2`)).
 		WithArgs(b.ID, "org_a").WillReturnRows(rows)
 	got, ok := s.GetBuild("org_a", b.ID)
 	if !ok || got.Scheme != "MyApp" || len(got.Log) != 1 {
@@ -72,11 +72,11 @@ func TestPGCreateGetBuild(t *testing.T) {
 
 func TestPGClaimBuildAtomic(t *testing.T) {
 	s, mock := newMockStore(t)
-	rows := pgxmock.NewRows([]string{"id", "org", "scheme", "ref", "status", "host", "created_at", "log"}).
-		AddRow("bld_x", "org_a", "MyApp", "", StatusRunning, "mac-1", testTime, []string{})
+	rows := pgxmock.NewRows([]string{"id", "org", "scheme", "ref", "status", "host", "region", "created_at", "log"}).
+		AddRow("bld_x", "org_a", "MyApp", "", StatusRunning, "mac-1", "", testTime, []string{})
 	mock.ExpectQuery("UPDATE builds SET status").
-		WithArgs("mac-1").WillReturnRows(rows)
-	claim := s.ClaimNext("mac-1", []string{"build"})
+		WithArgs("mac-1", "").WillReturnRows(rows)
+	claim := s.ClaimNext("mac-1", "", []string{"build"})
 	if claim == nil || claim.Kind != "build" || claim.Build.Host != "mac-1" {
 		t.Fatalf("claim: %+v", claim)
 	}
@@ -87,11 +87,11 @@ func TestPGClaimBuildAtomic(t *testing.T) {
 
 func TestPGSimActionRoundtrip(t *testing.T) {
 	s, mock := newMockStore(t)
-	simCols := []string{"id", "org", "device", "runtime", "status", "webrtc_url", "ax_tree_url", "host", "recording", "created_at", "tree", "shot", "sim_log", "video"}
+	simCols := []string{"id", "org", "device", "runtime", "status", "webrtc_url", "ax_tree_url", "host", "region", "recording", "created_at", "tree", "shot", "sim_log", "video"}
 	mock.ExpectQuery("FROM sims WHERE id=\\$1 AND org=\\$2").
 		WithArgs("sim_1", "org_a").
 		WillReturnRows(pgxmock.NewRows(simCols).AddRow(
-			"sim_1", "org_a", "iPhone 16", "", StatusRunning, "", "/v1/sims/sim_1/tree", "mac-1", false, testTime,
+			"sim_1", "org_a", "iPhone 16", "", StatusRunning, "", "/v1/sims/sim_1/tree", "mac-1", "", false, testTime,
 			[]byte(`{}`), []byte{}, []string{}, []byte{}))
 	mock.ExpectQuery("INSERT INTO actions").
 		WithArgs(pgxmock.AnyArg(), "sim_1", pgxmock.AnyArg(), pgxmock.AnyArg()).

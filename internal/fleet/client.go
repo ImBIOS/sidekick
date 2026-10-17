@@ -26,10 +26,11 @@ type Client struct {
 	HTTP    *http.Client
 }
 
-// Resolve fills control/token/pool from flags > host.json (sidekick host
-// join) > env (SIDEKICK_CONTROL/SIDEKICK_HOST_TOKEN/SIDEKICK_POOL).
-func Resolve(flagControl, flagToken, flagPool string) (control, token, pool string, err error) {
-	control, token, pool = flagControl, flagToken, flagPool
+// Resolve fills control/token/pool/region from flags > host.json (sidekick
+// host join) > env (SIDEKICK_CONTROL/SIDEKICK_HOST_TOKEN/SIDEKICK_POOL/
+// SIDEKICK_REGION).
+func Resolve(flagControl, flagToken, flagPool, flagRegion string) (control, token, pool, region string, err error) {
+	control, token, pool, region = flagControl, flagToken, flagPool, flagRegion
 	if (control == "" || token == "" || pool == "") && ifProfileExists() {
 		if p, perr := loadProfile(); perr == nil {
 			if control == "" {
@@ -40,6 +41,9 @@ func Resolve(flagControl, flagToken, flagPool string) (control, token, pool stri
 			}
 			if pool == "" {
 				pool = p.Pool
+			}
+			if region == "" {
+				region = p.Region
 			}
 		}
 	}
@@ -52,16 +56,20 @@ func Resolve(flagControl, flagToken, flagPool string) (control, token, pool stri
 	if pool == "" {
 		pool = os.Getenv("SIDEKICK_POOL")
 	}
-	if control == "" || token == "" || pool == "" {
-		return "", "", "", fmt.Errorf("need control+token+pool: flags, `sidekick host join`, or SIDEKICK_CONTROL/SIDEKICK_HOST_TOKEN/SIDEKICK_POOL")
+	if region == "" {
+		region = os.Getenv("SIDEKICK_REGION")
 	}
-	return strings.TrimSuffix(control, "/"), token, pool, nil
+	if control == "" || token == "" || pool == "" {
+		return "", "", "", "", fmt.Errorf("need control+token+pool: flags, `sidekick host join`, or SIDEKICK_CONTROL/SIDEKICK_HOST_TOKEN/SIDEKICK_POOL (region optional)")
+	}
+	return strings.TrimSuffix(control, "/"), token, pool, region, nil
 }
 
 type profile struct {
 	Control string `json:"control_plane_url"`
 	Token   string `json:"host_token"`
 	Pool    string `json:"pool"`
+	Region  string `json:"region"`
 }
 
 func profilePath() (string, error) {
@@ -161,10 +169,10 @@ func (c *Client) do(method, path string, body any, out any) (int, error) {
 	return resp.StatusCode, nil
 }
 
-// ClaimNext polls one claim for pool. ok=false means 204 (nothing to do).
-func (c *Client) ClaimNext(pool string, kinds []string) (claim *Claim, ok bool, err error) {
+// ClaimNext polls one claim for pool+region. ok=false means 204.
+func (c *Client) ClaimNext(pool, region string, kinds []string) (claim *Claim, ok bool, err error) {
 	var cl Claim
-	code, err := c.do(http.MethodPost, "/v1/host/claims/next", map[string]any{"pool": pool, "kinds": kinds}, &cl)
+	code, err := c.do(http.MethodPost, "/v1/host/claims/next", map[string]any{"pool": pool, "region": region, "kinds": kinds}, &cl)
 	if err != nil {
 		if code == http.StatusNoContent {
 			return nil, false, nil

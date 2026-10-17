@@ -31,6 +31,7 @@ type Build struct {
 	Ref       string    `json:"ref,omitempty"`
 	Status    string    `json:"status"`
 	Host      string    `json:"host,omitempty"`
+	Region    string    `json:"region,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	Log       []string  `json:"-"`
 }
@@ -45,6 +46,7 @@ type Sim struct {
 	WebRTCURL string    `json:"webrtc_url,omitempty"`
 	AXTreeURL string    `json:"ax_tree_url,omitempty"`
 	Host      string    `json:"host,omitempty"`
+	Region    string    `json:"region,omitempty"`
 	Recording bool      `json:"recording"`
 	CreatedAt time.Time `json:"created_at"`
 	// Daemon-reported state, served via dedicated endpoints (never inlined).
@@ -77,6 +79,7 @@ type Emu struct {
 	Status    string    `json:"status"`
 	ADBTarget string    `json:"adb_target,omitempty"`
 	Host      string    `json:"host,omitempty"`
+	Region    string    `json:"region,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	// Daemon-reported state, served via dedicated endpoints (never inlined).
 	Tree   json.RawMessage `json:"-"`
@@ -115,7 +118,7 @@ func (s *Store) nextID(prefix string) string {
 
 // CreateBuild queues a build for org. A build-daemon claims it via
 // /v1/host/claims/next, streams logs, and marks it terminal.
-func (s *Store) CreateBuild(org OrgID, scheme, ref string) *Build {
+func (s *Store) CreateBuild(org OrgID, scheme, ref, region string) *Build {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	b := &Build{
@@ -123,6 +126,7 @@ func (s *Store) CreateBuild(org OrgID, scheme, ref string) *Build {
 		Org:       org,
 		Scheme:    scheme,
 		Ref:       ref,
+		Region:    region,
 		Status:    StatusQueued,
 		CreatedAt: time.Now().UTC(),
 		Log:       []string{"[sidekick] queued; waiting for a build host"},
@@ -207,7 +211,7 @@ func (s *Store) HostFinishBuild(id, status string) bool {
 
 // CreateSim provisions a simulator session for org. It starts provisioning;
 // the sim-daemon binds it to a host and marks it running with live URLs.
-func (s *Store) CreateSim(org OrgID, device, runtime string) *Sim {
+func (s *Store) CreateSim(org OrgID, device, runtime, region string) *Sim {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sim := &Sim{
@@ -215,6 +219,7 @@ func (s *Store) CreateSim(org OrgID, device, runtime string) *Sim {
 		Org:       org,
 		Device:    device,
 		Runtime:   runtime,
+		Region:    region,
 		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}
@@ -263,13 +268,14 @@ func (s *Store) DeleteSim(org OrgID, id string) bool {
 
 // CreateEmu provisions an emulator session for org. It starts provisioning;
 // the Linux host binds it and reports the adb target when running.
-func (s *Store) CreateEmu(org OrgID, profile string) *Emu {
+func (s *Store) CreateEmu(org OrgID, profile, region string) *Emu {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	emu := &Emu{
 		ID:        s.nextID("emu"),
 		Org:       org,
 		Profile:   profile,
+		Region:    region,
 		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}

@@ -6,7 +6,7 @@ set -eu
 export SIDEKICK_URL=http://localhost:8080 SIDEKICK_TOKEN=ci-key
 BIN="$GITHUB_WORKSPACE/bin"
 # emu-host and the CLI shell `adb`; the runner does not guarantee it on PATH.
-for d in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" /usr/local/lib/android/sdk /opt/android-sdk; do
+for d in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" /usr/local/lib/android/sdk /opt/android-sdk /home/imbios/Android/Sdk; do
   if [ -n "$d" ] && [ -x "$d/platform-tools/adb" ]; then export PATH="$d/platform-tools:$d/emulator:$PATH"; break; fi
 done
 command -v adb
@@ -62,9 +62,9 @@ done
 test -s shot.png
 "$BIN/sidekick" android logs "$EID" --tail 5 | tee logs.txt
 test -s logs.txt
-"$BIN/sidekick" android record "$EID" --out demo.mp4 --duration 20
+"$BIN/sidekick" android record "$EID" --out demo.mp4 --duration 20s --adb-serial emulator-5554
 test -s demo.mp4
-"$BIN/sidekick" android netcap --out cap.pcap --duration 15 --adb-serial emulator-5554
+"$BIN/sidekick" android netcap --out cap.pcap --duration 15s --adb-serial emulator-5554
 test -s cap.pcap
 "$BIN/sidekick" android rotate "$EID" 90 --adb-serial emulator-5554
 "$BIN/sidekick" android rotate "$EID" 0 --adb-serial emulator-5554

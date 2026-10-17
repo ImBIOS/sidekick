@@ -175,12 +175,13 @@ func runStep(run Runner, s Step, ref string) string {
 
 // treeNode is the subset of the AX tree we match on.
 type treeNode struct {
-	Ref      string     `json:"ref"`
-	Class    string     `json:"class"`
-	Text     string     `json:"text"`
-	Desc     string     `json:"desc"`
-	Bounds   string     `json:"bounds"`
-	Children []treeNode `json:"children"`
+	Ref       string     `json:"ref"`
+	Class     string     `json:"class"`
+	Text      string     `json:"text"`
+	Desc      string     `json:"desc"`
+	Bounds    string     `json:"bounds"`
+	Clickable bool       `json:"clickable"`
+	Children  []treeNode `json:"children"`
 }
 
 // ResolveRef finds ref in tree; if the exact ref is gone, returns the

@@ -150,10 +150,12 @@ func toolDefs() []toolDef {
 		{"sidekick_org", "Show the org the API key belongs to.", objSchema(nil, map[string]any{})},
 		{"sidekick_xcode_build", "Queue a remote Xcode/Gradle build and optionally wait for it.", objSchema(req("scheme"), map[string]any{
 			"scheme": strProp("Xcode scheme (required)"), "ref": strProp("git ref (default: working copy)"),
+			"region": strProp("pin to a fleet region (default any)"),
 			"wait": map[string]any{"type": "boolean", "description": "stream until terminal (default true)"},
 		})},
 		{"sidekick_ios_create", "Create a cloud iOS simulator. Poll sidekick_ios_get until running.", objSchema(nil, map[string]any{
 			"device": strProp("device name (default iPhone 16)"), "runtime": strProp("iOS runtime (default latest)"),
+			"region": strProp("pin to a fleet region (default any)"),
 		})},
 		{"sidekick_ios_get", "Show one simulator (status, URLs).", objSchema(req("id"), map[string]any{"id": strProp("sim id")})},
 		{"sidekick_ios_list", "List your org's simulators.", objSchema(nil, map[string]any{})},
@@ -176,6 +178,7 @@ func toolDefs() []toolDef {
 		})},
 		{"sidekick_android_create", "Create a cloud Android emulator. Poll sidekick_android_get until running.", objSchema(nil, map[string]any{
 			"profile": strProp("emulator profile (default Pixel_7_API_34)"),
+			"region": strProp("pin to a fleet region (default any)"),
 		})},
 		{"sidekick_android_get", "Show one emulator (status, adb target).", objSchema(req("id"), map[string]any{"id": strProp("emulator id")})},
 		{"sidekick_android_list", "List your org's emulators.", objSchema(nil, map[string]any{})},
@@ -229,7 +232,7 @@ func (s *Server) callTool(name string, args map[string]any) ([]any, bool, error)
 		if scheme == "" {
 			return nil, false, fmt.Errorf("scheme is required")
 		}
-		body := map[string]string{"scheme": scheme, "ref": strArg(args, "ref", "")}
+		body := map[string]string{"scheme": scheme, "ref": strArg(args, "ref", ""), "region": strArg(args, "region", "")}
 		var b struct {
 			ID     string `json:"build_id"`
 			Status string `json:"status"`
@@ -275,7 +278,7 @@ func (s *Server) callTool(name string, args map[string]any) ([]any, bool, error)
 	case "sidekick_ios_create":
 		var out any
 		if err := s.API.Call(http.MethodPost, "/v1/sims", map[string]string{
-			"device": strArg(args, "device", "iPhone 16"), "runtime": strArg(args, "runtime", ""),
+			"device": strArg(args, "device", "iPhone 16"), "runtime": strArg(args, "runtime", ""), "region": strArg(args, "region", ""),
 		}, &out); err != nil {
 			return fail("%v", err)
 		}
@@ -419,7 +422,7 @@ func (s *Server) callTool(name string, args map[string]any) ([]any, bool, error)
 	case "sidekick_android_create":
 		var out any
 		if err := s.API.Call(http.MethodPost, "/v1/emus", map[string]string{
-			"profile": strArg(args, "profile", "Pixel_7_API_34"),
+			"profile": strArg(args, "profile", "Pixel_7_API_34"), "region": strArg(args, "region", ""),
 		}, &out); err != nil {
 			return fail("%v", err)
 		}

@@ -82,22 +82,22 @@ func (s *PGStore) nextID(prefix string) string {
 
 // --- builds ---
 
-func (s *PGStore) CreateBuild(org OrgID, scheme, ref string) *Build {
+func (s *PGStore) CreateBuild(org OrgID, scheme, ref, region string) *Build {
 	b := &Build{
 		ID: s.nextID("bld"), Org: org, Scheme: scheme, Ref: ref,
-		Status: StatusQueued, CreatedAt: time.Now().UTC(),
+		Status: StatusQueued, Region: region, CreatedAt: time.Now().UTC(),
 		Log: []string{"[sidekick] queued; waiting for a build host"},
 	}
 	_, _ = s.q.Exec(context.Background(),
-		`INSERT INTO builds (id, org, scheme, ref, status, created_at, log) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-		b.ID, string(org), scheme, ref, b.Status, b.CreatedAt, b.Log)
+		`INSERT INTO builds (id, org, scheme, ref, status, region, created_at, log) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+		b.ID, string(org), scheme, ref, b.Status, b.Region, b.CreatedAt, b.Log)
 	return b
 }
 
 func scanBuild(row pgx.Row) (*Build, error) {
 	var b Build
 	var org string
-	err := row.Scan(&b.ID, &org, &b.Scheme, &b.Ref, &b.Status, &b.Host, &b.CreatedAt, &b.Log)
+	err := row.Scan(&b.ID, &org, &b.Scheme, &b.Ref, &b.Status, &b.Host, &b.Region, &b.CreatedAt, &b.Log)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func scanBuild(row pgx.Row) (*Build, error) {
 
 func (s *PGStore) GetBuild(org OrgID, id string) (*Build, bool) {
 	b, err := scanBuild(s.q.QueryRow(context.Background(),
-		`SELECT id, org, scheme, ref, status, host, created_at, log FROM builds WHERE id=$1 AND org=$2`, id, string(org)))
+		`SELECT id, org, scheme, ref, status, host, region, created_at, log FROM builds WHERE id=$1 AND org=$2`, id, string(org)))
 	if err != nil {
 		return nil, false
 	}
@@ -116,7 +116,7 @@ func (s *PGStore) GetBuild(org OrgID, id string) (*Build, bool) {
 
 func (s *PGStore) ListBuilds(org OrgID) []*Build {
 	rows, err := s.q.Query(context.Background(),
-		`SELECT id, org, scheme, ref, status, host, created_at, log FROM builds WHERE org=$1 ORDER BY created_at DESC`, string(org))
+		`SELECT id, org, scheme, ref, status, host, region, created_at, log FROM builds WHERE org=$1 ORDER BY created_at DESC`, string(org))
 	if err != nil {
 		return nil
 	}
@@ -158,15 +158,15 @@ func (s *PGStore) HostFinishBuild(id, status string) bool {
 
 // --- sims ---
 
-func (s *PGStore) CreateSim(org OrgID, device, runtime string) *Sim {
+func (s *PGStore) CreateSim(org OrgID, device, runtime, region string) *Sim {
 	sim := &Sim{
 		ID: s.nextID("sim"), Org: org, Device: device, Runtime: runtime,
-		Status: StatusProvisioning, CreatedAt: time.Now().UTC(),
+		Status: StatusProvisioning, Region: region, CreatedAt: time.Now().UTC(),
 	}
 	sim.AXTreeURL = "/v1/sims/" + sim.ID + "/tree"
 	_, _ = s.q.Exec(context.Background(),
-		`INSERT INTO sims (id, org, device, runtime, status, ax_tree_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-		sim.ID, string(org), device, runtime, sim.Status, sim.AXTreeURL, sim.CreatedAt)
+		`INSERT INTO sims (id, org, device, runtime, status, region, ax_tree_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+		sim.ID, string(org), device, runtime, sim.Status, sim.Region, sim.AXTreeURL, sim.CreatedAt)
 	return sim
 }
 
@@ -175,7 +175,7 @@ func scanSim(row pgx.Row) (*Sim, error) {
 	var org string
 	var tree []byte
 	err := row.Scan(&sim.ID, &org, &sim.Device, &sim.Runtime, &sim.Status,
-		&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Recording, &sim.CreatedAt,
+		&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Region, &sim.Recording, &sim.CreatedAt,
 		&tree, &sim.Shot, &sim.SimLog, &sim.Video)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func scanSim(row pgx.Row) (*Sim, error) {
 	return &sim, nil
 }
 
-const simCols = `id, org, device, runtime, status, webrtc_url, ax_tree_url, host, recording, created_at, tree, shot, sim_log, video`
+const simCols = `id, org, device, runtime, status, webrtc_url, ax_tree_url, host, region, recording, created_at, tree, shot, sim_log, video`
 
 func (s *PGStore) GetSim(org OrgID, id string) (*Sim, bool) {
 	sim, err := scanSim(s.q.QueryRow(context.Background(),
@@ -300,11 +300,11 @@ func (s *PGStore) GetSimAction(org OrgID, id string) (*QueuedAction, bool) {
 
 // --- emus ---
 
-func (s *PGStore) CreateEmu(org OrgID, profile string) *Emu {
+func (s *PGStore) CreateEmu(org OrgID, profile, region string) *Emu {
 	emu := &Emu{ID: s.nextID("emu"), Org: org, Profile: profile, Status: StatusProvisioning, CreatedAt: time.Now().UTC()}
 	_, _ = s.q.Exec(context.Background(),
-		`INSERT INTO emus (id, org, profile, status, created_at) VALUES ($1,$2,$3,$4,$5)`,
-		emu.ID, string(org), profile, emu.Status, emu.CreatedAt)
+		`INSERT INTO emus (id, org, profile, status, region, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+		emu.ID, string(org), profile, emu.Status, emu.Region, emu.CreatedAt)
 	return emu
 }
 
@@ -313,7 +313,7 @@ func scanEmu(row pgx.Row) (*Emu, error) {
 	var org string
 	var tree []byte
 	err := row.Scan(&emu.ID, &org, &emu.Profile, &emu.Status, &emu.ADBTarget,
-		&emu.Host, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
+		&emu.Host, &emu.Region, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func scanEmu(row pgx.Row) (*Emu, error) {
 	return &emu, nil
 }
 
-const emuCols = `id, org, profile, status, adb_target, host, created_at, tree, shot, emu_log`
+const emuCols = `id, org, profile, status, adb_target, host, region, created_at, tree, shot, emu_log`
 
 func (s *PGStore) GetEmu(org OrgID, id string) (*Emu, bool) {
 	emu, err := scanEmu(s.q.QueryRow(context.Background(),
@@ -451,7 +451,7 @@ func (s *PGStore) RevokeInstanceToken(org OrgID, id string) bool {
 
 // ClaimNext mirrors Store.ClaimNext with SKIP LOCKED atomicity: concurrent
 // hosts in one pool can never double-claim the same build.
-func (s *PGStore) ClaimNext(pool string, kinds []string) *Claim {
+func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 	ctx := context.Background()
 	want := func(k string) bool {
 		if len(kinds) == 0 {
@@ -467,11 +467,11 @@ func (s *PGStore) ClaimNext(pool string, kinds []string) *Claim {
 	if want("build") {
 		var b Build
 		var org string
-		err := s.q.QueryRow(ctx, `UPDATE builds SET status='running', host=$1,
+		err := s.q.QueryRow(ctx, `UPDATE builds SET status='running', host=$1, region=$2,
 			log = log || ('[sidekick] build claimed by ' || $1)
-			WHERE id = (SELECT id FROM builds WHERE status='queued' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
-			RETURNING id, org, scheme, ref, status, host, created_at, log`, pool).
-			Scan(&b.ID, &org, &b.Scheme, &b.Ref, &b.Status, &b.Host, &b.CreatedAt, &b.Log)
+			WHERE id = (SELECT id FROM builds WHERE status='queued' AND (region='' OR region=$2) ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+			RETURNING id, org, scheme, ref, status, host, region, created_at, log`, pool, region).
+			Scan(&b.ID, &org, &b.Scheme, &b.Ref, &b.Status, &b.Host, &b.Region, &b.CreatedAt, &b.Log)
 		if err == nil {
 			b.Org = OrgID(org)
 			return &Claim{Kind: "build", Build: &b}
@@ -512,7 +512,7 @@ func (s *PGStore) ClaimNext(pool string, kinds []string) *Claim {
 		var simID string
 		err := s.q.QueryRow(ctx, `SELECT a.id, a.sim_id, a.body, a.done, a.result, a.created_at
 			FROM actions a JOIN sims s ON s.id = a.sim_id
-			WHERE s.host=$1 AND a.done=false ORDER BY a.created_at LIMIT 1`, pool).
+			WHERE s.host=$1 AND (s.region='' OR s.region=$2) AND a.done=false ORDER BY a.created_at LIMIT 1`, pool, region).
 			Scan(&a.ID, &simID, &body, &a.Done, &a.Result, &a.CreatedAt)
 		if err == nil {
 			a.SimID = simID

@@ -43,11 +43,12 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, limit int64, v any) 
 }
 
 type claimReq struct {
-	Pool  string   `json:"pool"`
-	Kinds []string `json:"kinds"`
+	Pool   string   `json:"pool"`
+	Region string   `json:"region"`
+	Kinds  []string `json:"kinds"`
 }
 
-// POST /v1/host/claims/next — oldest actionable claim for pool, 204 if none.
+// POST /v1/host/claims/next — oldest actionable claim for pool+region.
 func (s *Server) handleHostClaim(w http.ResponseWriter, r *http.Request) {
 	var req claimReq
 	if !decodeJSONBody(w, r, 64<<10, &req) {
@@ -57,7 +58,7 @@ func (s *Server) handleHostClaim(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "pool is required")
 		return
 	}
-	claim := s.store.ClaimNext(req.Pool, req.Kinds)
+	claim := s.store.ClaimNext(req.Pool, req.Region, req.Kinds)
 	if claim == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return
