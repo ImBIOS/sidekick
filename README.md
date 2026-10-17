@@ -24,20 +24,20 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Android emulators + adb tunnel | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial |
 | Apple TV / tvOS + Android TV | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Roku (real hardware) | 🛣️ Roadmap (Beta hardware pool) | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
-| Foldables (posture + rotate verbs) | 🛣️ Roadmap (iPhone Duo-style hinge API) | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Foldables (posture + rotate verbs) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Real physical devices | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes |
 | CLI with device verbs (tap, type, screenshot) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
 | Agent skill file (skill install) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No |
 | MCP server | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes |
 | UI / accessibility tree reads | ✅ Yes | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
 | Batch actions (ms precision) | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
-| Session video recording | 🛣️ Roadmap (Per-step screenshots today; video roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
-| App logs + network capture | 🛣️ Roadmap (App logs today; network capture roadmap) | ➖ Partial | ➖ Partial | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| Session video recording | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
+| App logs + network capture | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | Live share links (no login needed) | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
 | Embeddable player (iframe / SDK) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | Live collaboration + human takeover | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
-| Record once, replay everywhere | 🛣️ Roadmap (Recorder beta) | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
-| Visual regression per step | 🛣️ Roadmap (Ships with recorder) | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ✅ Yes |
+| Record once, replay everywhere | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
+| Visual regression per step | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ✅ Yes |
 | AI / plain-English testing | 🛣️ Roadmap (Agent-fix on moved elements) | ✅ Yes | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ➖ Partial |
 | CI runner + GitHub checks | 🛣️ Roadmap (Actions + checks) | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
 | Self-hostable (BYO Mac minis) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |

@@ -227,19 +227,82 @@ func (r execRunner) Rotate(serial string, degrees int) error {
 	return nil
 }
 
-// SetPosture requests a foldable posture. It drives the platform
-// device_state controller when present; otherwise it fails loudly instead
-// of pretending (foldables without posture control are just phones).
+// SetPosture requests a foldable posture (open|half-open|closed). Device
+// state identifiers differ per device (this foldable: 1/2/3), so they are
+// discovered from print-states instead of hardcoded — hardcoding 0/1/2
+// silently targets the wrong state on real hardware.
 func (r execRunner) SetPosture(serial, posture string) error {
-	id := map[string]string{"closed": "0", "half-open": "1", "open": "2"}[posture]
-	if id == "" {
-		return fmt.Errorf(`posture must be one of "closed", "half-open", "open"`)
+	want := map[string]string{"closed": "CLOSED", "half-open": "HALF_OPENED", "open": "OPENED"}[posture]
+	if want == "" {
+		return fmt.Errorf(`posture must be one of "open", "half-open", "closed"`)
 	}
-	out, err := r.adbCmd(serial, "shell", "cmd", "device_state", "state", id).CombinedOutput()
+	out, err := r.adbCmd(serial, "shell", "cmd", "device_state", "print-states").CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("posture %q unsupported on this device (%s)", posture, firstLine(out))
+		return fmt.Errorf("print-states: %w (%s)", err, firstLine(out))
+	}
+	id := parseStateID(string(out), want)
+	if id == "" {
+		// Some builds abbreviate (HALF_OPENED vs HALF_OPEN): retry loose.
+		id = parseStateIDLoose(string(out), want)
+	}
+	if id == "" {
+		return fmt.Errorf("posture %q unsupported on this device (no %s state)", posture, want)
+	}
+	if out, err := r.adbCmd(serial, "shell", "cmd", "device_state", "state", id).CombinedOutput(); err != nil {
+		return fmt.Errorf("posture %q failed (%s)", posture, firstLine(out))
 	}
 	return nil
+}
+
+// parseStateID extracts the identifier for an exact state name from
+// `cmd device_state print-states` output.
+func parseStateID(out, name string) string {
+	for _, line := range strings.Split(out, "\n") {
+		if id, found := parseStateLine(line); found == name {
+			return id
+		}
+	}
+	return ""
+}
+
+// parseStateIDLoose matches HALF_OPEN against HALF_OPENED and vice versa.
+func parseStateIDLoose(out, name string) string {
+	for _, line := range strings.Split(out, "\n") {
+		if id, found := parseStateLine(line); found != "" && normState(found) == normState(name) {
+			return id
+		}
+	}
+	return ""
+}
+
+// parseStateLine pulls (identifier, name) from one print-states line.
+func parseStateLine(line string) (string, string) {
+	i := strings.Index(line, "identifier=")
+	if i < 0 {
+		return "", ""
+	}
+	rest := line[i+len("identifier="):]
+	j := 0
+	for j < len(rest) && rest[j] >= '0' && rest[j] <= '9' {
+		j++
+	}
+	if j == 0 {
+		return "", ""
+	}
+	id := rest[:j]
+	name := ""
+	if k := strings.Index(line, "name='"); k >= 0 {
+		rest2 := line[k+len("name='"):]
+		if q := strings.Index(rest2, "'"); q >= 0 {
+			name = rest2[:q]
+		}
+	}
+	return id, name
+}
+
+// normState treats HALF_OPEN and HALF_OPENED as the same posture.
+func normState(s string) string {
+	return strings.TrimSuffix(strings.TrimSuffix(s, "ED"), "_")
 }
 
 // StartNetcap begins a pcap capture (needs adb root; emulator images allow

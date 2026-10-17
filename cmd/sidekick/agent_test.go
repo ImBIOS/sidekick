@@ -61,3 +61,37 @@ func TestAgentSetupInstalls(t *testing.T) {
 		t.Errorf("AGENTS.md nudge missing: %v", err)
 	}
 }
+
+func TestRefCenterClickableAncestor(t *testing.T) {
+	tree := []byte(`{"nodes":[{"ref":"@e1","class":"FrameLayout","bounds":"[0,0][1080,100]","clickable":true,"children":[{"ref":"@e2","class":"TextView","text":"Gmail","bounds":"[309,1487][519,1759]"}]}]}`)
+	// @e2 itself is not clickable: expect the clickable parent's center.
+	x, y, err := refCenter(tree, "@e2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if x != 540 || y != 50 {
+		t.Errorf("got (%d,%d), want parent center (540,50)", x, y)
+	}
+	// Exact clickable node resolves to itself.
+	tree2 := []byte(`{"nodes":[{"ref":"@e5","class":"Button","bounds":"[100,200][400,300]","clickable":true}]}`)
+	x, y, err = refCenter(tree2, "@e5")
+	if err != nil || x != 250 || y != 250 {
+		t.Errorf("got (%d,%d) %v, want (250,250)", x, y, err)
+	}
+	if _, _, err := refCenter(tree2, "@e9"); err == nil {
+		t.Error("missing ref should error")
+	}
+}
+
+func TestParseFoldState(t *testing.T) {
+	out := "Supported states: [\n  DeviceState{identifier=1, name='CLOSED'},\n  DeviceState{identifier=2, name='HALF_OPENED'},\n  DeviceState{identifier=3, name='OPENED'},\n]"
+	if got := parseFoldState(out, "OPENED"); got != "3" {
+		t.Errorf("open: %q", got)
+	}
+	if got := parseFoldState(out, "HALF_OPENED"); got != "2" {
+		t.Errorf("half: %q", got)
+	}
+	if got := parseFoldState(out, "TABLET"); got != "" {
+		t.Errorf("missing: %q", got)
+	}
+}

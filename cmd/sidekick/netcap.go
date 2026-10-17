@@ -106,6 +106,11 @@ func droidRecordCmd() *cobra.Command {
 			if serial == "" {
 				serial = "localhost:5555"
 			}
+			// Fail fast when the tunnel/device is unreachable instead of
+			// recording silence into a missing file.
+			if out, err := exec.Command(adbBin, "-s", serial, "get-state").CombinedOutput(); err != nil || strings.TrimSpace(string(out)) != "device" {
+				return fmt.Errorf("adb %s not ready (%s): is adb-proxy running?", serial, firstLine(out))
+			}
 			devicePath := "/sdcard/sidekick-rec.mp4"
 			run := func(a ...string) ([]byte, error) {
 				full := append([]string{"-s", serial}, a...)
@@ -175,6 +180,50 @@ func rotateCmd() *cobra.Command {
 	return c
 }
 
+// parseFoldState extracts a device-state identifier by name (twin of
+// emu-host's discovery: identifiers differ per foldable, never hardcode).
+func parseFoldState(out, name string) string {
+	for _, line := range strings.Split(out, "\n") {
+		id, found := parseStateLine(line)
+		if found == "" {
+			continue
+		}
+		if found == name || normState(found) == normState(name) {
+			return id
+		}
+	}
+	return ""
+}
+
+// parseStateLine pulls (identifier, name) from one print-states line.
+func parseStateLine(line string) (string, string) {
+	i := strings.Index(line, "identifier=")
+	if i < 0 {
+		return "", ""
+	}
+	rest := line[i+len("identifier="):]
+	j := 0
+	for j < len(rest) && rest[j] >= '0' && rest[j] <= '9' {
+		j++
+	}
+	if j == 0 {
+		return "", ""
+	}
+	id := rest[:j]
+	name := ""
+	if k := strings.Index(line, "name='"); k >= 0 {
+		rest2 := line[k+len("name='"):]
+		if q := strings.Index(rest2, "'"); q >= 0 {
+			name = rest2[:q]
+		}
+	}
+	return id, name
+}
+
+// normState treats HALF_OPEN and HALF_OPENED as the same posture.
+func normState(s string) string {
+	return strings.TrimSuffix(strings.TrimSuffix(s, "ED"), "_")
+}
 // postureCmd requests a foldable posture via the platform device_state
 // controller. Fails loudly on non-foldables instead of pretending.
 func postureCmd() *cobra.Command {
@@ -184,16 +233,28 @@ func postureCmd() *cobra.Command {
 		Short: "set foldable hinge posture",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			id := map[string]string{"closed": "0", "half-open": "1", "open": "2"}[args[1]]
-			if id == "" {
+			want := map[string]string{"closed": "CLOSED", "half-open": "HALF_OPENED", "open": "OPENED"}[args[1]]
+			if want == "" {
 				return fmt.Errorf(`posture must be one of "open", "half-open", "closed"`)
 			}
 			if serial == "" {
 				serial = "localhost:5555"
 			}
-			full := []string{"-s", serial, "shell", "cmd", "device_state", "state", id}
-			if out, err := exec.Command(adbBin, full...).CombinedOutput(); err != nil {
-				return fmt.Errorf("posture %q unsupported on this device (%s)", args[1], firstLine(out))
+			run := func(a ...string) ([]byte, error) {
+				full := append([]string{"-s", serial}, a...)
+				return exec.Command(adbBin, full...).CombinedOutput()
+			}
+			// Identifiers differ per device: discover, don't hardcode.
+			states, err := run("shell", "cmd", "device_state", "print-states")
+			if err != nil {
+				return fmt.Errorf("posture unsupported on this device (%s)", firstLine(states))
+			}
+			id := parseFoldState(string(states), want)
+			if id == "" {
+				return fmt.Errorf("posture %q unsupported on this device", args[1])
+			}
+			if out, err := run("shell", "cmd", "device_state", "state", id); err != nil {
+				return fmt.Errorf("posture %q failed (%s)", args[1], firstLine(out))
 			}
 			fmt.Printf("posture %s -> %s\n", args[0], args[1])
 			return nil

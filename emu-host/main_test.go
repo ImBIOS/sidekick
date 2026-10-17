@@ -211,3 +211,33 @@ func TestRefreshReapsDeleted(t *testing.T) {
 		t.Errorf("local instance not destroyed: %v", r.kills)
 	}
 }
+
+func TestParseStateID(t *testing.T) {
+	out := `Supported states: [
+  DeviceState{identifier=1, name='CLOSED', app_accessible=true},
+  DeviceState{identifier=2, name='HALF_OPENED', app_accessible=true},
+  DeviceState{identifier=3, name='OPENED', app_accessible=true},
+]`
+	if got := parseStateID(out, "CLOSED"); got != "1" {
+		t.Errorf("closed: %q", got)
+	}
+	if got := parseStateID(out, "HALF_OPENED"); got != "2" {
+		t.Errorf("half: %q", got)
+	}
+	if got := parseStateID(out, "OPENED"); got != "3" {
+		t.Errorf("open: %q", got)
+	}
+	if got := parseStateID(out, "TABLET"); got != "" {
+		t.Errorf("missing state should be empty: %q", got)
+	}
+}
+
+func TestParseStateIDLoose(t *testing.T) {
+	out := "  DeviceState{identifier=2, name='HALF_OPENED'},\n  DeviceState{identifier=3, name='OPENED'},"
+	if got := parseStateIDLoose(out, "HALF_OPEN"); got != "2" {
+		t.Errorf("loose half: %q", got)
+	}
+	if got := parseStateIDLoose(out, "OPENED"); got != "3" {
+		t.Errorf("loose open: %q (must not match HALF_OPENED)", got)
+	}
+}

@@ -245,15 +245,17 @@ func refToXY(ref string) []string {
 // --- coordinate resolution + replay/diff commands ---
 
 // refCenter resolves an AX ref to screen-center pixels by walking any tree
-// shape (emu {nodes} or sim {root}) for {ref, bounds} pairs.
+// shape (emu {nodes} or sim {root}) for {ref, bounds} pairs. Taps land on
+// the nearest clickable ancestor-or-self: labels rarely hold touch
+// targets, their containers do (witnessed: label-center taps miss icons).
 func refCenter(tree []byte, ref string) (int, int, error) {
 	var doc any
 	if err := json.Unmarshal(tree, &doc); err != nil {
 		return 0, 0, fmt.Errorf("bad tree: %w", err)
 	}
-	bounds, ok := findBounds(doc, ref)
+	bounds, ok := findTapBounds(doc, ref)
 	if !ok {
-		return 0, 0, fmt.Errorf("ref %s not on screen; re-read the tree", ref)
+		return 0, 0, fmt.Errorf("ref %s has no tappable target; re-read the tree", ref)
 	}
 	// "[x1,y1][x2,y2]"
 	var x1, y1, x2, y2 int
@@ -263,31 +265,55 @@ func refCenter(tree []byte, ref string) (int, int, error) {
 	return (x1 + x2) / 2, (y1 + y2) / 2, nil
 }
 
-func findBounds(v any, ref string) (string, bool) {
-	m, ok := v.(map[string]any)
-	if !ok {
-		return "", false
+// findTapBounds locates ref, then climbs to the nearest clickable ancestor
+// (or self) and returns its bounds.
+func findTapBounds(v any, ref string) (string, bool) {
+	type frame struct {
+		node     map[string]any
+		ancestry []map[string]any
 	}
-	if r, _ := m["ref"].(string); r == ref {
-		if b, _ := m["bounds"].(string); b != "" {
-			return b, true
-		}
+	stack := []frame{}
+	if m, ok := v.(map[string]any); ok {
+		stack = append(stack, frame{node: m})
 	}
-	for _, val := range m {
-		switch t := val.(type) {
-		case map[string]any:
-			if b, ok := findBounds(t, ref); ok {
-				return b, true
-			}
-		case []any:
-			for _, e := range t {
-				if b, ok := findBounds(e, ref); ok {
+	for len(stack) > 0 {
+		f := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if r, _ := f.node["ref"].(string); r == ref {
+			chain := append(f.ancestry, f.node)
+			for i := len(chain) - 1; i >= 0; i-- {
+				b, _ := chain[i]["bounds"].(string)
+				if b != "" && isTruthy(chain[i]["clickable"]) {
 					return b, true
+				}
+			}
+			return "", false
+		}
+		for _, val := range f.node {
+			switch t := val.(type) {
+			case map[string]any:
+				stack = append(stack, frame{node: t, ancestry: append(f.ancestry, f.node)})
+			case []any:
+				for i := len(t) - 1; i >= 0; i-- {
+					if m, ok := t[i].(map[string]any); ok {
+						stack = append(stack, frame{node: m, ancestry: append(f.ancestry, f.node)})
+					}
 				}
 			}
 		}
 	}
 	return "", false
+}
+
+func isTruthy(v any) bool {
+	switch t := v.(type) {
+	case bool:
+		return t
+	case string:
+		return t == "true"
+	default:
+		return false
+	}
 }
 
 func adbDo(adb string, args ...string) error {
