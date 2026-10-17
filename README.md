@@ -19,11 +19,11 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Remote Xcode build (no Mac needed) | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ➖ Partial | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
 | Android / Gradle cloud build | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
 | Signing handled (certs, profiles, keystores) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No |
-| Store submit from terminal (TestFlight + Play) | 🛣️ Roadmap (TestFlight today; Play on the roadmap) | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No |
+| Store submit from terminal (TestFlight + Play) | 🛣️ Roadmap (Play upload implemented; TestFlight needs a Mac (backlog)) | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No |
 | iOS simulators | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes |
 | Android emulators + adb tunnel | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial |
 | Apple TV / tvOS + Android TV | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
-| Roku (real hardware) | 🛣️ Roadmap (Beta hardware pool) | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
+| Roku (real hardware) | 🛣️ Roadmap (Backlog: needs real hardware pool) | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Foldables (posture + rotate verbs) | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Real physical devices | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes |
 | CLI with device verbs (tap, type, screenshot) | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
@@ -43,7 +43,7 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Self-hostable (BYO Mac minis) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |
 | Source-available (FSL → Apache-2.0) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Public pricing + free tier, no card | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ➖ Partial | ➖ Partial | ➖ Partial | ❌ No |
-| Per-instance sandbox tokens + region pin | 🛣️ Roadmap (Tokens today; regions roadmap) | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
+| Per-instance sandbox tokens + region pin | 🛣️ Roadmap (Scoped tokens shipped; regions need a second region) | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |
 
 Legend: ✅ Yes · 🛣️ Roadmap = public, lands in the open · ➖ Partial · ❌ No.
 </details>
