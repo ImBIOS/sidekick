@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "",
+  "steps": [
+    {
+      "action": "tap",
+      "ref": "@e2"
+    }
+  ]
+}

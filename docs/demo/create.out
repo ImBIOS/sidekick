@@ -1,0 +1,6 @@
+{
+  "id": "emu_20261018-1",
+  "adb_target": "",
+  "status": "provisioning"
+}
+provisioning: poll `sidekick android get` until running, then connect adb

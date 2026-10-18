@@ -38,7 +38,7 @@ const lines = FEATURES.map(
 
 const table = [
   "<details>",
-  "<summary>Full 28-row comparison (all 9 vendors) — generated from <code>web/apps/web/src/data/comparison.ts</code>, last updated 28 Sep 2026</summary>",
+  "<summary>Full 28-row comparison (all 9 vendors) — generated from <code>web/apps/web/src/data/comparison.ts</code>, last updated 18 Oct 2026</summary>",
   "",
   header,
   sep,

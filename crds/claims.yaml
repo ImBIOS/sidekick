@@ -1,23 +1,187 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 ImBIOS — licensed under Apache-2.0, see LICENSE-APACHE.md.
+#
+# Sidekick claim CRDs. Apply once per cluster, then let teams provision
+# capacity declaratively:
+#
+#   kubectl apply -f crds/claims.yaml
+#   kubectl apply -f team-a-sims.yaml   # kind: SimulatorClaim
+#
+# The controller (cmd/controller) reconciles each claim against the
+# control-plane: it creates the resource, mirrors state into .status, and
+# enforces spec.ttl (default 2h) by releasing the resource on expiry.
+# Claim lifecycle: Pending -> Provisioning -> Running -> Succeeded/Failed,
+# or Expired when the TTL fires. Terminal claims are never resurrected:
+# delete and re-apply to recreate.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: simulatorclaims.sidekick.imbios.dev
+spec:
+  group: sidekick.imbios.dev
+  names:
+    kind: SimulatorClaim
+    listKind: SimulatorClaimList
+    plural: simulatorclaims
+    singular: simulatorclaim
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Host
+          type: string
+          jsonPath: .status.host
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [device, tenant]
+              properties:
+                device: { type: string, description: "Simulator device, e.g. iPhone16" }
+                os: { type: string, description: "Runtime, e.g. 18.2 (default: latest)" }
+                region: { type: string, description: "Fleet region pin (default: any)" }
+                tenant: { type: string, description: "Owning tenant, e.g. tn_123" }
+                ttl: { type: string, description: "Lifetime like 30m (default: 2h)" }
+            status:
+              type: object
+              properties:
+                phase: { type: string }
+                resourceID: { type: string }
+                host: { type: string }
+                udid: { type: string }
+                webrtcURL: { type: string }
+                message: { type: string }
+                expiresAt: { type: string, format: date-time }
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: buildclaims.sidekick.imbios.dev
+spec:
+  group: sidekick.imbios.dev
+  names:
+    kind: BuildClaim
+    listKind: BuildClaimList
+    plural: buildclaims
+    singular: buildclaim
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [scheme, tenant]
+              properties:
+                scheme: { type: string, description: "Xcode scheme to build" }
+                xcode: { type: string, description: "Xcode version pin, e.g. 16.2" }
+                region: { type: string, description: "Fleet region pin (default: any)" }
+                tenant: { type: string, description: "Owning tenant, e.g. tn_123" }
+                ttl: { type: string, description: "Watch window like 2h (default: 2h)" }
+            status:
+              type: object
+              properties:
+                phase: { type: string }
+                resourceID: { type: string }
+                host: { type: string }
+                message: { type: string }
+                expiresAt: { type: string, format: date-time }
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: emulatorclaims.sidekick.imbios.dev
+spec:
+  group: sidekick.imbios.dev
+  names:
+    kind: EmulatorClaim
+    listKind: EmulatorClaimList
+    plural: emulatorclaims
+    singular: emulatorclaim
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Host
+          type: string
+          jsonPath: .status.host
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [profile, tenant]
+              properties:
+                profile: { type: string, description: "AVD profile, e.g. Pixel_7_API_34" }
+                region: { type: string, description: "Fleet region pin (default: any)" }
+                tenant: { type: string, description: "Owning tenant, e.g. tn_123" }
+                ttl: { type: string, description: "Lifetime like 30m (default: 2h)" }
+            status:
+              type: object
+              properties:
+                phase: { type: string }
+                resourceID: { type: string }
+                host: { type: string }
+                adbTarget: { type: string }
+                message: { type: string }
+                expiresAt: { type: string, format: date-time }
+---
+# Examples (were the entire previous file — kept verbatim, now namespaced).
 apiVersion: sidekick.imbios.dev/v1
 kind: SimulatorClaim
 metadata:
   name: sim-abc
+  namespace: default
 spec:
   device: iPhone16
   os: "18.2"
   ttl: 30m
   tenant: tn_123
-status:
-  host: mac-mini-02
-  udid: ""
-  webrtcUrl: ""
 ---
 apiVersion: sidekick.imbios.dev/v1
 kind: BuildClaim
 metadata:
   name: build-abc
+  namespace: default
 spec:
   scheme: MyApp
   xcode: "16.2"
@@ -27,6 +191,7 @@ apiVersion: sidekick.imbios.dev/v1
 kind: EmulatorClaim
 metadata:
   name: emu-abc
+  namespace: default
 spec:
   profile: Pixel_7_API_34
   tenant: tn_123
