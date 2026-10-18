@@ -15,6 +15,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      - run: bash scripts/design-lint.sh
       - run: bunx turbo run check-types -F web
         env:
           NODE_ENV: development
