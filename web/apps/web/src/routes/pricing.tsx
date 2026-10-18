@@ -18,8 +18,11 @@ function Pricing() {
   return (
     <div className="bg-black text-zinc-100">
       <Container>
-        <p className="pt-10 text-sm text-zinc-500"><Link to="/">Home</Link> / Pricing</p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">Test your app. Pick your plan.</h1>
+        <p className="pt-10 text-sm text-zinc-500"><Link to="/" className="transition-colors hover:text-nest">Home</Link> <span className="text-zinc-700">/</span> Pricing</p>
+        <p className="mt-6 font-jakarta text-xs font-bold tracking-[0.18em] text-nest uppercase">Pricing</p>
+        <h1 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-white uppercase md:text-6xl">
+          Test your app<span className="text-nest">.</span> Pick your plan<span className="text-nest">.</span>
+        </h1>
         <p className="mt-3 max-w-2xl text-zinc-400">
           Upload your iOS, Android or TV build and drive it from your agent or browser.
           Every plan is monthly with streaming minutes and builds included — overage draws from credit at $0.03/min.

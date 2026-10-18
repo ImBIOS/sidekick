@@ -103,10 +103,6 @@ export function HeroCodenest(props: HeroCodenestCopy) {
 
   return (
     <div className="bg-[#070b0a] text-white">
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700&family=Instrument+Serif:ital@0;1&display=swap"
-      />
       <style>{`
         .liquid-card {
           background: rgba(255, 255, 255, 0.01);

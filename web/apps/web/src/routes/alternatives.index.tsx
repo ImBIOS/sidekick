@@ -18,8 +18,9 @@ function AlternativesHub() {
   return (
     <div className="bg-black text-zinc-100">
       <Container>
-        <p className="pt-10 text-sm text-zinc-500"><Link to="/">Home</Link> / Alternatives</p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">Mobile app testing alternatives</h1>
+        <p className="pt-10 text-sm text-zinc-500"><Link to="/" className="transition-colors hover:text-nest">Home</Link> <span className="text-zinc-700">/</span> Alternatives</p>
+        <p className="mt-6 font-jakarta text-xs font-bold tracking-[0.18em] text-nest uppercase">Comparisons</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white md:text-5xl">Mobile app testing alternatives<span className="text-nest">.</span></h1>
         <p className="mt-3 max-w-3xl text-zinc-400">
           Sidekick compared with VibeView, EAS Simulator, BrowserStack, Expo EAS Build, Limrun,
           Appetize, AWS Device Farm, LambdaTest and Sauce Labs — sourced, dated, and explicit
@@ -52,7 +53,7 @@ function AlternativesHub() {
               <Link key={c.slug} to="/alternatives/$slug" params={{ slug: c.slug }} className="group rounded-2xl border border-white/10 bg-zinc-950 p-5 hover:border-white/30">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-white group-hover:underline">{c.name} alternative</h3>
-                  <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                  <span className="rounded-full border border-nest/20 bg-nest/10 px-2.5 py-0.5 text-xs font-medium text-nest">
                     {s.sidekick.toFixed(0)}–{s.them.toFixed(0)}
                   </span>
                 </div>

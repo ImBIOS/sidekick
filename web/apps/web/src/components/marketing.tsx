@@ -10,7 +10,7 @@ export function Container({ children, wide }: { children: ReactNode; wide?: bool
 export function cellLabel(c: Cell): { icon: string; text: string; cls: string } {
   switch (c) {
     case "yes":
-      return { icon: "✅", text: "Yes", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" };
+      return { icon: "✅", text: "Yes", cls: "border-nest/20 bg-nest/10 text-nest" };
     case "roadmap":
       return { icon: "🛣️", text: "Roadmap", cls: "border-sky-400/20 bg-sky-400/10 text-sky-300" };
     case "partial":
@@ -140,7 +140,7 @@ export function PricingTable({ tiers = PRICING }: { tiers?: PriceTier[] }) {
           <ul className={`mt-4 flex-1 space-y-2 text-sm ${t.featured ? "text-zinc-700" : "text-zinc-400"}`}>
             {t.features.map((f) => (
               <li key={f} className="flex gap-2">
-                <span className={t.featured ? "text-black" : "text-emerald-400"}>✓</span>{f}
+                <span className={t.featured ? "text-black" : "text-nest"}>✓</span>{f}
               </li>
             ))}
           </ul>

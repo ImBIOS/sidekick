@@ -33,9 +33,10 @@ function AlternativePage() {
     <div className="bg-black text-zinc-100">
       <Container>
         <p className="pt-10 text-sm text-zinc-500">
-          <Link to="/">Home</Link> / <Link to="/alternatives">Alternatives</Link> / {c.name}
+          <Link to="/" className="transition-colors hover:text-nest">Home</Link> <span className="text-zinc-700">/</span> <Link to="/alternatives" className="transition-colors hover:text-nest">Alternatives</Link> <span className="text-zinc-700">/</span> {c.name}
         </p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">{c.name} alternative: what Sidekick does differently</h1>
+        <p className="mt-6 font-jakarta text-xs font-bold tracking-[0.18em] text-nest uppercase">Alternative</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white md:text-5xl">{c.name} alternative: what Sidekick does differently</h1>
         <p className="mt-3 max-w-3xl text-lg text-zinc-400">{c.tagline}</p>
         <div className="mt-5"><CtaRow /></div>
 
@@ -49,7 +50,7 @@ function AlternativePage() {
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">
           Sidekick vs {c.name}{" "}
-          <span className="ml-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-300">
+          <span className="ml-2 rounded-full border border-nest/20 bg-nest/10 px-3 py-1 text-sm font-semibold text-nest">
             Sidekick {s.sidekick.toFixed(0)}/{s.rows} rows · {c.name} {s.them.toFixed(0)}/{s.rows}
           </span>
         </h2>
@@ -79,7 +80,7 @@ function AlternativePage() {
         <div className="mt-4 space-y-3">
           {c.decideGuide.map((d) => (
             <div key={d.label} className="flex gap-3 rounded-2xl border border-white/10 bg-zinc-950 p-4">
-              <span className={`h-fit rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${d.winner === "sidekick" ? "bg-emerald-400/15 text-emerald-300" : "bg-white/10 text-zinc-300"}`}>
+              <span className={`h-fit rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${d.winner === "sidekick" ? "bg-nest/15 text-nest" : "bg-white/10 text-zinc-300"}`}>
                 {d.winner === "sidekick" ? "Sidekick" : c.name}
               </span>
               <p className="text-sm text-zinc-300"><strong className="text-white">{d.label}:</strong> {d.body}</p>

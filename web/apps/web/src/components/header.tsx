@@ -62,8 +62,8 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 transition-colors duration-300 ${
         scrolled
-          ? "border-b border-white/10 bg-black/80 backdrop-blur"
-          : "border-b border-transparent bg-black/40 backdrop-blur-md"
+          ? "border-b border-white/10 bg-ink/80 backdrop-blur"
+          : "border-b border-transparent bg-ink/40 backdrop-blur-md"
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
@@ -73,7 +73,7 @@ export default function Header() {
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-zinc-400 md:flex">
           {LINKS.map(({ to, label }) => (
-            <Link key={to} to={to} className="transition-colors hover:text-white">
+            <Link key={to} to={to} className="transition-colors hover:text-nest">
               {label}
             </Link>
           ))}

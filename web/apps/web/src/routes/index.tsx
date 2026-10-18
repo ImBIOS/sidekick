@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { motion } from "motion/react";
 import { COMPETITORS, FEATURES } from "../data/comparison";
 import { CellBadge, CompareTable, Container, Faq, PricingTable, SiteFooter, Terminal, cellCounts } from "../components/marketing";
 import { Reveal } from "../components/reveal";
@@ -98,7 +97,7 @@ function SessionPanel() {
         <p className="mx-auto hidden rounded-full border border-white/10 bg-white/5 px-4 py-1 font-mono text-xs text-zinc-400 sm:block">
           sidekick.imbios.dev/s/sim_8f3a
         </p>
-        <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+        <span className="rounded-full border border-nest/20 bg-nest/10 px-2.5 py-0.5 text-xs font-medium text-nest">
           ● Live
         </span>
       </div>
@@ -115,14 +114,10 @@ function SessionPanel() {
           </button>
         ))}
       </div>
-      <motion.div
+      <div
         key={active}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="grid gap-6 p-6 md:grid-cols-2 md:p-8"
-      >
-        <div>
+        className="animate-panel-in grid gap-6 p-6 md:grid-cols-2 md:p-8"
+      >        <div>
           <p className="font-mono text-xs text-zinc-500">{p.device}</p>
           <ul className="mt-3 space-y-2.5">
             {p.rows.map((t, i) => (
@@ -133,11 +128,11 @@ function SessionPanel() {
             ))}
           </ul>
         </div>
-        <div className="flex flex-col justify-center rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-5">
-          <p className="font-mono text-sm text-emerald-300">✓ agent verified: tap @e7 → diff 3 elements</p>
+        <div className="flex flex-col justify-center rounded-2xl border border-nest/15 bg-nest/[0.06] p-5">
+          <p className="font-mono text-sm text-nest">✓ agent verified: tap @e7 → diff 3 elements</p>
           <p className="mt-3 font-mono text-xs leading-relaxed text-zinc-500">{p.verb}</p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
