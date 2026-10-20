@@ -16,7 +16,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@sidekick/config": "workspace:*",
+    "drizzle-orm": "catalog:",
     "typescript": "catalog:"
   }
 }
