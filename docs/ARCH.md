@@ -1,6 +1,6 @@
 # Sidekick architecture
 
-Source of truth: this repo at `ebc06d5` (18 Oct 2026). Anything here that
+Source of truth: this repo at `d669b92` (18 Oct 2026). Anything here that
 isn't backed by code or a test is marked **[unwitnessed]**.
 
 ## Control plane vs data plane

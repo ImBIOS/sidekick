@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidekick — one working loop (Android, witnessed 18 Oct 2026)</title>
+<style>
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  video, img { width: 100%; border: 1px solid #ccc; }
+  pre { background: #f4f4f4; padding: 1rem; overflow-x: auto; }
+  .yes { color: #0a0; font-weight: bold; } .no { color: #a00; font-weight: bold; }
+  table { border-collapse: collapse; } td, th { border: 1px solid #ccc; padding: .3rem .6rem; text-align: left; }
+</style>
+</head>
+<body>
+<h1>Sidekick — one working loop, no mocks</h1>
+<p>Real binaries from this repo, AVD <code>T3</code> (Android 14) booted on <code>/dev/kvm</code>,
+every agent verb via the real <code>sidekick</code> CLI. Full log: <code>DEMO.md</code>.</p>
+
+<h2>The loop (5 lines)</h2>
+<pre>$ sidekick android create --profile T3
+{"id": "emu_20261018-2", "status": "provisioning"}        # host claims, boots AVD (~4 min cold)
+$ sidekick android get emu_20261018-2
+{"status": "running", "adb_target": "127.0.0.1:5555"}
+$ sidekick android ui-tree emu_20261018-2                 # refs: 17 (@e1..@e17)
+$ sidekick android screenshot emu_20261018-2 --out shot.png   # saved 1374041 bytes
+$ sidekick test replay --in t.json --emu emu_20261018-2 --threshold 0.5
+passed 1 steps   # + record demo.mp4, netcap pcap, rotate 90/0, diff 0.00%, delete</pre>
+
+<h2>Recorded mp4 (from the loop itself)</h2>
+<video controls preload="metadata" src="demo.mp4"></video>
+
+<h2>Screenshot (from the loop itself)</h2>
+<img alt="emulator screenshot from the witnessed loop" src="shot.png">
+
+<h2>Witnessed vs not</h2>
+<table>
+<tr><th>Claim</th><th>Status</th></tr>
+<tr><td>Android loop above (scheduler, CLI, daemons, record/replay/diff)</td><td class="yes">WITNESSED</td></tr>
+<tr><td>iOS loop (xcode build → ios create → act → preview link)</td><td class="no">UNWITNESSED — needs a Mac fleet</td></tr>
+<tr><td>K8s claims live on a cluster</td><td class="no">UNWITNESSED — fake-client tests only</td></tr>
+<tr><td>Postgres-backed scheduler under load</td><td class="no">UNWITNESSED — pgxmock shapes only</td></tr>
+<tr><td><code>docker compose -f docker-compose.selfhost.yml up</code> end-to-end</td><td class="no">UNWITNESSED — no docker here</td></tr>
+</table>
+
+<h2>Docs</h2>
+<ul>
+<li><a href="../ARCH.md">ARCH.md</a> — control/data plane, tokens, tenant isolation, on-call notes</li>
+<li><a href="../GAPS.md">GAPS.md</a> — honest gaps vs the Limrun job req + what was cut</li>
+<li><a href="DEMO.md">DEMO.md</a> — full transcript + artifacts + the 204 bug this loop caught</li>
+</ul>
+</body>
+</html>
