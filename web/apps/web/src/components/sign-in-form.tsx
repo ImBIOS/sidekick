@@ -35,7 +35,13 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             toast.success("Sign in successful");
           },
           onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
+            const msg =
+              (error as { error?: { message?: string; statusText?: string } })?.error
+                ?.message ||
+              (error as { error?: { message?: string; statusText?: string } })?.error
+                ?.statusText ||
+              "Sign in failed — check your connection and try again";
+            toast.error(msg);
           },
         },
       );

@@ -17,8 +17,10 @@ RUN bun install --ignore-scripts
 COPY web/apps ./apps
 COPY web/packages ./packages
 # Local-only env required by varlock at build time (gitignored upstream).
-# Points at the documented API host; marketing routes don't call it during SSR.
-ARG VITE_SERVER_URL=https://api.sidekick.imbios.dev
+# Points at the same-origin API host: browsers call <origin>/api/* which
+# Traefik routes to sidekick-api, so no extra DNS is ever needed.
+# (api.sidekick.imbios.dev has no DNS and must NOT be used.)
+ARG VITE_SERVER_URL=https://sidekick.imbios.dev
 RUN printf 'NODE_ENV=production\nVITE_SERVER_URL=%s\n' "$VITE_SERVER_URL" > ./apps/web/.env
 RUN touch ./apps/server/.env ./packages/db/.env && bun run env:generate
 RUN NODE_ENV=production ./node_modules/.bin/turbo run build --filter=web...
