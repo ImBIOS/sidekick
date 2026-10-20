@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@sidekick/ui/components/button";
 import { Input } from "@sidekick/ui/components/input";
 import { Label } from "@sidekick/ui/components/label";
-import { CodeBlock, CopyButton, Step } from "@/components/console";
+import { CodeBlock, CopyButton, CreateDeviceSplitButton, Step } from "@/components/console";
 import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/_auth/console")({
@@ -59,6 +59,10 @@ function RouteComponent() {
         agent a prompt, and watch your app come to life. Three steps, about two
         minutes — no Mac, no Xcode, no installs beyond the CLI.
       </p>
+
+      <div className="mt-6">
+        <CreateDeviceSplitButton caption="iOS or Android. No local setup." />
+      </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">

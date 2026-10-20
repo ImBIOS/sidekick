@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
-import { CodeBlock } from "@/components/console";
+import { CodeBlock, CreateDeviceSplitButton } from "@/components/console";
 
 export const Route = createFileRoute("/_auth/simulators")({
   component: RouteComponent,
@@ -21,10 +21,13 @@ function RouteComponent() {
         Simulators<span className="text-nest">.</span>
       </h1>
       <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-400">
-        No sessions yet. Boot one from the CLI or your agent — share links open
-        in any browser, no login needed.
+        No sessions yet. Create one below, boot it from the CLI, or let your
+        agent drive — share links open in any browser, no login needed.
       </p>
-      <div className="mt-8">
+      <div className="mt-6">
+        <CreateDeviceSplitButton caption="iOS or Android. No local setup — or paste the commands below." />
+      </div>
+      <div className="mt-6">
         <CodeBlock lines={COMMANDS} title="terminal" />
       </div>
       <p className="mt-6 text-sm text-zinc-500">
