@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useTRPC } from "@/utils/trpc";
 
-export const Route = createFileRoute("/_auth/dashboard")({
+export const Route = createFileRoute("/_auth/console")({
   component: RouteComponent,
 });
 
@@ -15,7 +15,7 @@ function RouteComponent() {
 
   return (
     <div>
-      <h1>Dashboard</h1>
+      <h1>Console</h1>
       <p>Welcome {session.user.name}</p>
       <p>API: {privateData.data?.message}</p>
     </div>

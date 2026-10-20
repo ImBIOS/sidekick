@@ -36,8 +36,8 @@ export default function UserMenu() {
 
   return (
     <>
-      <Link to="/dashboard">
-        <Button className="rounded-full bg-white px-5 text-black hover:bg-zinc-200">Dashboard</Button>
+      <Link to="/console">
+        <Button className="rounded-full bg-white px-5 text-black hover:bg-zinc-200">Console</Button>
       </Link>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="outline" />}>
