@@ -1,0 +1,134 @@
+{
+  "nodes": [
+    {
+      "bounds": "[0,0][1080,2400]",
+      "children": [
+        {
+          "bounds": "[0,0][1080,2400]",
+          "children": [
+            {
+              "bounds": "[99,232][1023,503]",
+              "children": [
+                {
+                  "bounds": "[99,232][1023,503]",
+                  "children": [
+                    {
+                      "bounds": "[99,300][1023,362]",
+                      "class": "TextView",
+                      "clickable": true,
+                      "desc": "Sun, Oct 18",
+                      "ref": "@e5",
+                      "text": "Sun, Oct 18"
+                    }
+                  ],
+                  "class": "ViewGroup",
+                  "clickable": true,
+                  "ref": "@e4"
+                }
+              ],
+              "class": "ViewPager",
+              "ref": "@e3"
+            },
+            {
+              "bounds": "[309,1487][519,1759]",
+              "class": "TextView",
+              "clickable": true,
+              "desc": "Gmail",
+              "ref": "@e6",
+              "text": "Gmail"
+            },
+            {
+              "bounds": "[561,1487][771,1759]",
+              "class": "TextView",
+              "clickable": true,
+              "desc": "Photos",
+              "ref": "@e7",
+              "text": "Photos"
+            },
+            {
+              "bounds": "[813,1487][1023,1759]",
+              "class": "TextView",
+              "clickable": true,
+              "desc": "YouTube",
+              "ref": "@e8",
+              "text": "YouTube"
+            }
+          ],
+          "class": "ScrollView",
+          "ref": "@e2"
+        },
+        {
+          "bounds": "[0,136][1080,2337]",
+          "class": "View",
+          "desc": "Home",
+          "ref": "@e9"
+        },
+        {
+          "bounds": "[76,1873][249,2068]",
+          "class": "TextView",
+          "clickable": true,
+          "desc": "Phone",
+          "ref": "@e10",
+          "text": "Phone"
+        },
+        {
+          "bounds": "[328,1873][501,2068]",
+          "class": "TextView",
+          "clickable": true,
+          "desc": "Messages",
+          "ref": "@e11",
+          "text": "Messages"
+        },
+        {
+          "bounds": "[580,1873][753,2068]",
+          "class": "TextView",
+          "clickable": true,
+          "desc": "Chrome",
+          "ref": "@e12",
+          "text": "Chrome"
+        },
+        {
+          "bounds": "[832,1873][1004,2068]",
+          "class": "TextView",
+          "clickable": true,
+          "desc": "Predicted app: Gmail",
+          "ref": "@e13",
+          "text": "Gmail"
+        },
+        {
+          "bounds": "[75,2125][1004,2290]",
+          "children": [
+            {
+              "bounds": "[86,2144][212,2270]",
+              "class": "ImageView",
+              "clickable": true,
+              "desc": "Google app",
+              "ref": "@e15"
+            },
+            {
+              "bounds": "[741,2125][867,2290]",
+              "class": "ImageView",
+              "clickable": true,
+              "desc": "Voice search",
+              "ref": "@e16"
+            },
+            {
+              "bounds": "[867,2125][993,2290]",
+              "class": "ImageButton",
+              "clickable": true,
+              "desc": "Google Lens",
+              "ref": "@e17"
+            }
+          ],
+          "class": "FrameLayout",
+          "clickable": true,
+          "desc": "Search",
+          "ref": "@e14"
+        }
+      ],
+      "class": "FrameLayout",
+      "ref": "@e1"
+    }
+  ],
+  "refs": 17
+}

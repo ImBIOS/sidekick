@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: FSL-1.1-ALv2
+# Copyright 2026 ImBIOS — licensed under FSL-1.1-ALv2, see LICENSE.md.
+#
+# Sidekick claim controller. Apply after crds/claims.yaml:
+#
+#   kubectl apply -f crds/claims.yaml
+#   kubectl -n sidekick-system create secret generic controller-secrets \
+#     --from-literal=host-token=$SIDEKICK_HOST_TOKEN
+#   kubectl apply -f deploy/controller.yaml
+#
+# The controller needs a control-plane URL it can reach (in-cluster DNS
+# when the control-plane runs in the same cluster).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sidekick-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sidekick-controller
+  namespace: sidekick-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sidekick-controller
+rules:
+  - apiGroups: ["sidekick.imbios.dev"]
+    resources: ["simulatorclaims", "buildclaims", "emulatorclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["sidekick.imbios.dev"]
+    resources: ["simulatorclaims/status", "buildclaims/status", "emulatorclaims/status"]
+    verbs: ["update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sidekick-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sidekick-controller
+subjects:
+  - kind: ServiceAccount
+    name: sidekick-controller
+    namespace: sidekick-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidekick-controller
+  namespace: sidekick-system
+spec:
+  replicas: 1 # one leader: reconcile is idempotent but TTL delete is not atomic
+  selector:
+    matchLabels:
+      app: sidekick-controller
+  template:
+    metadata:
+      labels:
+        app: sidekick-controller
+    spec:
+      serviceAccountName: sidekick-controller
+      containers:
+        - name: controller
+          # Build it: go build -o controller ./cmd/controller
+          image: ghcr.io/imbios/sidekick-controller:latest
+          args:
+            - --control=$(CONTROL_PLANE_URL)
+            - --resync=30s
+          env:
+            - name: CONTROL_PLANE_URL
+              value: http://control-plane.sidekick-system.svc:8080
+            - name: SIDEKICK_HOST_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: controller-secrets
+                  key: host-token
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+          livenessProbe:
+            exec: { command: ["sh", "-c", "true"] }

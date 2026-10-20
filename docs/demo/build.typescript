@@ -1,0 +1,5 @@
+Script started on 2026-10-18 11:53:47+00:00 [COMMAND="/tmp/sk/bin/sidekick xcode build . --scheme MyApp --wait=false" <not executed on terminal>]
+syncing . -> control-plane, scheme=MyApp
+build bld_20261018-3 (queued)
+
+Script done on 2026-10-18 11:53:47+00:00 [COMMAND_EXIT_CODE="0"]
