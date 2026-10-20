@@ -62,9 +62,9 @@ function RouteComponent() {
       <div className="mt-10 space-y-10">
         <Step n={1} title="Copy your API key">
           <p>
-            Keys are scoped to your default org (“{keys.data?.[0]?.name ?? "your org"}” below
-            shows what exists). The secret shows <strong className="text-zinc-200">once</strong> —
-            agents pick it up from <code className="font-mono text-xs">SIDEKICK_TOKEN</code>.
+            Keys are scoped to your default org. The secret shows{" "}
+            <strong className="text-zinc-200">once</strong> — agents pick it up
+            from <code className="font-mono text-xs">SIDEKICK_TOKEN</code>.
           </p>
           {newSecret ? (
             <div className="space-y-2 rounded-xl border border-dashed border-nest/40 bg-nest/5 p-3">

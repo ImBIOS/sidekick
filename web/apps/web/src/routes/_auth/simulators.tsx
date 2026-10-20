@@ -21,8 +21,8 @@ function RouteComponent() {
         Simulators<span className="text-nest">.</span>
       </h1>
       <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-400">
-        No sessions yet. Boot one from the CLI or your agent — it appears here
-        with its share link the moment it is running.
+        No sessions yet. Boot one from the CLI or your agent — share links open
+        in any browser, no login needed.
       </p>
       <div className="mt-8">
         <CodeBlock lines={COMMANDS} title="terminal" />
