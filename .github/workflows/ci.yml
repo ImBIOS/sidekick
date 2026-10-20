@@ -24,9 +24,17 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - run: bun install --frozen-lockfile
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
       - run: bash scripts/design-lint.sh
-      - run: bunx turbo run check-types -F web
+      - run: pnpm exec turbo run check-types -F web
         env:
           NODE_ENV: development
           VITE_SERVER_URL: http://localhost:3000
