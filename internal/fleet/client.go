@@ -169,14 +169,18 @@ func (c *Client) do(method, path string, body any, out any) (int, error) {
 	return resp.StatusCode, nil
 }
 
-// ClaimNext polls one claim for pool+region. ok=false means 204.
+// ClaimNext polls one claim for pool+region. ok=false means 204 (no work).
+// Note: do() treats 204 as success with an empty body, so the status check
+// must come before the error check — otherwise every idle poll decodes as
+// an empty claim and daemons spin on phantom work (found live 18 Oct 2026:
+// emu-host logged "claimed <empty>" and refused forever).
 func (c *Client) ClaimNext(pool, region string, kinds []string) (claim *Claim, ok bool, err error) {
 	var cl Claim
 	code, err := c.do(http.MethodPost, "/v1/host/claims/next", map[string]any{"pool": pool, "region": region, "kinds": kinds}, &cl)
+	if code == http.StatusNoContent {
+		return nil, false, nil
+	}
 	if err != nil {
-		if code == http.StatusNoContent {
-			return nil, false, nil
-		}
 		return nil, false, err
 	}
 	return &cl, true, nil
