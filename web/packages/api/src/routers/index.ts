@@ -1,5 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { apiKeysRouter } from "./api-keys";
+import { devicesRouter } from "./devices";
 import { organizationRouter } from "./organization";
 
 export const appRouter = router({
@@ -14,5 +15,6 @@ export const appRouter = router({
   }),
   organization: organizationRouter,
   apiKeys: apiKeysRouter,
+  devices: devicesRouter,
 });
 export type AppRouter = typeof appRouter;
