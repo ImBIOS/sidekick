@@ -11,6 +11,9 @@ import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/_auth/console")({
   component: RouteComponent,
+  head: () => ({
+    meta: [{ title: "Get started — Sidekick Console" }],
+  }),
 });
 
 const INSTALL = `npm i -g @imbios/sidekick   # or: brew install ImBIOS/tap/sidekick

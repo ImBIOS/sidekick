@@ -4,6 +4,9 @@ import { CodeBlock, CreateDeviceSplitButton } from "@/components/console";
 
 export const Route = createFileRoute("/_auth/simulators")({
   component: RouteComponent,
+  head: () => ({
+    meta: [{ title: "Simulators — Sidekick Console" }],
+  }),
 });
 
 const COMMANDS = `sidekick ios create --device "iPhone 17"   # or Pixel_7 via: sidekick android create

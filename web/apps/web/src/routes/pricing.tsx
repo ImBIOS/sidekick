@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CompareTable, Container, PricingTable, SiteFooter } from "../components/marketing";
 
-export const Route = createFileRoute("/pricing")({ component: Pricing });
+export const Route = createFileRoute("/pricing")({
+  component: Pricing,
+  head: () => ({
+    meta: [{ title: "Pricing — Sidekick" }],
+  }),
+});
 
 const PLAN_ROWS: [string, string[]][] = [
   ["Monthly price", ["$0", "$15", "$39", "$149"]],

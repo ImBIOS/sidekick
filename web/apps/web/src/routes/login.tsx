@@ -11,6 +11,9 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search) => searchSchema.parse(search),
+  head: () => ({
+    meta: [{ title: "Log in — Sidekick" }],
+  }),
   component: RouteComponent,
 });
 
