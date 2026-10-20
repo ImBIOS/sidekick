@@ -64,14 +64,16 @@ async function controlFetch(secret: string, path: string, init?: RequestInit) {
   return body;
 }
 
-/** Mint an ephemeral key, run `fn`, revoke. Revocation failure is swallowed. */
+/** Mint an ephemeral key, run `fn`, revoke. Revocation failure is swallowed.
+ * TTL is 1 day (the plugin minimum) as a backstop; revocation is the real
+ * cleanup, so a leaked key visibly named `console one-click` expires fast. */
 async function withEphemeralKey<T>(
   ctx: { auth: Auth; headers: Headers },
   orgId: string | null | undefined,
   fn: (secret: string) => Promise<T>,
 ): Promise<T> {
   const created = (await ctx.auth.api.createApiKey({
-    body: { name: "console one-click", organizationId: orgId ?? undefined, expiresIn: 300 },
+    body: { name: "console one-click", organizationId: orgId ?? undefined, expiresIn: 86400 },
     headers: ctx.headers,
   })) as { key: string; id: string };
   try {
