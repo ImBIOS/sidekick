@@ -35,14 +35,14 @@ function AlternativesHub() {
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Which one to read</h2>
         <div className="mt-4 space-y-3 text-[15px] text-zinc-300">
-          <p><strong>If you're choosing between the two agent-native loops:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "vibeview" }}>VibeView</Link> is the closest full-stack rival — the page concedes Roku, Duo and record-replay, and shows where any-stack builds and self-host answer.</p>
+          <p><strong>If you're choosing between the two agent-native loops:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "vibeview" }}>VibeView</Link> is the closest full-stack rival — the page concedes Roku hardware and the Duo, and shows where any-stack builds and self-host answer.</p>
           <p><strong>If you're an Expo shop:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "eas-simulator" }}>EAS Simulator</Link> is the shortest path inside the preview — the page covers the waitlist, the missing price, and what phones-only means for TV apps.</p>
           <p><strong>If the blocker is the build itself:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "eas-build" }}>EAS Build</Link> compiles and submits RN apps — the page prices per build and shows what a device adds.</p>
           <p><strong>If the blocker is cost per person:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "aws-device-farm" }}>AWS Device Farm</Link> meters the device; <Link className="underline" to="/alternatives/$slug" params={{ slug: "lambdatest" }}>LambdaTest</Link> prices per parallel. Both pages work out what the fourth teammate costs.</p>
           <p><strong>If the blocker is who can get in:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "sauce-labs" }}>Sauce Labs</Link> requires logins to watch; our share links need no account.</p>
           <p><strong>If you weigh hardware against reach:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "browserstack" }}>BrowserStack</Link> puts builds on real hardware; we put them in front of non-engineers.</p>
-          <p><strong>If you're already sold on embedding:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "appetize" }}>Appetize</Link> is the closest embed comparison — two differences pointing opposite ways.</p>
-          <p><strong>If you're evaluating the other agent-native incumbent:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "limrun" }}>Limrun</Link> is the closest CLI match — the page concedes video, tokens and regions.</p>
+          <p><strong>If you're already sold on embedding:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "appetize" }}>Appetize</Link> is the closest embed comparison — agents against embedding.</p>
+          <p><strong>If you're evaluating the other agent-native incumbent:</strong> <Link className="underline" to="/alternatives/$slug" params={{ slug: "limrun" }}>Limrun</Link> is the closest CLI match — video, tokens and regions now argued row by row on our side of the table.</p>
         </div>
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-white">Alternatives guides</h2>

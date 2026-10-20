@@ -49,13 +49,13 @@ export const COMPETITORS: Competitor[] = [
       "It is the most complete closed product in this comparison — and the pricing page proves it: Free/Dev/Starter/Professional at $0/$19/$49/$249 with $0.04/min overage. What it isn't: open (no source, no self-host), any-stack (cloud builds are React Native only), or login-free at the API level. That is the whole gap Sidekick is built to fill.",
     ],
     strengths: [
-      { title: "Five platforms today, including Duo and Roku", body: "Apple's iPhone Duo foldable is live in the browser and Roku runs on beta hardware. Our Roku is a dated roadmap item and our foldable verbs are roadmap too — today this row is theirs." },
-      { title: "Record-replay where AI picks up changed steps", body: "Recorded steps replay exactly and an AI agent picks up only the steps where the screen actually changed. Our recorder is a beta roadmap item; their loop is shipping." },
+      { title: "Five platforms today, including Duo and Roku", body: "Apple's iPhone Duo foldable is live in the browser and Roku runs on beta hardware. Our Roku is backlog — today the hardware rows are theirs. (Our foldable posture/rotate verbs shipped; see the table.)" },
+      { title: "Record-replay polish, not existence", body: "Recorded steps replay exactly and an AI agent picks up only the steps where the screen actually changed. We record and replay too now (CLI, witnessed on-device) — theirs remains the more polished managed loop with AI step repair; ours is open and scriptable." },
       { title: "Share links + guests + embed that need nothing", body: "Send a URL and the recipient uses the app with no account; paid tiers add live guests and site embeds. We match the shape — they have the years of polish." },
     ],
     decideGuide: [
       { label: "You ship React Native and want the managed closed loop", winner: "them", body: "VibeView. Cloud builds, five platforms, AI testing and per-org pricing in one place with no infrastructure to think about." },
-      { label: "You need Roku beta or the iPhone Duo this week", winner: "them", body: "VibeView ships both today. Sidekick's Roku and foldable verbs are dated roadmap items." },
+      { label: "You need Roku beta or the iPhone Duo this week", winner: "them", body: "VibeView ships both today. Sidekick's Roku is backlog; foldable verbs shipped." },
       { label: "Your app isn't React Native", winner: "sidekick", body: "Sidekick builds any Xcode/Gradle project. VibeView cloud builds are RN-only by design." },
       { label: "You must run it on your own Mac minis", winner: "sidekick", body: "Sidekick self-hosts free under FSL. VibeView is their cloud or nothing." },
       { label: "You need the source to audit or extend the platform", winner: "sidekick", body: "Every Sidekick line is source-available (FSL → Apache-2.0). VibeView is closed." },
@@ -64,7 +64,7 @@ export const COMPETITORS: Competitor[] = [
       { q: "How does VibeView price compare?", a: "Dev $19/mo (200 min, 15 builds) vs our Dev $15/mo (200 min, 25 builds); both charge overage per minute ($0.04 vs $0.03). Their Free caps sessions at 5 minutes; ours caps minutes, not length. Self-host is $0 only on our side." },
       { q: "Does VibeView build non-RN apps?", a: "No — vibeview build --cloud compiles React Native apps; anything else arrives as an uploaded binary. Sidekick builds any Xcode or Gradle project from source." },
       { q: "Can agents drive VibeView devices?", a: "Yes — skill plus MCP server with UI-tree refs, the same shape as Sidekick. The difference isn't the verbs, it's what surrounds them: any-stack builds, source access and self-hosting." },
-      { q: "Where is VibeView stronger?", a: "Roku hardware beta, iPhone Duo foldable, and the record-replay AI testing loop — all shipping today. We name each on this page with the roadmap dates for our answers." },
+      { q: "Where is VibeView stronger?", a: "Roku hardware beta and the iPhone Duo foldable — both shipping today, both backlog on our side. On record-replay and AI testing we now match them (see the table); their edge is polish, not existence." },
     ],
   },
   {
@@ -171,9 +171,9 @@ export const COMPETITORS: Competitor[] = [
     ],
     decideGuide: [
       { label: "You ship a TV app", winner: "sidekick", body: "Sidekick runs tvOS/Android TV with d-pad verbs. Limrun's own guide says tvOS schemes don't support simulator attachment yet." },
-      { label: "You want tests that outlive the agent", winner: "sidekick", body: "Sidekick record-replay + visual regression + CI checks (roadmap, dated). Limrun points at 'your favorite framework' — legitimate, and a different product." },
+      { label: "You want tests that outlive the agent", winner: "sidekick", body: "Sidekick record-replay + visual regression shipped and witnessed; CI checks are roadmap. Limrun points at 'your favorite framework' — legitimate, and a different product." },
       { label: "You submit to Google Play from the terminal", winner: "sidekick", body: "Sidekick submits to TestFlight and Play. Limrun documents App Store upload only." },
-      { label: "You run a fleet of sandboxed agents across regions", winner: "them", body: "Limrun. Per-instance tokens and jurisdiction pinning are documented; our region pinning is roadmap." },
+      { label: "You run a fleet of sandboxed agents across regions", winner: "them", body: "Limrun. Per-instance tokens and jurisdiction pinning are documented and mature; our scoped tokens and region pin are fresh and witnessed across two regions — pick them for fleet depth, us for openness." },
       { label: "You need the price before you start", winner: "sidekick", body: "Every Sidekick plan is public with a no-card free tier. Limrun publishes its model, not its numbers." },
     ],
     faqs: [
@@ -188,26 +188,26 @@ export const COMPETITORS: Competitor[] = [
     url: "https://appetize.io",
     price: "Free 30 min (public) · Starter $59/mo · Premium $319/mo",
     checked: "27 Sep 2026",
-    tagline: "Two real differences, pointing opposite ways: we drive with agents, they capture network traffic.",
-    cardBlurb: "The fastest browser emulators and the embed king — but no builds, no agent verbs, and network capture is their row, not ours.",
+    tagline: "Two differences, pointing opposite ways: we drive with agents, they embed anywhere — and both capture traffic now.",
+    cardBlurb: "The fastest browser emulators and the embed king — but no builds, no agent verbs, and their capture lives in the browser while ours lives in the terminal.",
     intro: [
       "Appetize streams iOS/Android apps in any browser in seconds, embeds anywhere with a JS SDK, automates via Playwright and is SOC 2/ISO/GDPR compliant. For sales demos and support-driven previews it is superb.",
       "But Appetize is a streaming surface, not an agent loop: no Xcode build (upload a binary), no CLI verbs or skill file for agents, no TV/Roku, no record-replay testing, and paid tiers start at $59/mo for starter minutes.",
     ],
     strengths: [
       { title: "Speed + embedding maturity", body: "Sub-minute cold starts, public embed URLs, kiosk mode, allowlists, auto-updates of latest builds. A decade of 'put the app in a browser tab' polish." },
-      { title: "Network capture + logs in-session", body: "Inspect UI hierarchy, device logs and network traffic while debugging. Our network capture is roadmap; today this row is theirs." },
+      { title: "Network capture + logs in-session", body: "Inspect UI hierarchy, device logs and network traffic while debugging. We capture too now (pcap pull, witnessed); their edge is live in-session inspection next to the stream, not capture itself." },
     ],
     decideGuide: [
       { label: "You need the app embedded in docs/support tooling this week", winner: "them", body: "Appetize's embed SDK, kiosk mode and access controls are the mature choice for non-agent embedding." },
       { label: "An agent must build and verify from source", winner: "sidekick", body: "Appetize takes binaries; Sidekick takes git repos — builds, boots, drives, verifies, posts the preview link itself." },
-      { label: "You need TV, Roku or foldables", winner: "sidekick", body: "Appetize is phones. Sidekick covers TV devices today, Roku/foldables on the dated roadmap." },
+      { label: "You need TV, Roku or foldables", winner: "sidekick", body: "Appetize is phones. Sidekick covers TV devices and foldables today; Roku is backlog." },
       { label: "Budget under $59/mo matters", winner: "sidekick", body: "Sidekick Dev is $15/mo with 200 minutes; self-host is $0. Appetize Starter is $59/mo." },
     ],
     faqs: [
       { q: "Does Appetize build iOS apps?", a: "No — you upload a signed .ipa/.apk. Sidekick builds from source on hosted Macs, then installs on the device in the same command chain." },
       { q: "Can agents automate Appetize?", a: "Via Playwright scripts against the stream. Sidekick exposes agent-native verbs (ui-tree, tap, type, screenshot) plus a skill file and MCP server — no browser-automation layer in between." },
-      { q: "What about network inspection?", a: "Appetize wins today: live network capture alongside logs. Sidekick streams app logs now; network capture is a dated roadmap item — and because we're source-available, you can watch it land." },
+      { q: "What about network inspection?", a: "Appetize shows live capture alongside logs in the browser. Sidekick captures pcap from the CLI and streams app logs — both witnessed; because we're source-available, you can watch either improve." },
     ],
   },
   {
@@ -230,7 +230,7 @@ export const COMPETITORS: Competitor[] = [
       { label: "Procurement must stay on AWS", winner: "them", body: "Device Farm. Private devices on the AWS bill need no new vendor." },
       { label: "A fourth teammate must open the build", winner: "sidekick", body: "Sidekick prices the org with unlimited members on Scale and share links need no login. Device Farm meters every device-minute and every viewer needs AWS access." },
       { label: "An agent must build + verify", winner: "sidekick", body: "Device Farm executes scripts you write. Sidekick's agent builds from source, drives the device, and reports back with screenshots." },
-      { label: "You need regions outside us-west-2", winner: "sidekick", body: "Device Farm is Oregon-only. Sidekick pins us/eu/as (region pinning roadmap, dated)." },
+      { label: "You need regions outside us-west-2", winner: "sidekick", body: "Device Farm is Oregon-only. Sidekick pins regions too (pool+region, witnessed across two GCP regions)." },
     ],
     faqs: [
       { q: "What does AWS Device Farm really cost?", a: "~$0.17 per device-minute after the one-time 1,000 free minutes, or ~$250/device/month unmetered (breakeven ≈1,470 min/device). 20,000 device-minutes/mo ≈ $3,400. Sidekick Dev is $15/mo + $0.03/min overage." },
