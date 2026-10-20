@@ -2,7 +2,7 @@ import type { AppRouter } from "@sidekick/api/routers/index";
 import { Toaster } from "@sidekick/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
@@ -64,15 +64,30 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <div className="grid min-h-svh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr]">
-          <Header />
-          <Outlet />
-        </div>
+        <DocumentShell />
         <Toaster richColors />
         <TanStackRouterDevtools position="bottom-left" />
         <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
         <Scripts />
       </body>
     </html>
+  );
+}
+
+// Marketing navbar only on marketing pages. Console routes
+// (/console, /settings, /simulators, /builds) own their chrome
+// (sidebar + header bar) and must not render it twice.
+const CONSOLE_PATHS = ["/console", "/settings", "/simulators", "/builds"];
+
+function DocumentShell() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (CONSOLE_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    return <Outlet />;
+  }
+  return (
+    <div className="grid min-h-svh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr]">
+      <Header />
+      <Outlet />
+    </div>
   );
 }

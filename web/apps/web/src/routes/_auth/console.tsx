@@ -32,6 +32,7 @@ function RouteComponent() {
   const queryClient = useQueryClient();
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const keys = useQuery(trpc.apiKeys.list.queryOptions());
+  const activeOrg = useQuery(trpc.organization.active.queryOptions());
   const hasKey = (keys.data?.length ?? 0) > 0;
 
   const createKey = useMutation(
@@ -58,6 +59,37 @@ function RouteComponent() {
         agent a prompt, and watch your app come to life. Three steps, about two
         minutes — no Mac, no Xcode, no installs beyond the CLI.
       </p>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
+          <p className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase">
+            Organization
+          </p>
+          <p className="mt-1 truncate text-lg font-semibold text-white">
+            {activeOrg.data?.name ?? "…"}
+          </p>
+          <p className="truncate font-mono text-xs text-zinc-500">
+            {activeOrg.data?.slug ?? ""}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
+          <p className="text-xs font-semibold tracking-[0.14em] text-zinc-500 uppercase">
+            API keys
+          </p>
+          <p className="mt-1 text-lg font-semibold text-white">
+            {keys.data ? keys.data.length : "…"}
+          </p>
+          <p className="text-xs text-zinc-500">
+            {hasKey ? (
+              <Link to="/settings" className="underline hover:text-white">
+                Manage in API keys
+              </Link>
+            ) : (
+              "Create your first below"
+            )}
+          </p>
+        </div>
+      </div>
 
       <div className="mt-10 space-y-10">
         <Step n={1} title="Copy your API key">
