@@ -1,0 +1,29 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm blocks lifecycle scripts by default (Bun runs all of them).
+# These are required for builds to work: esbuild downloads its platform
+# binary, better-sqlite3 selects prebuilds, Prisma generates its client.
+allowBuilds:
+  '@prisma/client': true
+  better-sqlite3: true
+  esbuild: true
+
+catalog:
+  zod: ^4.5.4
+  typescript: ^6.0.3
+  '@types/bun': ^1.4.2
+  varlock: 1.18.0
+  '@trpc/server': ^11.18.0
+  better-auth: 1.7.5
+  lucide-react: ^1.41.0
+  next-themes: ^0.4.6
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  sonner: ^2.0.8
+  tailwindcss: ^4.3.3
+  '@trpc/client': ^11.18.0
+  '@types/react': ^19.2.18
+  '@types/react-dom': ^19.2.7
+  drizzle-orm: 1.0.0-rc.4

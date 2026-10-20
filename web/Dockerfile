@@ -1,8 +1,10 @@
 # Sidekick web (TanStack Start marketing + console) for Dokploy.
 # Build from repo root context: docker build -f web/Dockerfile .
-FROM oven/bun:1 AS build
+# pnpm installs dependencies (frozen lockfile); Bun is only the runtime.
+FROM node:22-slim AS deps
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 WORKDIR /app
-COPY web/bun.lock web/package.json web/turbo.json ./
+COPY web/pnpm-lock.yaml web/pnpm-workspace.yaml web/package.json web/turbo.json ./
 COPY web/apps/web/package.json ./apps/web/
 COPY web/apps/server/package.json ./apps/server/
 COPY web/apps/fumadocs/package.json ./apps/fumadocs/
@@ -13,7 +15,20 @@ COPY web/packages/db/package.json ./packages/db/
 COPY web/packages/ui/package.json ./packages/ui/
 # --ignore-scripts: postinstall (varlock codegen) needs the full source +
 # .env files, which are copied below. Codegen runs explicitly after that.
-RUN bun install --ignore-scripts
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+  pnpm install --frozen-lockfile --ignore-scripts
+
+FROM oven/bun:1 AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
+COPY --from=deps /app/apps/fumadocs/node_modules ./apps/fumadocs/node_modules
+COPY --from=deps /app/packages/api/node_modules ./packages/api/node_modules
+COPY --from=deps /app/packages/auth/node_modules ./packages/auth/node_modules
+COPY --from=deps /app/packages/config/node_modules ./packages/config/node_modules
+COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 COPY web/apps ./apps
 COPY web/packages ./packages
 # Local-only env required by varlock at build time (gitignored upstream).
