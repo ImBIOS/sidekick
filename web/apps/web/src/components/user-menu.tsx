@@ -27,7 +27,7 @@ export default function UserMenu() {
         <Link to="/login" search={{ mode: "signin" }} className="px-2 text-sm text-zinc-400 transition-colors hover:text-white">
           Log in
         </Link>
-        <Link to="/login">
+        <Link to="/signup">
           <Button className="rounded-full bg-white px-5 text-black hover:bg-zinc-200">Sign up</Button>
         </Link>
       </>

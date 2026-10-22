@@ -1,11 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
 import { CodeBlock, CreateDeviceSplitButton } from "@/components/console";
+import { SessionsTable, type SessionFilters } from "@/components/sessions-table";
 import { useTRPC } from "@/utils/trpc";
+
+const searchSchema = z.object({
+  q: z.string().optional(),
+  status: z.string().optional(),
+  sort: z.string().optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
+});
 
 export const Route = createFileRoute("/_auth/simulators")({
   component: RouteComponent,
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [{ title: "Simulators — Sidekick Console" }],
   }),
@@ -18,14 +28,22 @@ sidekick android ui-tree <id>          # same verbs, both platforms`;
 
 function RouteComponent() {
   const trpc = useTRPC();
+  const navigate = Route.useNavigate();
+  const search = Route.useSearch();
   const sims = useQuery(trpc.devices.listSims.queryOptions());
   const emus = useQuery(trpc.devices.listEmus.queryOptions());
   const loading = sims.isPending || emus.isPending;
   const sessions = [
-    ...(sims.data ?? []).map((s) => ({ id: s.id, label: s.device, kind: "simulator", status: s.status })),
-    ...(emus.data ?? []).map((e) => ({ id: e.id, label: e.profile, kind: "emulator", status: e.status })),
+    ...(sims.data ?? []).map((s) => ({ id: s.id, label: s.device, kind: "simulator" as const, status: s.status })),
+    ...(emus.data ?? []).map((e) => ({ id: e.id, label: e.profile, kind: "emulator" as const, status: e.status })),
   ];
   const failed = sims.isError || emus.isError;
+  const filters: SessionFilters = {
+    q: search.q ?? "",
+    status: search.status ?? "all",
+    sort: search.sort === "label" || search.sort === "status" ? search.sort : "",
+    dir: search.dir ?? "asc",
+  };
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -42,25 +60,14 @@ function RouteComponent() {
             ? `${sessions.length} session${sessions.length === 1 ? "" : "s"} in this org — share links open in any browser, no login needed.`
             : "No sessions yet. Create one below, boot it from the CLI, or let your agent drive — share links open in any browser, no login needed."}
       </p>
-      {sessions.length > 0 && (
-        <ul className="mt-6 space-y-2">
-          {sessions.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-950 px-4 py-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{s.label}</p>
-                <p className="truncate font-mono text-xs text-zinc-500">
-                  {s.kind} · {s.id}
-                </p>
-              </div>
-              <span className="shrink-0 rounded-full border border-nest/30 bg-nest/10 px-2.5 py-1 font-mono text-xs text-nest">
-                {s.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+      {sessions.length > 0 && !loading && (
+        <SessionsTable
+          sessions={sessions}
+          filters={filters}
+          onFiltersChange={(next) =>
+            navigate({ search: { q: next.q || undefined, status: next.status === "all" ? undefined : next.status, sort: next.sort || undefined, dir: next.dir }, replace: true })
+          }
+        />
       )}
       {failed && (
         <p className="mt-6 text-sm text-zinc-500">

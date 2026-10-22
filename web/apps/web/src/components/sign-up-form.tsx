@@ -1,7 +1,7 @@
 import { Button } from "@sidekick/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sidekick/ui/components/card";
 import { Input } from "@sidekick/ui/components/input";
-import { Label } from "@sidekick/ui/components/label";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@sidekick/ui/components/field";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -72,13 +72,12 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
           e.stopPropagation();
           form.handleSubmit();
         }}
-        className="space-y-4"
       >
-        <div>
-          <form.Field name="name">
+        <FieldGroup>
+        <form.Field name="name">
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Name</Label>
+              <Field data-invalid={!field.state.meta.isValid}>
+                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -87,20 +86,16 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
+                  <FieldError key={error?.message}>{error?.message}</FieldError>
                 ))}
-              </div>
+              </Field>
             )}
           </form.Field>
-        </div>
 
-        <div>
-          <form.Field name="email">
+        <form.Field name="email">
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
+              <Field data-invalid={!field.state.meta.isValid}>
+                <FieldLabel htmlFor={field.name}>Email</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -110,20 +105,16 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
+                  <FieldError key={error?.message}>{error?.message}</FieldError>
                 ))}
-              </div>
+              </Field>
             )}
           </form.Field>
-        </div>
 
-        <div>
-          <form.Field name="password">
+        <form.Field name="password">
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
+              <Field data-invalid={!field.state.meta.isValid}>
+                <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -133,14 +124,11 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
+                  <FieldError key={error?.message}>{error?.message}</FieldError>
                 ))}
-              </div>
+              </Field>
             )}
           </form.Field>
-        </div>
 
         <form.Subscribe
           selector={(state) => ({ canSubmit: state.canSubmit, isSubmitting: state.isSubmitting })}
@@ -151,6 +139,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
             </Button>
           )}
         </form.Subscribe>
+        </FieldGroup>
       </form>
 
       <div className="mt-4 text-center">

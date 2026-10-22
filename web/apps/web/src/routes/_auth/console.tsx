@@ -166,7 +166,7 @@ function RouteComponent() {
       <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-zinc-500">
         <p>Bring your app and the agent you already use.</p>
         <div className="flex gap-4">
-          <Link to="/simulators" className="underline hover:text-white">
+          <Link to="/simulators" search={{}} className="underline hover:text-white">
             Simulators
           </Link>
           <Link to="/builds" className="underline hover:text-white">

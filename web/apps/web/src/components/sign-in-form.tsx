@@ -1,7 +1,7 @@
 import { Button } from "@sidekick/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sidekick/ui/components/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@sidekick/ui/components/field";
 import { Input } from "@sidekick/ui/components/input";
-import { Label } from "@sidekick/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -75,53 +75,48 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
           e.stopPropagation();
           form.handleSubmit();
         }}
-        className="space-y-4"
       >
-        <div>
-          <form.Field name="email">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
+        <FieldGroup>
+        <form.Field name="email">
+          {(field) => (
+            <Field data-invalid={!field.state.meta.isValid}>
+              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                type="email"
+                placeholder="m@example.com"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={!field.state.meta.isValid}
+              />
+              {field.state.meta.errors.map((error) => (
+                <FieldError key={error?.message}>{error?.message}</FieldError>
+              ))}
+            </Field>
+          )}
+        </form.Field>
 
-        <div>
-          <form.Field name="password">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="password"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
+        <form.Field name="password">
+          {(field) => (
+            <Field data-invalid={!field.state.meta.isValid}>
+              <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                type="password"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                aria-invalid={!field.state.meta.isValid}
+              />
+              {field.state.meta.errors.map((error) => (
+                <FieldError key={error?.message}>{error?.message}</FieldError>
+              ))}
+            </Field>
+          )}
+        </form.Field>
 
         <form.Subscribe
           selector={(state) => ({ canSubmit: state.canSubmit, isSubmitting: state.isSubmitting })}
@@ -132,6 +127,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             </Button>
           )}
         </form.Subscribe>
+        </FieldGroup>
       </form>
 
       <div className="mt-4 text-center">

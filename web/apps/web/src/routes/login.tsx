@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -18,11 +18,17 @@ export const Route = createFileRoute("/login")({
 });
 
 function RouteComponent() {
+  const navigate = useNavigate({ from: "/login" });
+  // Legacy ?mode= support: /signup is the canonical sign-up URL now.
   const { mode } = Route.useSearch();
-  const [showSignIn, setShowSignIn] = useState(mode === "signin");
+  const [showSignIn, setShowSignIn] = useState(mode !== "signup");
+
+  if (mode === "signup") {
+    return <Navigate to="/signup" replace />;
+  }
 
   return showSignIn ? (
-    <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
+    <SignInForm onSwitchToSignUp={() => navigate({ to: "/signup" })} />
   ) : (
     <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
   );
