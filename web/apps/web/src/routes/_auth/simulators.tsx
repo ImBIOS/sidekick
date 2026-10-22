@@ -68,7 +68,7 @@ function RouteComponent() {
         </p>
       )}
       <div className="mt-6">
-        <CreateDeviceSplitButton caption="iOS or Android. No local setup — or paste the commands below." />
+        <CreateDeviceSplitButton caption="Android ready now · iOS coming soon — or paste the commands below." />
       </div>
       <div className="mt-6">
         <CodeBlock lines={COMMANDS} title="terminal" />

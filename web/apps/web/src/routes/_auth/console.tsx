@@ -64,7 +64,7 @@ function RouteComponent() {
       </p>
 
       <div className="mt-6">
-        <CreateDeviceSplitButton caption="iOS or Android. No local setup." />
+        <CreateDeviceSplitButton caption="Android ready now · iOS coming soon." />
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">

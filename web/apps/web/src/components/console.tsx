@@ -218,10 +218,12 @@ export function Step({
 }
 
 /** Click-first device creation: split button from Limrun onboarding.
- * Primary creates an iOS simulator; the chevron offers an Android
- * emulator. The agent-first CLI steps stay the main path — this is the
- * secondary click path, backed by the devices router (ephemeral key,
- * missing ids resolve to null so empty states can offer creation). */
+ * Primary creates an Android emulator (Pixel_7) — the path that boots
+ * today via the linux-pool emu-host. iOS stays in the menu, disabled,
+ * until a Mac fleet (sim-daemon + build-daemon) is joined.
+ * The agent-first CLI steps stay the main path — this is the secondary
+ * click path, backed by the devices router (ephemeral key, missing ids
+ * resolve to null so empty states can offer creation). */
 export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -238,19 +240,13 @@ export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
     navigate({ to: "/simulators" });
   };
 
-  const sim = useMutation(
-    trpc.devices.createSim.mutationOptions({
-      onSuccess: () => onCreated("Simulator provisioning started"),
-      onError: (e) => setError(e.message),
-    }),
-  );
   const emu = useMutation(
     trpc.devices.createEmu.mutationOptions({
       onSuccess: () => onCreated("Emulator provisioning started"),
       onError: (e) => setError(e.message),
     }),
   );
-  const pending = sim.isPending || emu.isPending;
+  const pending = emu.isPending;
 
   return (
     <div>
@@ -258,14 +254,14 @@ export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
         <button
           type="button"
           disabled={pending}
-          onClick={() => sim.mutate({ device: "iPhone 17" })}
+          onClick={() => emu.mutate({ profile: "Pixel_7" })}
           className="inline-flex items-center gap-2 rounded-l-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 disabled:opacity-60"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
             <rect x="4" y="1.5" width="8" height="13" rx="1.5" />
             <line x1="7" y1="12.5" x2="9" y2="12.5" strokeLinecap="round" />
           </svg>
-          {pending ? "Creating…" : "Create iOS Simulator"}
+          {pending ? "Creating…" : "Create Android Emulator"}
         </button>
         <button
           type="button"
@@ -281,15 +277,18 @@ export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
           </svg>
         </button>
         {open && (
-          <div role="menu" className="absolute top-full left-0 z-10 mt-1 min-w-56 rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-xl">
+          <div role="menu" className="absolute top-full left-0 z-10 mt-1 min-w-64 rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-xl">
             <button
               type="button"
               role="menuitem"
-              disabled={pending}
-              onClick={() => emu.mutate({ profile: "Pixel_7" })}
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-200 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-60"
+              disabled
+              title="iOS needs a joined Mac fleet (sim-daemon + build-daemon)"
+              className="flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm text-zinc-500"
             >
-              Create Android Emulator
+              <span>Create iOS Simulator</span>
+              <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
+                Coming soon · Mac fleet
+              </span>
             </button>
           </div>
         )}
