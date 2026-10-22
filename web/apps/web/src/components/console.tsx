@@ -1,26 +1,17 @@
-import { Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth-client";
+import { Separator } from "@sidekick/ui/components/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@sidekick/ui/components/sidebar";
 import { useTRPC } from "@/utils/trpc";
-import { SidekickMark } from "./brand";
 
-const SECTIONS: { title: string; items: { to: string; label: string; exact: boolean }[] }[] = [
-  {
-    title: "Platform",
-    items: [
-      { to: "/console", label: "Get started", exact: true },
-      { to: "/simulators", label: "Simulators", exact: false },
-      { to: "/builds", label: "Builds", exact: false },
-    ],
-  },
-  {
-    title: "Account",
-    items: [{ to: "/settings", label: "API keys", exact: false }],
-  },
-];
+import { AppSidebar } from "./app-sidebar";
 
 const TITLES: [RegExp, string][] = [
   [/^\/console$/, "Get started"],
@@ -36,31 +27,20 @@ function pageTitle(pathname: string): string {
   return "Console";
 }
 
-/** Console shell: shadcn dashboard anatomy (sidebar + header bar + main).
- * Sidebar sections, header breadcrumb, mobile top tabs. No fake data:
- * stats come from tRPC, everything else is actions and links. */
+/** Console shell on the shadcn dashboard-01 primitives: offcanvas sidebar,
+ * trigger + breadcrumb header, inset content. No fake data: stats come from
+ * tRPC, everything else is actions and links. */
 export function ConsoleShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
-  const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-svh bg-ink text-zinc-100">
-      {/* Header bar */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/80 backdrop-blur">
-        <div className="flex h-14 items-center gap-3 px-4 md:px-6">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
-            aria-expanded={open}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 hover:text-white md:hidden"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              {open ? <path d="M3 3l10 10M13 3L3 13" /> : <path d="M2 5h12M2 8h12M2 11h12" />}
-            </svg>
-          </button>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="bg-ink text-zinc-100">
+        {/* Header bar */}
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-white/10 bg-ink/80 px-4 backdrop-blur md:px-6">
+          <SidebarTrigger className="text-zinc-300 hover:bg-white/5 hover:text-white" />
+          <Separator orientation="vertical" className="mr-1 h-4 bg-white/10" />
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-sm">
             <span className="truncate text-zinc-500">Console</span>
             <span aria-hidden="true" className="text-zinc-700">/</span>
@@ -80,80 +60,18 @@ export function ConsoleShell({ children }: { children: React.ReactNode }) {
               GitHub
             </a>
           </div>
-        </div>
-        {open && (
-          <nav className="border-t border-white/10 px-4 py-2 md:hidden" aria-label="Console">
-            {SECTIONS.flatMap((s) => s.items).map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setOpen(false)}
-                className="block rounded-lg px-2 py-2.5 text-[15px] text-zinc-300 hover:bg-white/5 hover:text-white"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        )}
-      </header>
+        </header>
 
-      <div className="md:grid md:grid-cols-[240px_minmax(0,1fr)]">
-        {/* Sidebar */}
-        <aside className="hidden border-r border-white/10 p-4 md:block">
-          <Link to="/" className="flex items-center gap-2 px-2 py-2" aria-label="Sidekick home">
-            <SidekickMark size={24} />
-            <span className="font-bold tracking-tight text-white">Sidekick</span>
-          </Link>
-          <nav className="mt-4 space-y-5" aria-label="Console">
-            {SECTIONS.map((section) => (
-              <div key={section.title}>
-                <p className="px-3 text-[11px] font-semibold tracking-[0.14em] text-zinc-600 uppercase">
-                  {section.title}
-                </p>
-                <div className="mt-1 space-y-0.5">
-                  {section.items.map(({ to, label, exact }) => {
-                    const active = exact ? pathname === to : pathname.startsWith(to);
-                    return (
-                      <Link
-                        key={to}
-                        to={to}
-                        className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                          active
-                            ? "bg-white/10 font-medium text-white"
-                            : "text-zinc-400 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-          <div className="mt-6 border-t border-white/10 p-3">
-            <p className="truncate text-sm font-medium text-white">{session?.user.name ?? ""}</p>
-            <p className="truncate text-xs text-zinc-500">{session?.user.email ?? ""}</p>
-            <button
-              type="button"
-              onClick={() =>
-                authClient.signOut({ fetchOptions: { onSuccess: () => navigate({ to: "/" }) } })
-              }
-              className="mt-2 text-xs text-zinc-500 underline hover:text-white"
-            >
-              Sign out
-            </button>
-          </div>
-        </aside>
-        <main className="min-w-0 px-6 py-10 md:px-12">{children}</main>
-      </div>
-    </div>
+        <main className="min-w-0 flex-1 px-6 py-10 md:px-12">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
 /** Current location hook for console pages that need it. */
 export function useConsolePath() {
-  return useLocation().pathname;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return pathname;
 }
 
 /** Copy button for keys and commands. */
@@ -237,7 +155,7 @@ export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
     toast.success(label);
     queryClient.invalidateQueries({ queryKey: trpc.devices.listSims.queryKey() });
     queryClient.invalidateQueries({ queryKey: trpc.devices.listEmus.queryKey() });
-    navigate({ to: "/simulators" });
+    navigate({ to: "/simulators", search: {} });
   };
 
   const emu = useMutation(
