@@ -16,10 +16,19 @@ import { db } from "./services";
 const app = new Hono();
 
 app.use(logger());
+// CORS + trusted origins cover the marketing host and the console
+// subdomain (plus desktop apps): the same deployment serves both.
+const WEB_ORIGINS = [
+  ENV.CORS_ORIGIN,
+  ...(ENV.CORS_EXTRA_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+];
 app.use(
   "/*",
   cors({
-    origin: ENV.CORS_ORIGIN,
+    origin: WEB_ORIGINS,
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
