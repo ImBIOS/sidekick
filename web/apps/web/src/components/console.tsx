@@ -277,13 +277,13 @@ export function CreateDeviceSplitButton({ caption }: { caption?: string }) {
           </svg>
         </button>
         {open && (
-          <div role="menu" className="absolute top-full left-0 z-10 mt-1 min-w-64 rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-xl">
+          <div role="menu" className="absolute top-full left-0 z-10 mt-1 min-w-72 rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-xl">
             <button
               type="button"
               role="menuitem"
               disabled
               title="iOS needs a joined Mac fleet (sim-daemon + build-daemon)"
-              className="flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm text-zinc-500"
+              className="flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap text-zinc-500"
             >
               <span>Create iOS Simulator</span>
               <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
