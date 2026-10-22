@@ -1,0 +1,80 @@
+# Production deploy: build + push images, trigger Dokploy.
+#
+# Flow (per https://docs.dokploy.com/docs/core/applications/going-production):
+# CI builds (server never builds), pushes to the registry already configured
+# in Dokploy Shared projects, then calls /api/application.deploy so each
+# Dokploy app pulls the fresh tag. Pushes to main deploy web + api.
+#
+# Required repo configuration (Settings -> Secrets and variables -> Actions):
+#   Variables: IMAGE_REGISTRY (e.g. docker.io), IMAGE_NAMESPACE (e.g. imbios)
+#   Secrets:   REGISTRY_USERNAME, REGISTRY_PASSWORD,
+#              DOKPLOY_HOST (e.g. https://deploy.imbios.dev, no trailing slash),
+#              DOKPLOY_API_KEY,
+#              DOKPLOY_APP_ID_WEB, DOKPLOY_APP_ID_API (Dokploy application IDs)
+name: deploy-prod
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-prod.yml"
+
+jobs:
+  build-push-trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      REGISTRY: ${{ vars.IMAGE_REGISTRY }}
+      NAMESPACE: ${{ vars.IMAGE_NAMESPACE }}
+      SHA_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./web/Dockerfile
+          push: true
+          build-args: |
+            VITE_SERVER_URL=https://sidekick.imbios.dev
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:latest
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:${{ env.SHA_TAG }}
+
+      - name: Build and push api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./web/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:latest
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ env.SHA_TAG }}
+
+      - name: Trigger Dokploy redeploys
+        run: |
+          set -eu
+          for app in "$DOKPLOY_APP_ID_WEB" "$DOKPLOY_APP_ID_API"; do
+            curl --fail --retry 3 --retry-delay 5 -X POST \
+              "$DOKPLOY_HOST/api/application.deploy" \
+              -H 'accept: application/json' \
+              -H "x-api-key: $DOKPLOY_API_KEY" \
+              -H 'Content-Type: application/json' \
+              -d "{\"applicationId\": \"$app\"}"
+          done
+        env:
+          DOKPLOY_HOST: ${{ secrets.DOKPLOY_HOST }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          DOKPLOY_APP_ID_WEB: ${{ secrets.DOKPLOY_APP_ID_WEB }}
+          DOKPLOY_APP_ID_API: ${{ secrets.DOKPLOY_APP_ID_API }}
