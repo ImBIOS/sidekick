@@ -1,4 +1,5 @@
 import { Button } from "@sidekick/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sidekick/ui/components/card";
 import { Input } from "@sidekick/ui/components/input";
 import { Label } from "@sidekick/ui/components/label";
 import { useForm } from "@tanstack/react-form";
@@ -8,6 +9,7 @@ import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
 
+import { SidekickMark } from "./brand";
 import Loader from "./loader";
 
 export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
@@ -59,9 +61,14 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
-
+    <div className="flex min-h-[80svh] items-center justify-center px-4 py-10">
+      <Card className="w-full max-w-md">
+        <CardHeader className="items-center text-center">
+          <SidekickMark size={32} />
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardDescription>Log in to your Sidekick console.</CardDescription>
+        </CardHeader>
+        <CardContent>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -136,6 +143,8 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
           Need an account? Sign Up
         </Button>
       </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
