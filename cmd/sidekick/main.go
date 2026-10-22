@@ -389,7 +389,7 @@ func xcodeCmd() *cobra.Command {
 func iosCmd() *cobra.Command {
 	ios := &cobra.Command{Use: "ios", Short: "cloud iOS simulators"}
 
-	var device, runtime, simRegion string
+	var device, runtime, simRegion, simPool string
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "create simulator, print id + webrtc/ax-tree URLs",
@@ -401,7 +401,7 @@ func iosCmd() *cobra.Command {
 				AXTreeURL string `json:"ax_tree_url"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/sims",
-				map[string]string{"device": device, "runtime": runtime, "region": simRegion}, &sim); err != nil {
+				map[string]string{"device": device, "runtime": runtime, "region": simRegion, "pool": simPool}, &sim); err != nil {
 				return err
 			}
 			printJSON(sim)
@@ -414,6 +414,7 @@ func iosCmd() *cobra.Command {
 	create.Flags().StringVar(&device, "device", "iPhone 16", "device name")
 	create.Flags().StringVar(&runtime, "runtime", "", "iOS runtime (default: latest)")
 	create.Flags().StringVar(&simRegion, "region", "", "pin to a fleet region (default: any)")
+	create.Flags().StringVar(&simPool, "pool", "", "pin to a fleet pool, e.g. emu-sg-1 (default: any)")
 
 	list := &cobra.Command{
 		Use:   "list",
@@ -624,7 +625,7 @@ func recordCmd() *cobra.Command {
 func androidCmd() *cobra.Command {
 	android := &cobra.Command{Use: "android", Short: "cloud Android emulators"}
 
-	var profile, emuRegion string
+	var profile, emuRegion, emuPool string
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "create emulator + print adb target",
@@ -635,7 +636,7 @@ func androidCmd() *cobra.Command {
 				Status    string `json:"status"`
 			}
 			if err := call(cmd, http.MethodPost, "/v1/emus",
-				map[string]string{"profile": profile, "region": emuRegion}, &emu); err != nil {
+				map[string]string{"profile": profile, "region": emuRegion, "pool": emuPool}, &emu); err != nil {
 				return err
 			}
 			printJSON(emu)
@@ -647,6 +648,7 @@ func androidCmd() *cobra.Command {
 	}
 	create.Flags().StringVar(&profile, "profile", "Pixel_7_API_34", "emulator profile")
 	create.Flags().StringVar(&emuRegion, "region", "", "pin to a fleet region (default: any)")
+	create.Flags().StringVar(&emuPool, "pool", "", "pin to a fleet pool, e.g. emu-sg-1 (default: any)")
 
 	list := &cobra.Command{
 		Use:   "list",

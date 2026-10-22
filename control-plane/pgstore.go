@@ -158,15 +158,15 @@ func (s *PGStore) HostFinishBuild(id, status string) bool {
 
 // --- sims ---
 
-func (s *PGStore) CreateSim(org OrgID, device, runtime, region string) *Sim {
+func (s *PGStore) CreateSim(org OrgID, device, runtime, region, pool string) *Sim {
 	sim := &Sim{
 		ID: s.nextID("sim"), Org: org, Device: device, Runtime: runtime,
-		Status: StatusProvisioning, Region: region, CreatedAt: time.Now().UTC(),
+		Status: StatusProvisioning, Region: region, Pool: pool, CreatedAt: time.Now().UTC(),
 	}
 	sim.AXTreeURL = "/v1/sims/" + sim.ID + "/tree"
 	_, _ = s.q.Exec(context.Background(),
-		`INSERT INTO sims (id, org, device, runtime, status, region, ax_tree_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-		sim.ID, string(org), device, runtime, sim.Status, sim.Region, sim.AXTreeURL, sim.CreatedAt)
+		`INSERT INTO sims (id, org, device, runtime, status, region, pool, ax_tree_url, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		sim.ID, string(org), device, runtime, sim.Status, sim.Region, sim.Pool, sim.AXTreeURL, sim.CreatedAt)
 	return sim
 }
 
@@ -175,7 +175,7 @@ func scanSim(row pgx.Row) (*Sim, error) {
 	var org string
 	var tree []byte
 	err := row.Scan(&sim.ID, &org, &sim.Device, &sim.Runtime, &sim.Status,
-		&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Region, &sim.Recording, &sim.CreatedAt,
+		&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Region, &sim.Pool, &sim.Recording, &sim.CreatedAt,
 		&tree, &sim.Shot, &sim.SimLog, &sim.Video)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func scanSim(row pgx.Row) (*Sim, error) {
 	return &sim, nil
 }
 
-const simCols = `id, org, device, runtime, status, webrtc_url, ax_tree_url, host, region, recording, created_at, tree, shot, sim_log, video`
+const simCols = `id, org, device, runtime, status, webrtc_url, ax_tree_url, host, region, pool, recording, created_at, tree, shot, sim_log, video`
 
 func (s *PGStore) GetSim(org OrgID, id string) (*Sim, bool) {
 	sim, err := scanSim(s.q.QueryRow(context.Background(),
@@ -300,11 +300,11 @@ func (s *PGStore) GetSimAction(org OrgID, id string) (*QueuedAction, bool) {
 
 // --- emus ---
 
-func (s *PGStore) CreateEmu(org OrgID, profile, region string) *Emu {
-	emu := &Emu{ID: s.nextID("emu"), Org: org, Profile: profile, Status: StatusProvisioning, CreatedAt: time.Now().UTC()}
+func (s *PGStore) CreateEmu(org OrgID, profile, region, pool string) *Emu {
+	emu := &Emu{ID: s.nextID("emu"), Org: org, Profile: profile, Status: StatusProvisioning, Region: region, Pool: pool, CreatedAt: time.Now().UTC()}
 	_, _ = s.q.Exec(context.Background(),
-		`INSERT INTO emus (id, org, profile, status, region, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
-		emu.ID, string(org), profile, emu.Status, emu.Region, emu.CreatedAt)
+		`INSERT INTO emus (id, org, profile, status, region, pool, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+		emu.ID, string(org), profile, emu.Status, emu.Region, emu.Pool, emu.CreatedAt)
 	return emu
 }
 
@@ -313,7 +313,7 @@ func scanEmu(row pgx.Row) (*Emu, error) {
 	var org string
 	var tree []byte
 	err := row.Scan(&emu.ID, &org, &emu.Profile, &emu.Status, &emu.ADBTarget,
-		&emu.Host, &emu.Region, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
+		&emu.Host, &emu.Region, &emu.Pool, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func scanEmu(row pgx.Row) (*Emu, error) {
 	return &emu, nil
 }
 
-const emuCols = `id, org, profile, status, adb_target, host, region, created_at, tree, shot, emu_log`
+const emuCols = `id, org, profile, status, adb_target, host, region, pool, created_at, tree, shot, emu_log`
 
 func (s *PGStore) GetEmu(org OrgID, id string) (*Emu, bool) {
 	emu, err := scanEmu(s.q.QueryRow(context.Background(),
@@ -482,9 +482,9 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 		var org string
 		var tree []byte
 		err := s.q.QueryRow(ctx, `UPDATE sims SET host=$1
-			WHERE id = (SELECT id FROM sims WHERE status='provisioning' AND host='' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
-			RETURNING `+simCols, pool).Scan(&sim.ID, &org, &sim.Device, &sim.Runtime, &sim.Status,
-			&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Recording, &sim.CreatedAt,
+			WHERE id = (SELECT id FROM sims WHERE status='provisioning' AND host='' AND (region='' OR region=$2) AND (pool='' OR pool=$3) ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+			RETURNING `+simCols, pool, region, pool).Scan(&sim.ID, &org, &sim.Device, &sim.Runtime, &sim.Status,
+			&sim.WebRTCURL, &sim.AXTreeURL, &sim.Host, &sim.Region, &sim.Pool, &sim.Recording, &sim.CreatedAt,
 			&tree, &sim.Shot, &sim.SimLog, &sim.Video)
 		if err == nil {
 			sim.Org = OrgID(org)
@@ -497,9 +497,9 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 		var org string
 		var tree []byte
 		err := s.q.QueryRow(ctx, `UPDATE emus SET host=$1
-			WHERE id = (SELECT id FROM emus WHERE status='provisioning' AND host='' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
-			RETURNING `+emuCols, pool).Scan(&emu.ID, &org, &emu.Profile, &emu.Status, &emu.ADBTarget,
-			&emu.Host, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
+			WHERE id = (SELECT id FROM emus WHERE status='provisioning' AND host='' AND (region='' OR region=$2) AND (pool='' OR pool=$3) ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+			RETURNING `+emuCols, pool, region, pool).Scan(&emu.ID, &org, &emu.Profile, &emu.Status, &emu.ADBTarget,
+			&emu.Host, &emu.Region, &emu.Pool, &emu.CreatedAt, &tree, &emu.Shot, &emu.EmuLog)
 		if err == nil {
 			emu.Org = OrgID(org)
 			emu.Tree = tree

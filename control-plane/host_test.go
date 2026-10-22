@@ -329,3 +329,38 @@ func TestRegionPinning(t *testing.T) {
 		t.Errorf("drained pool: got %d, want 204", rec.Code)
 	}
 }
+
+func TestPoolPinning(t *testing.T) {
+	srv := testHostServer()
+	// One emu pinned to emu-sg-1, one unpinned.
+	rec := authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P","pool":"emu-sg-1"}`)
+	var pinned Emu
+	if err := json.Unmarshal(rec.Body.Bytes(), &pinned); err != nil {
+		t.Fatal(err)
+	}
+	if pinned.Pool != "emu-sg-1" {
+		t.Fatalf("create should echo pool, got %+v", pinned)
+	}
+	rec = authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P"}`)
+	var anywhere Emu
+	if err := json.Unmarshal(rec.Body.Bytes(), &anywhere); err != nil {
+		t.Fatal(err)
+	}
+
+	// A different pool sees only the unpinned emu.
+	rec = hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"emu-jk-1","kinds":["emu"]}`)
+	var c1 Claim
+	if err := json.Unmarshal(rec.Body.Bytes(), &c1); err != nil || c1.Emu.ID != anywhere.ID {
+		t.Fatalf("other-pool claim: %+v %v", c1, err)
+	}
+	// The pinned pool gets the pinned emu.
+	rec = hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"emu-sg-1","kinds":["emu"]}`)
+	var c2 Claim
+	if err := json.Unmarshal(rec.Body.Bytes(), &c2); err != nil || c2.Emu.ID != pinned.ID {
+		t.Fatalf("pinned-pool claim: %+v %v", c2, err)
+	}
+	// Nothing left for anyone.
+	if rec := hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken, `{"pool":"emu-sg-1","kinds":["emu"]}`); rec.Code != http.StatusNoContent {
+		t.Errorf("drained pool: got %d, want 204", rec.Code)
+	}
+}

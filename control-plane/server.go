@@ -28,7 +28,7 @@ type Scheduler interface {
 	FinishBuild(org OrgID, id, status string) bool
 	HostAppendBuildLog(id string, lines []string) bool
 	HostFinishBuild(id, status string) bool
-	CreateSim(org OrgID, device, runtime, region string) *Sim
+	CreateSim(org OrgID, device, runtime, region, pool string) *Sim
 	GetSim(org OrgID, id string) (*Sim, bool)
 	ListSims(org OrgID) []*Sim
 	DeleteSim(org OrgID, id string) bool
@@ -41,7 +41,7 @@ type Scheduler interface {
 	EnqueueSimAction(org OrgID, simID string, body map[string]string) (*QueuedAction, bool)
 	CompleteSimAction(id, result string) bool
 	GetSimAction(org OrgID, id string) (*QueuedAction, bool)
-	CreateEmu(org OrgID, profile, region string) *Emu
+	CreateEmu(org OrgID, profile, region, pool string) *Emu
 	GetEmu(org OrgID, id string) (*Emu, bool)
 	ListEmus(org OrgID) []*Emu
 	DeleteEmu(org OrgID, id string) bool
@@ -213,6 +213,7 @@ type createSimReq struct {
 	Device  string `json:"device"`
 	Runtime string `json:"runtime"`
 	Region  string `json:"region"`
+	Pool    string `json:"pool"`
 }
 
 // POST /v1/sims — provision an iOS simulator session.
@@ -226,7 +227,7 @@ func (s *Server) handleCreateSim(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "device is required")
 		return
 	}
-	writeJSON(w, http.StatusCreated, s.store.CreateSim(orgFromContext(r), req.Device, req.Runtime, req.Region))
+	writeJSON(w, http.StatusCreated, s.store.CreateSim(orgFromContext(r), req.Device, req.Runtime, req.Region, req.Pool))
 }
 
 // GET /v1/sims — list the caller's org sims.
@@ -446,6 +447,7 @@ func (s *Server) handleGetSimVideo(w http.ResponseWriter, r *http.Request) {
 type createEmuReq struct {
 	Profile string `json:"profile"`
 	Region  string `json:"region"`
+	Pool    string `json:"pool"`
 }
 
 // POST /v1/emus — provision an Android emulator session.
@@ -459,7 +461,7 @@ func (s *Server) handleCreateEmu(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "profile is required")
 		return
 	}
-	writeJSON(w, http.StatusCreated, s.store.CreateEmu(orgFromContext(r), req.Profile, req.Region))
+	writeJSON(w, http.StatusCreated, s.store.CreateEmu(orgFromContext(r), req.Profile, req.Region, req.Pool))
 }
 
 // GET /v1/emus — list the caller's org emus.

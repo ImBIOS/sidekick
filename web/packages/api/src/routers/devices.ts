@@ -116,6 +116,7 @@ export const devicesRouter = router({
         device: z.string().min(1).default("iPhone 17"),
         runtime: z.string().max(64).nullish(),
         region: z.string().max(64).nullish(),
+        pool: z.string().max(64).nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -126,6 +127,7 @@ export const devicesRouter = router({
             device: input.device,
             runtime: input.runtime ?? "",
             region: input.region ?? "",
+            pool: input.pool ?? "",
           }),
         }),
       );
@@ -155,13 +157,14 @@ export const devicesRouter = router({
       z.object({
         profile: z.string().min(1).default("Pixel_7"),
         region: z.string().max(64).nullish(),
+        pool: z.string().max(64).nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const body = await withEphemeralKey(ctx, orgIdOf(ctx), (secret) =>
         controlFetch(secret, "/v1/emus", {
           method: "POST",
-          body: JSON.stringify({ profile: input.profile, region: input.region ?? "" }),
+          body: JSON.stringify({ profile: input.profile, region: input.region ?? "", pool: input.pool ?? "" }),
         }),
       );
       return emuSchema.parse(body);

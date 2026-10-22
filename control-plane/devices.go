@@ -62,7 +62,7 @@ func (s *Store) ClaimNext(pool, region string, kinds []string) *Claim {
 	if want("sim") {
 		var oldest *Sim
 		for _, sim := range s.sims {
-			if sim.Status != StatusProvisioning || sim.Host != "" || !regionMatch(sim.Region, region) {
+			if sim.Status != StatusProvisioning || sim.Host != "" || !regionMatch(sim.Region, region) || !poolMatch(sim.Pool, pool) {
 				continue
 			}
 			if oldest == nil || sim.CreatedAt.Before(oldest.CreatedAt) {
@@ -78,7 +78,7 @@ func (s *Store) ClaimNext(pool, region string, kinds []string) *Claim {
 	if want("emu") {
 		var oldest *Emu
 		for _, emu := range s.emus {
-			if emu.Status != StatusProvisioning || emu.Host != "" || !regionMatch(emu.Region, region) {
+			if emu.Status != StatusProvisioning || emu.Host != "" || !regionMatch(emu.Region, region) || !poolMatch(emu.Pool, pool) {
 				continue
 			}
 			if oldest == nil || emu.CreatedAt.Before(oldest.CreatedAt) {
@@ -298,4 +298,11 @@ func (s *Store) AppendEmuLog(id string, lines []string) bool {
 // only in their region.
 func regionMatch(resource, host string) bool {
 	return resource == "" || resource == host
+}
+
+// poolMatch gates manual assignment: a resource pinned to a pool is only
+// claimable by hosts in that pool; unpinned resources go to whoever claims
+// first. Empty pool on either side means "any".
+func poolMatch(resource, host string) bool {
+	return resource == "" || host == "" || resource == host
 }
