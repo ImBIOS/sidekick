@@ -4,7 +4,7 @@
   "scripts": [
     {
       "name": "Setup Worktree",
-      "command": "go mod download && (cd web && pnpm install) && ln -sf $T3CODE_PROJECT_ROOT/web/apps/web/.env web/apps/web/.env",
+      "command": "go mod download && (cd web && bun install) && ln -sf $T3CODE_PROJECT_ROOT/web/apps/web/.env web/apps/web/.env",
       "icon": "configure",
       "runOnWorktreeCreate": true
     }
