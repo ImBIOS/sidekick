@@ -9,6 +9,9 @@ export const Route = createFileRoute("/alternatives/$slug")({
     return { c };
   },
   component: AlternativePage,
+  head: ({ loaderData }: { loaderData?: { c: { name: string } } }) => ({
+    meta: [{ title: loaderData ? `${loaderData.c.name} alternative — Sidekick` : "Alternative — Sidekick" }],
+  }),
   notFoundComponent: () => (
     <div className="bg-black p-10 text-zinc-100">
       Unknown comparison. <Link to="/alternatives" className="underline">All alternatives</Link>

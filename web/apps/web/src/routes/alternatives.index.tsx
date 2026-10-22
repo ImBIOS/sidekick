@@ -2,7 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { COMPETITORS, FEATURES, score } from "../data/comparison";
 import { CellBadge, CompareTable, Container, SiteFooter, cellCounts } from "../components/marketing";
 
-export const Route = createFileRoute("/alternatives/")({ component: AlternativesHub });
+export const Route = createFileRoute("/alternatives/")({
+  component: AlternativesHub,
+  head: () => ({
+    meta: [{ title: "Mobile app testing alternatives — Sidekick" }],
+  }),
+});
 
 function AlternativesHub() {
   const tableRows = FEATURES.map((r) => ({

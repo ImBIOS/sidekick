@@ -11,6 +11,9 @@ import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/_auth/settings")({
   component: RouteComponent,
+  head: () => ({
+    meta: [{ title: "Settings — Sidekick Console" }],
+  }),
 });
 
 function RouteComponent() {

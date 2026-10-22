@@ -34,6 +34,7 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: bash scripts/design-lint.sh
+      - run: pnpm exec turbo run test
       - run: pnpm exec turbo run check-types -F web
         env:
           NODE_ENV: development

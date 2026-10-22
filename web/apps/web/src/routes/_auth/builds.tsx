@@ -4,6 +4,9 @@ import { CodeBlock } from "@/components/console";
 
 export const Route = createFileRoute("/_auth/builds")({
   component: RouteComponent,
+  head: () => ({
+    meta: [{ title: "Builds — Sidekick Console" }],
+  }),
 });
 
 const COMMANDS = `sidekick xcode build . --scheme MyApp   # streams logs until done

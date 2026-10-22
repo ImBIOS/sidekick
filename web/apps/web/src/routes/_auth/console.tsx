@@ -6,11 +6,14 @@ import { toast } from "sonner";
 import { Button } from "@sidekick/ui/components/button";
 import { Input } from "@sidekick/ui/components/input";
 import { Label } from "@sidekick/ui/components/label";
-import { CodeBlock, CopyButton, Step } from "@/components/console";
+import { CodeBlock, CopyButton, CreateDeviceSplitButton, Step } from "@/components/console";
 import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/_auth/console")({
   component: RouteComponent,
+  head: () => ({
+    meta: [{ title: "Get started — Sidekick Console" }],
+  }),
 });
 
 const INSTALL = `npm i -g @imbios/sidekick   # or: brew install ImBIOS/tap/sidekick
@@ -59,6 +62,10 @@ function RouteComponent() {
         agent a prompt, and watch your app come to life. Three steps, about two
         minutes — no Mac, no Xcode, no installs beyond the CLI.
       </p>
+
+      <div className="mt-6">
+        <CreateDeviceSplitButton caption="Android ready now · iOS coming soon." />
+      </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
