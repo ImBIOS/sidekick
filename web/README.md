@@ -19,10 +19,11 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 
 ## Getting Started
 
-First, install the dependencies:
+First, install the dependencies with pnpm (Bun remains the runtime for
+dev/build/serve — only the package manager changes):
 
 ```bash
-bun install
+pnpm install
 ```
 
 ## Database Setup
