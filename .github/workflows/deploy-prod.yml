@@ -1,16 +1,15 @@
-# Production deploy: CI builds, prod-0 pulls.
+# Production deploy: build on prod-0, update the swarm services.
 #
-# prod-0 runs sidekick-web (:3000) + sidekick-api (:3080) as plain swarm
-# services fronted by cloudflared — no Dokploy apps, no published-port
-# dance. So this workflow builds both images, pushes to the shared
-# registry, then updates the swarm services over Tailscale SSH (rolling,
-# with automatic rollback on failure).
+# prod-0 is a single-node ARM64 swarm running sidekick-web (:3000) +
+# sidekick-api (:3080) fronted by cloudflared. Deploys build natively on
+# prod-0 over Tailscale SSH and update services with local images — no
+# registry round-trip (docker login against registry:3 401s valid
+# credentials from CI runners; local logins are unaffected, but nothing
+# here needs the registry at all).
 #
 # Required repo secrets (Settings -> Secrets and variables -> Actions):
-#   REGISTRY_PASSWORD  – password/token for imbios_turner on registry.jaga.health
 #   PROD_SSH_KEY       – private ed25519 key; public half lives in prod-0 ubuntu authorized_keys
-#   TAILSCALE_AUTHKEY  – reusable auth key (admin console -> Settings -> Keys),
-#                        tagged to reach the prod-0 node (100.114.228.72)
+#   TAILSCALE_AUTHKEY  – reusable auth key (admin console -> Settings -> Keys)
 name: deploy-prod
 on:
   push:
@@ -21,10 +20,9 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: registry.jaga.health
-  NAMESPACE: imbios_turner
   PROD_HOST: 100.114.228.72
   PROD_USER: ubuntu
+  PROD_REPO: /home/ubuntu/sidekick
 
 jobs:
   build-push-deploy:
@@ -40,47 +38,18 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --accept-dns=false
 
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Log in to registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.NAMESPACE }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build and push web
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./web/Dockerfile
-          push: true
-          build-args: |
-            VITE_SERVER_URL=https://sidekick.imbios.dev
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:latest
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:${{ github.sha }}
-
-      - name: Build and push api
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./web/Dockerfile.api
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:latest
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ github.sha }}
-
-      - name: Rolling update on prod-0
+      - name: Build and rolling update on prod-0
         run: |
           set -eu
           mkdir -p ~/.ssh
           printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/prod_deploy
           chmod 600 ~/.ssh/prod_deploy
           SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_deploy ${PROD_USER}@${PROD_HOST}"
-          WEB_IMG="${REGISTRY}/${NAMESPACE}/sidekick-web:${GITHUB_SHA}"
-          API_IMG="${REGISTRY}/${NAMESPACE}/sidekick-api:${GITHUB_SHA}"
-          $SSH "echo \$REGISTRY_PASSWORD | docker login ${REGISTRY} -u ${NAMESPACE} --password-stdin >/dev/null && docker service update --with-registry-auth --image $WEB_IMG sidekick-web && docker service update --with-registry-auth --image $API_IMG sidekick-api"
+          $SSH "test -d $PROD_REPO/.git || git clone https://github.com/ImBIOS/sidekick $PROD_REPO"
+          $SSH "cd $PROD_REPO && git fetch origin && git checkout main && git reset --hard origin/main && git rev-parse --short HEAD"
+          $SSH "cd $PROD_REPO && docker build -f web/Dockerfile --build-arg VITE_SERVER_URL=https://sidekick.imbios.dev -t sidekick-web:${GITHUB_SHA} ."
+          $SSH "cd $PROD_REPO && docker build -f web/Dockerfile.api -t sidekick-api:${GITHUB_SHA} ."
+          $SSH "docker service update --image sidekick-web:${GITHUB_SHA} sidekick-web && docker service update --image sidekick-api:${GITHUB_SHA} sidekick-api"
           for svc in sidekick-web sidekick-api; do
             for i in $(seq 1 30); do
               running=$($SSH "docker service ps --format '{{.CurrentState}} {{.Image}}' $svc 2>/dev/null" | grep -c "Running.*${GITHUB_SHA:0:12}" || true)
@@ -88,10 +57,13 @@ jobs:
               sleep 10
             done
           done
-          curl -fsS --max-time 30 https://sidekick.imbios.dev/login | grep -q "Log in — Sidekick"
+          # Health check runs inside the new web task: the app serves
+          # /login as client-rendered SSR shell (always HTTP 200 when the
+          # router is up). Public curl from CI runners is blocked by the
+          # edge (403), so check locally instead of over the internet.
+          $SSH 'WEB_TASK=$(docker ps --filter name=sidekick-web --format "{{.ID}}" | head -1) && docker exec "$WEB_TASK" bun -e "for (const p of [\"/\", \"/login\"]) { const r = await fetch(\"http://127.0.0.1:3000\" + p); if (r.status !== 200) { console.error(p, r.status); process.exit(1); } console.log(p, r.status); }"'
         env:
           PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Roll back on failure
         if: failure()
