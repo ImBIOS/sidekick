@@ -53,11 +53,10 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Log in to registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.NAMESPACE }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$NAMESPACE" --password-stdin
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build and push web
         uses: docker/build-push-action@v6
