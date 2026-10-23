@@ -21,6 +21,7 @@
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
     "react": "catalog:",
+    "react-aria-components": "^1.22.1",
     "react-dom": "catalog:",
     "shadcn": "^4.21.0",
     "sonner": "catalog:",
