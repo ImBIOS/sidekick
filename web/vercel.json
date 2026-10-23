@@ -5,7 +5,7 @@
     "web": {
       "root": "apps/web",
       "framework": "tanstack-start",
-      "installCommand": "cd ../.. && pnpm install --frozen-lockfile"
+      "installCommand": "cd ../.. && bun install"
     }
   },
   "rewrites": [
