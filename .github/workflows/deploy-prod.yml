@@ -54,7 +54,7 @@ jobs:
 
       - name: Log in to registry
         run: |
-          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$NAMESPACE" --password-stdin
+          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$NAMESPACE" --password-stdin || docker login "$REGISTRY" -u "$NAMESPACE" -p "$REGISTRY_PASSWORD"
         env:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
