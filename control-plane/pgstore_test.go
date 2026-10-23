@@ -87,11 +87,11 @@ func TestPGClaimBuildAtomic(t *testing.T) {
 
 func TestPGSimActionRoundtrip(t *testing.T) {
 	s, mock := newMockStore(t)
-	simCols := []string{"id", "org", "device", "runtime", "status", "webrtc_url", "ax_tree_url", "host", "region", "recording", "created_at", "tree", "shot", "sim_log", "video"}
+	simCols := []string{"id", "org", "device", "runtime", "status", "webrtc_url", "ax_tree_url", "host", "region", "pool", "recording", "created_at", "tree", "shot", "sim_log", "video"}
 	mock.ExpectQuery("FROM sims WHERE id=\\$1 AND org=\\$2").
 		WithArgs("sim_1", "org_a").
 		WillReturnRows(pgxmock.NewRows(simCols).AddRow(
-			"sim_1", "org_a", "iPhone 16", "", StatusRunning, "", "/v1/sims/sim_1/tree", "mac-1", "", false, testTime,
+			"sim_1", "org_a", "iPhone 16", "", StatusRunning, "", "/v1/sims/sim_1/tree", "mac-1", "", "", false, testTime,
 			[]byte(`{}`), []byte{}, []string{}, []byte{}))
 	mock.ExpectQuery("INSERT INTO actions").
 		WithArgs(pgxmock.AnyArg(), "sim_1", pgxmock.AnyArg(), pgxmock.AnyArg()).

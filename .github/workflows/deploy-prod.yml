@@ -1,0 +1,104 @@
+# Production deploy: CI builds, prod-0 pulls.
+#
+# prod-0 runs sidekick-web (:3000) + sidekick-api (:3080) as plain swarm
+# services fronted by cloudflared — no Dokploy apps, no published-port
+# dance. So this workflow builds both images, pushes to the shared
+# registry, then updates the swarm services over Tailscale SSH (rolling,
+# with automatic rollback on failure).
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   REGISTRY_PASSWORD  – password/token for imbios_turner on registry.jaga.health
+#   PROD_SSH_KEY       – private ed25519 key; public half lives in prod-0 ubuntu authorized_keys
+#   TAILSCALE_AUTHKEY  – reusable auth key (admin console -> Settings -> Keys),
+#                        tagged to reach the prod-0 node (100.114.228.72)
+name: deploy-prod
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-prod.yml"
+
+env:
+  REGISTRY: registry.jaga.health
+  NAMESPACE: imbios_turner
+  PROD_HOST: 100.114.228.72
+  PROD_USER: ubuntu
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.NAMESPACE }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./web/Dockerfile
+          push: true
+          build-args: |
+            VITE_SERVER_URL=https://sidekick.imbios.dev
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:latest
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:${{ github.sha }}
+
+      - name: Build and push api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./web/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:latest
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ github.sha }}
+
+      - name: Connect Tailscale
+        uses: tailscale/tailscale-action@v1
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          args: --accept-dns=false
+
+      - name: Rolling update on prod-0
+        run: |
+          set -eu
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/prod_deploy
+          chmod 600 ~/.ssh/prod_deploy
+          SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_deploy ${PROD_USER}@${PROD_HOST}"
+          WEB_IMG="${REGISTRY}/${NAMESPACE}/sidekick-web:${GITHUB_SHA}"
+          API_IMG="${REGISTRY}/${NAMESPACE}/sidekick-api:${GITHUB_SHA}"
+          $SSH "echo \$REGISTRY_PASSWORD | docker login ${REGISTRY} -u ${NAMESPACE} --password-stdin >/dev/null && docker service update --with-registry-auth --image $WEB_IMG sidekick-web && docker service update --with-registry-auth --image $API_IMG sidekick-api"
+          for svc in sidekick-web sidekick-api; do
+            for i in $(seq 1 30); do
+              running=$($SSH "docker service ps --format '{{.CurrentState}} {{.Image}}' $svc 2>/dev/null" | grep -c "Running.*${GITHUB_SHA:0:12}" || true)
+              [ "$running" -ge 1 ] && break
+              sleep 10
+            done
+          done
+          curl -fsS --max-time 30 https://sidekick.imbios.dev/login | grep -q "Log in — Sidekick"
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Roll back on failure
+        if: failure()
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/prod_deploy
+          chmod 600 ~/.ssh/prod_deploy
+          SSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_deploy ${PROD_USER}@${PROD_HOST}"
+          $SSH 'docker service update --rollback sidekick-web; docker service update --rollback sidekick-api'
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}

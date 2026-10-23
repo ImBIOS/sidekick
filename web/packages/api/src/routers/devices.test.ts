@@ -93,6 +93,8 @@ function stubControlPlane() {
           id: `${kind === "sims" ? "sim" : "emu"}_test-${n}`,
           status: "provisioning",
           ...(kind === "sims" ? { device: body.device } : { profile: body.profile }),
+          ...(body.pool ? { pool: body.pool } : {}),
+          ...(body.region ? { region: body.region } : {}),
         };
         store.set(record.id as string, record);
         return Response.json(record, { status: 201 });
@@ -149,8 +151,9 @@ describe("devices router (click-first provisioning)", () => {
     const prev = process.env.SIDEKICK_CONTROL_URL;
     process.env.SIDEKICK_CONTROL_URL = stub.url;
     try {
-      const sim = await caller.devices.createSim({});
+      const sim = await caller.devices.createSim({ pool: "emu-sg-1" });
       expect(sim.device).toBe("iPhone 17");
+      expect((sim as { pool?: string }).pool).toBe("emu-sg-1");
       const emu = await caller.devices.createEmu({});
       expect(emu.profile).toBe("Pixel_7");
 

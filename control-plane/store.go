@@ -47,6 +47,7 @@ type Sim struct {
 	AXTreeURL string    `json:"ax_tree_url,omitempty"`
 	Host      string    `json:"host,omitempty"`
 	Region    string    `json:"region,omitempty"`
+	Pool      string    `json:"pool,omitempty"`
 	Recording bool      `json:"recording"`
 	CreatedAt time.Time `json:"created_at"`
 	// Daemon-reported state, served via dedicated endpoints (never inlined).
@@ -80,6 +81,7 @@ type Emu struct {
 	ADBTarget string    `json:"adb_target,omitempty"`
 	Host      string    `json:"host,omitempty"`
 	Region    string    `json:"region,omitempty"`
+	Pool      string    `json:"pool,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	// Daemon-reported state, served via dedicated endpoints (never inlined).
 	Tree   json.RawMessage `json:"-"`
@@ -211,7 +213,7 @@ func (s *Store) HostFinishBuild(id, status string) bool {
 
 // CreateSim provisions a simulator session for org. It starts provisioning;
 // the sim-daemon binds it to a host and marks it running with live URLs.
-func (s *Store) CreateSim(org OrgID, device, runtime, region string) *Sim {
+func (s *Store) CreateSim(org OrgID, device, runtime, region, pool string) *Sim {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sim := &Sim{
@@ -220,6 +222,7 @@ func (s *Store) CreateSim(org OrgID, device, runtime, region string) *Sim {
 		Device:    device,
 		Runtime:   runtime,
 		Region:    region,
+		Pool:      pool,
 		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}
@@ -268,7 +271,7 @@ func (s *Store) DeleteSim(org OrgID, id string) bool {
 
 // CreateEmu provisions an emulator session for org. It starts provisioning;
 // the Linux host binds it and reports the adb target when running.
-func (s *Store) CreateEmu(org OrgID, profile, region string) *Emu {
+func (s *Store) CreateEmu(org OrgID, profile, region, pool string) *Emu {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	emu := &Emu{
@@ -276,6 +279,7 @@ func (s *Store) CreateEmu(org OrgID, profile, region string) *Emu {
 		Org:       org,
 		Profile:   profile,
 		Region:    region,
+		Pool:      pool,
 		Status:    StatusProvisioning,
 		CreatedAt: time.Now().UTC(),
 	}
