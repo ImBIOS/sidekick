@@ -18,6 +18,7 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/deploy-prod.yml"
+  workflow_dispatch:
 
 env:
   REGISTRY: registry.jaga.health
