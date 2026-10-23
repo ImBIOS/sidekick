@@ -33,6 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Connect Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          args: --accept-dns=false
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Log in to registry
@@ -63,12 +69,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:latest
             ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ github.sha }}
-
-      - name: Connect Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: --accept-dns=false
 
       - name: Rolling update on prod-0
         run: |
