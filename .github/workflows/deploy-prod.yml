@@ -65,7 +65,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ github.sha }}
 
       - name: Connect Tailscale
-        uses: tailscale/tailscale-action@v1
+        uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --accept-dns=false
