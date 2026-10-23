@@ -57,7 +57,11 @@ jobs:
               sleep 10
             done
           done
-          curl -fsS --max-time 30 https://sidekick.imbios.dev/login | grep -q "Log in — Sidekick"
+          # Health check runs inside the new web task: the app serves
+          # /login as client-rendered SSR shell (always HTTP 200 when the
+          # router is up). Public curl from CI runners is blocked by the
+          # edge (403), so check locally instead of over the internet.
+          $SSH 'WEB_TASK=$(docker ps --filter name=sidekick-web --format "{{.ID}}" | head -1) && docker exec "$WEB_TASK" bun -e "for (const p of [\"/\", \"/login\"]) { const r = await fetch(\"http://127.0.0.1:3000\" + p); if (r.status !== 200) { console.error(p, r.status); process.exit(1); } console.log(p, r.status); }"'
         env:
           PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
 
