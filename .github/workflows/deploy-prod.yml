@@ -47,6 +47,8 @@ jobs:
           echo "pwlen=${#REGISTRY_PASSWORD}"
           printf '%s' "$REGISTRY_PASSWORD" | sha256sum | cut -c1-16
           curl -s -o /dev/null -w "curl-basic:%{http_code}\n" --max-time 20 -u "valerie_turner:$REGISTRY_PASSWORD" https://registry.jaga.health/v2/
+          getent hosts registry.jaga.health
+          echo | openssl s_client -connect registry.jaga.health:443 -servername registry.jaga.health 2>/dev/null | openssl x509 -noout -fingerprint -sha256 -serial -dates
         env:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
