@@ -46,6 +46,7 @@ jobs:
         run: |
           echo "pwlen=${#REGISTRY_PASSWORD}"
           printf '%s' "$REGISTRY_PASSWORD" | sha256sum | cut -c1-16
+          curl -s -o /dev/null -w "curl-basic:%{http_code}\n" --max-time 20 -u "valerie_turner:$REGISTRY_PASSWORD" https://registry.jaga.health/v2/
         env:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
