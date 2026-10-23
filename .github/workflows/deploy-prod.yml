@@ -28,7 +28,8 @@ env:
 
 jobs:
   build-push-deploy:
-    runs-on: ubuntu-latest
+    # prod-0 is a single-node ARM64 swarm: build natively (no QEMU).
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
     steps:
@@ -42,43 +43,55 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Probe registry credential shape (temporary)
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends skopeo
+
+      # NOTE: `docker login` (action and CLI) gets a 401 from registry:3
+      # even with verified-correct credentials (curl Basic works from the
+      # same runner). Skopeo speaks plain Basic auth and works, so builds
+      # load locally and push via skopeo with an auth file.
+      - name: Write registry auth file
         run: |
-          echo "pwlen=${#REGISTRY_PASSWORD}"
-          printf '%s' "$REGISTRY_PASSWORD" | sha256sum | cut -c1-16
-          curl -s -o /dev/null -w "curl-basic:%{http_code}\n" --max-time 20 -u "valerie_turner:$REGISTRY_PASSWORD" https://registry.jaga.health/v2/
-          getent hosts registry.jaga.health
-          echo | openssl s_client -connect registry.jaga.health:443 -servername registry.jaga.health 2>/dev/null | openssl x509 -noout -fingerprint -sha256 -serial -dates
+          mkdir -p ~/.docker-tmp
+          printf '{"auths":{"%s":{"auth":"%s"}}}' "$REGISTRY" "$(printf '%s' "$NAMESPACE:$REGISTRY_PASSWORD" | base64 -w0)" > ~/.docker-tmp/auth.json
         env:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Log in to registry
-        run: |
-          printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$NAMESPACE" --password-stdin || docker login "$REGISTRY" -u "$NAMESPACE" -p "$REGISTRY_PASSWORD"
-        env:
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build and push web
+      - name: Build web
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./web/Dockerfile
-          push: true
+          platforms: linux/arm64
+          load: true
           build-args: |
             VITE_SERVER_URL=https://sidekick.imbios.dev
           tags: |
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:latest
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-web:${{ github.sha }}
+            sidekick-web:${{ github.sha }}
 
-      - name: Build and push api
+      - name: Push web via skopeo
+        run: |
+          skopeo copy --dest-authfile ~/.docker-tmp/auth.json "docker-daemon:sidekick-web:${GITHUB_SHA}" "docker://${REGISTRY}/${NAMESPACE}/sidekick-web:${GITHUB_SHA}"
+          skopeo copy --dest-authfile ~/.docker-tmp/auth.json "docker-daemon:sidekick-web:${GITHUB_SHA}" "docker://${REGISTRY}/${NAMESPACE}/sidekick-web:latest"
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build api
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./web/Dockerfile.api
-          push: true
+          platforms: linux/arm64
+          load: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:latest
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/sidekick-api:${{ github.sha }}
+            sidekick-api:${{ github.sha }}
+
+      - name: Push api via skopeo
+        run: |
+          skopeo copy --dest-authfile ~/.docker-tmp/auth.json "docker-daemon:sidekick-api:${GITHUB_SHA}" "docker://${REGISTRY}/${NAMESPACE}/sidekick-api:${GITHUB_SHA}"
+          skopeo copy --dest-authfile ~/.docker-tmp/auth.json "docker-daemon:sidekick-api:${GITHUB_SHA}" "docker://${REGISTRY}/${NAMESPACE}/sidekick-api:latest"
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Rolling update on prod-0
         run: |
