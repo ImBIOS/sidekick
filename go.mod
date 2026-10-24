@@ -3,7 +3,7 @@ module github.com/ImBIOS/sidekick
 go 1.26.0
 
 require (
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/pashagolub/pgxmock/v4 v4.9.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/oauth2 v0.36.0
