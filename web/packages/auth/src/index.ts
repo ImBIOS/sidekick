@@ -14,7 +14,17 @@ export type AuthConfig = {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
   CORS_ORIGIN: string;
+  /** Comma-separated extra web origins (e.g. console subdomain). Optional. */
+  CORS_EXTRA_ORIGINS?: string;
 };
+
+/** Parse the optional extra-origins list into clean origins. */
+export function extraOrigins(env: Pick<AuthConfig, "CORS_EXTRA_ORIGINS">): string[] {
+  return (env.CORS_EXTRA_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
 
 export const OWNER_ROLE = "owner";
 
@@ -92,7 +102,7 @@ export function createAuth(
         apikey,
       },
     }),
-    trustedOrigins: [env.CORS_ORIGIN, ...desktopOrigins],
+    trustedOrigins: [env.CORS_ORIGIN, ...extraOrigins(env), ...desktopOrigins],
     emailAndPassword: { enabled: true },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
