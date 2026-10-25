@@ -69,20 +69,20 @@ describe("default org provisioning", () => {
     const auth = testAuth(db);
 
     await auth.api.signUpEmail({
-      body: { name: "Ada Lovelace", email: "ada@example.com", password: "password123" },
+      body: { name: "Test 1", email: "test01@sidekick.imbios.dev", password: "password123" },
     });
 
     const orgs = await db.select().from(organization);
     expect(orgs.length).toBe(1);
-    expect(orgs[0]?.name).toBe("Ada's Org");
-    expect(orgs[0]?.slug.startsWith("ada-")).toBe(true);
+    expect(orgs[0]?.name).toBe("Test's Org");
+    expect(orgs[0]?.slug.startsWith("test01-")).toBe(true);
 
     const members = await db.select().from(member);
     expect(members.length).toBe(1);
     expect(members[0]?.role).toBe("owner");
     expect(members[0]?.organizationId).toBe(orgs[0]?.id);
 
-    const authed = await authedHeaders(auth, "ada@example.com", "password123");
+    const authed = await authedHeaders(auth, "test01@sidekick.imbios.dev", "password123");
     const gotSession = await auth.api.getSession({ headers: authed });
     const defaultOrgId = orgs[0]?.id;
     expect(defaultOrgId).toBeTruthy();
@@ -91,10 +91,53 @@ describe("default org provisioning", () => {
     // Idempotent: backfill returns the same org, no duplicates.
     const again = await ensureDefaultOrg(db as unknown as Database, {
       id: members[0]?.userId ?? "",
-      email: "ada@example.com",
+      email: "test01@sidekick.imbios.dev",
     });
     expect(again).toBe(defaultOrgId as string);
     expect((await db.select().from(organization)).length).toBe(1);
+  });
+
+  test("closed dev gate: only the test account may sign in or sign up", async () => {
+    const db = await testDb();
+    const auth = testAuth(db);
+
+    // test1 can sign up, sign in, and hold a session.
+    await auth.api.signUpEmail({
+      body: {
+        name: "Test 1",
+        email: "test01@sidekick.imbios.dev",
+        password: "password123",
+      },
+    });
+    const test1 = await authedHeaders(auth, "test01@sidekick.imbios.dev", "password123");
+    const session = await auth.api.getSession({ headers: test1 });
+    expect(session?.user.email).toBe("test01@sidekick.imbios.dev");
+
+    // Case-insensitive match: mixed-case test1 email still logs in.
+    await auth.api.signOut({ headers: test1, asResponse: true } as never);
+    const mixed = await authedHeaders(auth, "Test01@sidekick.imbios.dev", "password123");
+    expect((await auth.api.getSession({ headers: mixed }))?.user).toBeTruthy();
+
+    // Anyone else is blocked at both doors, and no user row is created.
+    await expect(
+      auth.api.signUpEmail({
+        body: { name: "Mallory", email: "mallory@example.com", password: "password123" },
+      }),
+    ).rejects.toThrow(/closed development/);
+    await expect(
+      auth.api.signInEmail({
+        body: { email: "mallory@example.com", password: "password123" },
+      }),
+    ).rejects.toThrow(/closed development/);
+    // Wrong password for the test account still fails (gate is not a bypass).
+    await expect(
+      auth.api.signInEmail({
+        body: { email: "test01@sidekick.imbios.dev", password: "wrongpassword" },
+      }),
+    ).rejects.toThrow();
+    const { user } = await import("@sidekick/db/schema/auth");
+    const users = await db.select({ email: user.email }).from(user);
+    expect(users.map((u) => u.email)).toEqual(["test01@sidekick.imbios.dev"]);
   });
 
   test("org-scoped sk_live_ key verifies and resolves to the org", async () => {
@@ -102,12 +145,12 @@ describe("default org provisioning", () => {
     const auth = testAuth(db);
 
     await auth.api.signUpEmail({
-      body: { name: "Grace", email: "grace@example.com", password: "password123" },
+      body: { name: "Test 1", email: "test01@sidekick.imbios.dev", password: "password123" },
     });
     const orgs = await db.select().from(organization);
     const orgId = orgs[0]?.id ?? "";
 
-    const headers = await authedHeaders(auth, "grace@example.com", "password123");
+    const headers = await authedHeaders(auth, "test01@sidekick.imbios.dev", "password123");
 
     const created = (await auth.api.createApiKey({
       body: { name: "sidekick CLI", organizationId: orgId },
