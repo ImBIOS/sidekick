@@ -43,10 +43,10 @@ function testAuth(db: ReturnType<typeof drizzle>) {
 
 async function authedCaller(auth: ReturnType<typeof createAuth>, db: ReturnType<typeof drizzle>) {
   await auth.api.signUpEmail({
-    body: { name: "Dee Vice", email: "devices@example.com", password: "password123" },
+    body: { name: "Test 1", email: "test01@sidekick.imbios.dev", password: "password123" },
   });
   const res = (await auth.api.signInEmail({
-    body: { email: "devices@example.com", password: "password123" },
+    body: { email: "test01@sidekick.imbios.dev", password: "password123" },
     asResponse: true,
   } as Parameters<typeof auth.api.signInEmail>[0])) as unknown as Response;
   const headers = new Headers({ cookie: (res.headers.get("set-cookie") ?? "").split(";")[0] ?? "" });

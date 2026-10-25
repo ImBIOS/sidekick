@@ -5,6 +5,7 @@ import { apikey, invitation, member, organization } from "@sidekick/db/schema/or
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { organization as organizationPlugin } from "better-auth/plugins";
 
 import * as schema from "@sidekick/db/schema/auth";
@@ -17,6 +18,26 @@ export type AuthConfig = {
 };
 
 export const OWNER_ROLE = "owner";
+
+/**
+ * While the product is under development, only the internal test account
+ * may log in. gateEmails runs at sign-in/sign-up so both existing
+ * non-test sessions and future signups are blocked; the console becomes
+ * test1-only without touching any data.
+ *
+ * Remove this (and DEV_LOGIN_EMAIL below) when Sidekick opens up.
+ */
+const DEV_LOGIN_EMAIL = "test01@sidekick.imbios.dev";
+
+function devLoginError() {
+  return {
+    message: "Sidekick is in closed development — only the test account can log in.",
+  };
+}
+
+export function isDevLoginAllowed(email: string | null | undefined): boolean {
+  return (email ?? "").trim().toLowerCase() === DEV_LOGIN_EMAIL;
+}
 
 /** Build a URL-safe slug base from an email address. Uniqueness comes from the random suffix. */
 export function slugBaseForEmail(email: string): string {
@@ -93,6 +114,17 @@ export function createAuth(
       },
     }),
     trustedOrigins: [env.CORS_ORIGIN, ...desktopOrigins],
+    hooks: {
+      // Closed dev gate: only the test account may sign in or sign up.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/sign-in/email" || ctx.path === "/sign-up/email") {
+          const email = (ctx.body as { email?: unknown } | null)?.email;
+          if (!isDevLoginAllowed(typeof email === "string" ? email : undefined)) {
+            throw new APIError("FORBIDDEN", devLoginError());
+          }
+        }
+      }),
+    },
     emailAndPassword: { enabled: true },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -106,6 +138,12 @@ export function createAuth(
     databaseHooks: {
       user: {
         create: {
+          // Closed dev gate: only the test account may be created.
+          before: async (user) => {
+            if (!isDevLoginAllowed(user.email)) {
+              throw new APIError("FORBIDDEN", devLoginError());
+            }
+          },
           // Provision the default org at signup so agents/CLI work immediately.
           after: async (user) => {
             await ensureDefaultOrg(database, {
@@ -122,11 +160,16 @@ export function createAuth(
           // NOTE: this hook fires before user.create.after on signup, so load
           // the user row for real name/email instead of a junk fallback name.
           before: async (session) => {
+            // Closed dev gate: only the test account may hold a session.
             const rows = await database
               .select({ id: user.id, name: user.name, email: user.email })
               .from(user)
               .where(eq(user.id, session.userId))
               .limit(1);
+            const ownerEmail = rows.length > 0 && rows[0] ? rows[0].email : "";
+            if (!isDevLoginAllowed(ownerEmail)) {
+              throw new APIError("FORBIDDEN", devLoginError());
+            }
             const owner =
               rows.length > 0 && rows[0]
                 ? { id: rows[0].id, name: rows[0].name, email: rows[0].email }
