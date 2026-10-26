@@ -60,9 +60,9 @@ function Pricing() {
 					/>
 				</div>
 				<p className="mt-4 text-sm text-zinc-500">
-					Paid plans are enabled after signup — pick a plan and we&apos;ll
-					switch it on for your org. Scale (SSO, unlimited members) is set up
-					with you directly after signup.
+					Paid plans are enabled manually after signup for now — pick a plan and
+					we&apos;ll confirm it with you. Scale (SSO, unlimited members) is set
+					up with you directly.
 				</p>
 				<h2 className="mt-10 font-bold text-2xl text-white tracking-tight">
 					Compare plans in detail
