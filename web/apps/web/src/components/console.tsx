@@ -277,10 +277,13 @@ export function Step({
 export function CreateDeviceSplitButton({
 	caption,
 	unavailable,
+	checking,
 }: {
 	caption?: string;
 	/** Set when the device service is known-unreachable: disables the button with the reason. */
 	unavailable?: string | null;
+	/** True while availability is still being probed: disables the button to avoid a doomed click. */
+	checking?: boolean;
 }) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
@@ -314,8 +317,10 @@ export function CreateDeviceSplitButton({
 			<div className="relative inline-flex">
 				<button
 					type="button"
-					disabled={pending || !!unavailable}
-					title={unavailable ?? undefined}
+					disabled={pending || checking || !!unavailable}
+					title={
+						unavailable ?? (checking ? "Checking device service…" : undefined)
+					}
 					onClick={() => emu.mutate({ profile: "Pixel_7" })}
 					className="inline-flex items-center gap-2 rounded-l-xl bg-white px-4 py-2.5 font-semibold text-black text-sm transition-colors hover:bg-zinc-200 disabled:opacity-60"
 				>
@@ -331,7 +336,11 @@ export function CreateDeviceSplitButton({
 						<rect x="4" y="1.5" width="8" height="13" rx="1.5" />
 						<line x1="7" y1="12.5" x2="9" y2="12.5" strokeLinecap="round" />
 					</svg>
-					{pending ? "Creating…" : "Create Android Emulator"}
+					{pending
+						? "Creating…"
+						: checking
+							? "Checking…"
+							: "Create Android Emulator"}
 				</button>
 				<button
 					type="button"

@@ -39,8 +39,8 @@ function RouteComponent() {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 	const [newSecret, setNewSecret] = useState<string | null>(null);
-	const simsProbe = useQuery({
-		...trpc.devices.listSims.queryOptions(),
+	const emusProbe = useQuery({
+		...trpc.devices.listEmus.queryOptions(),
 		staleTime: 60_000,
 		retry: false,
 	});
@@ -78,8 +78,9 @@ function RouteComponent() {
 			<div className="mt-6">
 				<CreateDeviceSplitButton
 					caption="Android ready now · iOS coming soon."
+					checking={emusProbe.isPending}
 					unavailable={
-						simsProbe.isError
+						emusProbe.isError
 							? "Device service is unreachable from this browser session — use the CLI commands below instead."
 							: null
 					}

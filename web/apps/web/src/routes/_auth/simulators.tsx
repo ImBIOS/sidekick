@@ -246,6 +246,7 @@ function RouteComponent() {
 			<div className="mt-6">
 				<CreateDeviceSplitButton
 					caption="Android ready now · iOS coming soon — or paste the commands below."
+					checking={loading}
 					unavailable={
 						failed
 							? "Device service is unreachable from this browser session — create from the CLI below instead."
