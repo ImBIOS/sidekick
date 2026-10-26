@@ -43,7 +43,7 @@ function RouteComponent() {
 					role="status"
 				>
 					You picked <strong className="font-semibold">{plan}</strong> — create
-					your account and we&apos;ll switch the plan on for your org.
+					your account to get started.
 				</p>
 			)}
 			{showSignIn ? (
