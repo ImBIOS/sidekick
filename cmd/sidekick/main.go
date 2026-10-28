@@ -154,7 +154,7 @@ func init() {
 }
 
 func main() {
-	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), tokenCmd(), agentSetupCmd(), devCmd(), mcpCmd(), testCmd(), playCmd(), xcodeCmd(), iosCmd(), androidCmd())
+	root.AddCommand(loginCmd(), logoutCmd(), orgCmd(), hostCmd(), fleetCmd(), tokenCmd(), agentSetupCmd(), devCmd(), mcpCmd(), testCmd(), playCmd(), xcodeCmd(), iosCmd(), androidCmd())
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -228,6 +228,54 @@ func hostCmd() *cobra.Command {
 	join.Flags().StringVar(&joinRegion, "region", "", "region pin, e.g. asia-southeast1")
 	host.AddCommand(join)
 	return host
+}
+
+// --- fleet ---
+
+// fleetRegion mirrors control-plane RegionStatus (GET /v1/fleet/regions).
+type fleetRegion struct {
+	Region   string   `json:"region"`
+	Pools    []string `json:"pools"`
+	Hosts    int      `json:"hosts"`
+	LastSeen string   `json:"last_seen"`
+	Queued   int      `json:"queued"`
+}
+
+// fleetCmd shows the live region map: which regions have reporting hosts
+// (heartbeat via host claim polls) and this org's queued depth per region.
+// Empty fleet prints "no live regions" — never fakes regions.
+func fleetCmd() *cobra.Command {
+	fleet := &cobra.Command{Use: "fleet", Short: "live fleet map (reporting hosts per region)"}
+	regions := &cobra.Command{
+		Use:   "regions",
+		Short: "list regions with reporting hosts + queued depth",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out struct {
+				Regions []fleetRegion `json:"regions"`
+			}
+			if err := call(cmd, http.MethodGet, "/v1/fleet/regions", nil, &out); err != nil {
+				return err
+			}
+			if len(out.Regions) == 0 {
+				fmt.Println("no live regions (no hosts polling)")
+				return nil
+			}
+			format, _ := cmd.Flags().GetString("format")
+			if format == "json" {
+				printJSON(out)
+				return nil
+			}
+			for _, r := range out.Regions {
+				fmt.Printf("%s  hosts=%d pools=%s queued=%d last_seen=%s\n",
+					r.Region, r.Hosts, strings.Join(r.Pools, ","), r.Queued, r.LastSeen)
+			}
+			return nil
+		},
+	}
+	regions.Flags().String("format", "table", "output format: table|json")
+	fleet.AddCommand(regions)
+	return fleet
 }
 
 // --- auth ---
@@ -501,7 +549,7 @@ func iosCmd() *cobra.Command {
 	act.Flags().StringVar(&swipe, "swipe", "", "swipe direction")
 	act.Flags().StringVar(&batch, "batch", "", "JSON file of actions for ms precision")
 
-	ios.AddCommand(create, list, get, del, act, axTreeCmd(), shotCmd("/v1/sims/", "ios"), simLogsCmd(), recordCmd())
+	ios.AddCommand(create, list, get, del, act, axTreeCmd(), shotCmd("/v1/sims/", "ios"), simLogsCmd(), recordCmd(), shareCmd("sim"))
 	return ios
 }
 
@@ -546,6 +594,58 @@ func shotCmd(prefix, what string) *cobra.Command {
 		},
 	}
 	c.Flags().StringVar(&out, "out", "", "output file (default <id>.png)")
+	return c
+}
+
+// shareCmd mints a signed guest link: read-only snapshot page (screenshot,
+// tree, logs, video) at GET /s/<token>, no login needed. TTL like "24h"
+// (default 24h, max 720h); --revoke <share-id> kills an existing link.
+// The page is NOT live video — there is no media server in this system.
+func shareCmd(kind string) *cobra.Command {
+	var ttl, revoke string
+	c := &cobra.Command{
+		Use:   "share <id>",
+		Short: "mint a login-free guest link (snapshot page, not live video)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			url, token := resolveConn(cmd)
+			if revoke != "" {
+				var path string
+				if kind == "sim" {
+					path = "/v1/sims/" + args[0] + "/shares/" + revoke
+				} else {
+					path = "/v1/emus/" + args[0] + "/shares/" + revoke
+				}
+				if err := apiCall(url, token, http.MethodDelete, path, nil, nil); err != nil {
+					return err
+				}
+				fmt.Println("revoked " + revoke)
+				return nil
+			}
+			var path string
+			if kind == "sim" {
+				path = "/v1/sims/" + args[0] + "/shares"
+			} else {
+				path = "/v1/emus/" + args[0] + "/shares"
+			}
+			var res struct {
+				ID         string `json:"id"`
+				ShareToken string `json:"share_token"`
+			}
+			if err := apiCall(url, token, http.MethodPost, path, map[string]string{"ttl": ttl}, &res); err != nil {
+				return err
+			}
+			if res.ID == "" {
+				fmt.Printf("%s %s\n", strings.TrimSuffix(url, "/")+"/s/"+res.ShareToken, "(share id missing in response)")
+				return nil
+			}
+			fmt.Printf("%s\nshare %s (revoke: %s share %s --revoke %s)\n",
+				strings.TrimSuffix(url, "/")+"/s/"+res.ShareToken, res.ID, kind, args[0], res.ID)
+			return nil
+		},
+	}
+	c.Flags().StringVar(&ttl, "ttl", "24h", "link lifetime (max 720h)")
+	c.Flags().StringVar(&revoke, "revoke", "", "revoke an existing share id instead of minting")
 	return c
 }
 
@@ -728,7 +828,7 @@ func androidCmd() *cobra.Command {
 	}
 	logs.Flags().IntVar(&tail, "tail", 100, "last N lines")
 
-	android.AddCommand(create, list, get, del, tree, shotCmd("/v1/emus/", "android"), logs, netcapCmd(), droidRecordCmd(), rotateCmd(), postureCmd())
+	android.AddCommand(create, list, get, del, tree, shotCmd("/v1/emus/", "android"), logs, netcapCmd(), droidRecordCmd(), rotateCmd(), postureCmd(), shareCmd("emu"))
 	return android
 }
 

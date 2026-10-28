@@ -70,12 +70,15 @@ AI-assisted devices. Each row: what exists, how it's proved, what's missing.
 
 ## Stranger-run checklist (the bar)
 
-- [ ] `docker compose -f docker-compose.selfhost.yml up` boots (needs docker;
-      steps + failure modes in `docs/SELFHOST.md`)
-- [ ] `sidekick host join` enrolls a Mac/Linux host (works today, §SELFHOST)
-- [ ] Android loop: `android create → get → ui-tree → screenshot → record →
+- [x] `docker compose -f docker-compose.selfhost.yml up` boots (proved
+      28 Oct 2026: image builds, postgres healthy, plane serves; minio
+      opt-in, emulator image deferred — see `docs/SELFHOST.md` header)
+- [x] `sidekick host join` enrolls a Mac/Linux host (works, §SELFHOST)
+- [x] Android loop: `android create → get → ui-tree → screenshot → record →
       delete` against one emu-host (proved 18 Oct 2026, transcript in
-      `docs/demo/`)
+      `docs/demo/`; re-proved 28 Oct 2026 vs compose plane with real AVD
+      in --adopt mode: tree/screenshot/logs served, share link minted +
+      publicly read + revoked)
 - [ ] iOS loop: same verbs, needs a Mac — NOT stranger-runnable yet
 - [ ] K8s claims: `kubectl apply -f crds/claims.yaml` + controller —
       manifests parse-checked, NOT cluster-applied yet

@@ -44,6 +44,19 @@ function RouteComponent() {
 		staleTime: 60_000,
 		retry: false,
 	});
+	const fleetProbe = useQuery({
+		...trpc.devices.fleetRegions.queryOptions(),
+		staleTime: 30_000,
+		retry: false,
+	});
+	const liveRegions = fleetProbe.data ?? [];
+	const fleetLabel = fleetProbe.isPending
+		? "Checking fleet…"
+		: fleetProbe.isError
+			? "Fleet status unavailable"
+			: liveRegions.length === 0
+				? "No live regions — no hosts polling yet"
+				: `Live: ${liveRegions.map((r) => `${r.region} (${r.hosts} host${r.hosts === 1 ? "" : "s"}, ${r.queued} queued)`).join(" · ")}`;
 	const keys = useQuery(trpc.apiKeys.list.queryOptions());
 	const activeOrg = useQuery(trpc.organization.active.queryOptions());
 	const hasKey = (keys.data?.length ?? 0) > 0;
@@ -87,7 +100,21 @@ function RouteComponent() {
 				/>
 			</div>
 
-			<div className="mt-8 grid gap-3 sm:grid-cols-2">
+			<div className="mt-8 grid gap-3 sm:grid-cols-3">
+				<div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
+					<p className="font-semibold text-xs text-zinc-500 uppercase tracking-[0.14em]">
+						Fleet regions
+					</p>
+					<p className="mt-1 font-semibold text-lg text-white">
+						{fleetProbe.data ? liveRegions.length : "…"}
+					</p>
+					<p className="text-xs text-zinc-500" role="status">
+						{fleetLabel}
+					</p>
+					<p className="mt-1 font-mono text-[11px] text-zinc-600">
+						sidekick fleet regions
+					</p>
+				</div>
 				<div className="rounded-2xl border border-white/10 bg-zinc-950 p-5">
 					<p className="font-semibold text-xs text-zinc-500 uppercase tracking-[0.14em]">
 						Organization

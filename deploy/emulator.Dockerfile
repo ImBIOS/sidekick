@@ -4,7 +4,7 @@
 # claimed emu inside the emulator image, so adb is always localhost:5555.
 # AVDs must exist in the image (bake with sdkmanager/avdmanager, e.g.
 # Pixel_7_API_34) or be mounted in; emu-host fails claims loudly otherwise.
-FROM golang:1.24 AS hostbuild
+FROM golang:1.26 AS hostbuild
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

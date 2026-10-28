@@ -79,3 +79,31 @@ ALTER TABLE sims ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
 ALTER TABLE emus ADD COLUMN IF NOT EXISTS region TEXT NOT NULL DEFAULT '';
 ALTER TABLE sims ADD COLUMN IF NOT EXISTS pool TEXT NOT NULL DEFAULT '';
 ALTER TABLE emus ADD COLUMN IF NOT EXISTS pool TEXT NOT NULL DEFAULT '';
+
+-- Host liveness: one row per reporting pool+region, refreshed on every
+-- POST /v1/host/claims/next poll (hit or empty). GET /v1/fleet/regions folds
+-- this into the live region map. Empty region normalizes to 'any' on write.
+CREATE TABLE IF NOT EXISTS host_beats (
+  pool      TEXT NOT NULL,
+  region    TEXT NOT NULL DEFAULT 'any',
+  last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (pool, region)
+);
+
+-- Signed read-only guest shares: one row per minted link. Only the sha256
+-- hash of the secret persists; the `sk_share_...` secret itself is shown
+-- once at mint and never stored. Lookup checks revoked/expiry; expired or
+-- revoked secrets resolve as missing (404, no oracle). Resource rows are
+-- read via GetSimAny/GetEmuAny (the share itself is the capability).
+CREATE TABLE IF NOT EXISTS guest_shares (
+  id          TEXT NOT NULL,
+  org         TEXT NOT NULL,
+  kind        TEXT NOT NULL, -- 'sim' | 'emu'
+  resource_id TEXT NOT NULL,
+  hash        TEXT NOT NULL UNIQUE,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  revoked     BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (id, org)
+);
+CREATE INDEX IF NOT EXISTS guest_shares_org ON guest_shares (org);

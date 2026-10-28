@@ -92,6 +92,14 @@ function orgIdOf(ctx: { session: unknown }): string | null | undefined {
   return s?.session.activeOrganizationId as string | null | undefined;
 }
 
+const fleetRegionSchema = z.looseObject({
+  region: z.string(),
+  pools: z.array(z.string()),
+  hosts: z.number(),
+  last_seen: z.string(),
+  queued: z.number(),
+});
+
 export const devicesRouter = router({
   listSims: protectedProcedure.query(async ({ ctx }) => {
     const orgId = orgIdOf(ctx);
@@ -109,7 +117,6 @@ export const devicesRouter = router({
       if (body === null) return null;
       return simSchema.parse(body);
     }),
-
   createSim: protectedProcedure
     .input(
       z.object({
@@ -151,7 +158,6 @@ export const devicesRouter = router({
       if (body === null) return null;
       return emuSchema.parse(body);
     }),
-
   createEmu: protectedProcedure
     .input(
       z.object({
@@ -169,4 +175,20 @@ export const devicesRouter = router({
       );
       return emuSchema.parse(body);
     }),
+
+  /**
+   * Live fleet map for the console region badge.
+   *
+   * Proxies `GET /v1/fleet/regions` (one row per region with a reporting
+   * host: pools, host count, last-seen, this org's queued depth). Empty
+   * control-plane fleet resolves to `[]` (never 404s to the UI) so the
+   * badge can show "no live regions" honestly.
+   */
+  fleetRegions: protectedProcedure.query(async ({ ctx }) => {
+    const body = await withEphemeralKey(ctx, orgIdOf(ctx), (secret) =>
+      controlFetch(secret, "/v1/fleet/regions"),
+    );
+    const regions = ((body as { regions?: unknown } | null)?.regions ?? []) as unknown[];
+    return fleetRegionSchema.array().parse(regions);
+  }),
 });

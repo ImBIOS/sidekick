@@ -33,14 +33,14 @@ Coding agents moved to Linux cloud sandboxes. No Xcode, no simulator, no emulato
 | Batch actions (ms precision) | ➖ Partial | ➖ Partial | ❌ No | ❌ No | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ❌ No |
 | Session video recording | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
 | App logs + network capture | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| Live share links (no login needed) | 🛣️ Roadmap (webrtc_url plumbed; no media server witnessed) | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
+| Live share links (no login needed) | ➖ Partial | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
 | Embeddable player (iframe / SDK) | 🛣️ Roadmap (No iframe/SDK implemented) | ✅ Yes | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | Live collaboration + human takeover | 🛣️ Roadmap (Not implemented) | ✅ Yes | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial | ❌ No | ➖ Partial | ➖ Partial |
 | Record once, replay everywhere | ✅ Yes | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ➖ Partial | ❌ No |
 | Visual regression per step | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ✅ Yes |
 | AI / plain-English testing | ✅ Yes | ✅ Yes | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ➖ Partial |
 | CI runner + GitHub checks | 🛣️ Roadmap (Actions + checks) | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ✅ Yes | ✅ Yes |
-| Self-hostable (BYO Mac minis) | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |
+| Self-hostable (BYO Mac minis) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No |
 | Source-available (FSL → Apache-2.0) | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | Public pricing + free tier, no card | ✅ Yes | ✅ Yes | ➖ Partial | ➖ Partial | ✅ Yes | ❌ No | ➖ Partial | ➖ Partial | ➖ Partial | ❌ No |
 | Per-instance sandbox tokens + region pin | ✅ Yes | ➖ Partial | ❌ No | ➖ Partial | ❌ No | ✅ Yes | ❌ No | ❌ No | ❌ No | ➖ Partial |

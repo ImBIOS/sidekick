@@ -99,6 +99,8 @@ type Store struct {
 	sims   map[string]*Sim
 	emus   map[string]*Emu
 	tokens map[string]*InstanceToken // by secret hash
+	shares map[string]*GuestShare    // by secret hash
+	beats  map[string]*hostBeat      // host liveness, key pool+"\x00"+region
 }
 
 // NewStore returns an empty scheduler.
@@ -108,6 +110,8 @@ func NewStore() *Store {
 		sims:   map[string]*Sim{},
 		emus:   map[string]*Emu{},
 		tokens: map[string]*InstanceToken{},
+		shares: map[string]*GuestShare{},
+		beats:  map[string]*hostBeat{},
 	}
 }
 
@@ -397,6 +401,123 @@ func (s *Store) RevokeInstanceToken(org OrgID, id string) bool {
 		}
 	}
 	return false
+}
+
+// --- host liveness ---
+
+// hostBeat is one pool+region's last host poll. Hosts hit
+// POST /v1/host/claims/next every poll interval, so every hit (claim or
+// empty 204) refreshes the beat. Operators + agents read it back via
+// GET /v1/fleet/regions — the honest "which regions are alive" map. A
+// region is only claimed as live when a host actually polled from there.
+type hostBeat struct {
+	Pool     string
+	Region   string
+	LastSeen time.Time
+}
+
+// RecordHeartbeat stamps pool+region's liveness. Empty region is stored as
+// "any" so unpinned hosts still show up in the fleet map.
+func (s *Store) RecordHeartbeat(pool, region string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if region == "" {
+		region = "any"
+	}
+	key := pool + "|" + region
+	now := time.Now().UTC()
+	if b, ok := s.beats[key]; ok {
+		b.LastSeen = now
+		return
+	}
+	s.beats[key] = &hostBeat{Pool: pool, Region: region, LastSeen: now}
+}
+
+// RegionStatus is one row of the fleet liveness map.
+type RegionStatus struct {
+	Region   string    `json:"region"`
+	Pools    []string  `json:"pools"`
+	Hosts    int       `json:"hosts"`
+	LastSeen time.Time `json:"last_seen"`
+	Queued   int       `json:"queued"`
+}
+
+// FleetRegions folds host beats by region: pools reporting, host count,
+// last-seen, plus queued (unclaimed) builds+sims+emus pinned to that region.
+// Queued counts are org-scoped: only resources the caller could claim count.
+// A queued resource with a region pin counts toward that region; an
+// unpinned queued resource counts toward every region with live hosts,
+// because any of them could claim it next poll.
+func (s *Store) FleetRegions(org OrgID) []RegionStatus {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	byRegion := map[string]*RegionStatus{}
+	pools := map[string]map[string]bool{}
+	for _, b := range s.beats {
+		st, ok := byRegion[b.Region]
+		if !ok {
+			st = &RegionStatus{Region: b.Region, LastSeen: b.LastSeen}
+			byRegion[b.Region] = st
+		}
+		st.Hosts++
+		if st.LastSeen.Before(b.LastSeen) {
+			st.LastSeen = b.LastSeen
+		}
+		if pools[b.Region] == nil {
+			pools[b.Region] = map[string]bool{}
+		}
+		pools[b.Region][b.Pool] = true
+	}
+	for _, st := range byRegion {
+		for p := range pools[st.Region] {
+			st.Pools = append(st.Pools, p)
+		}
+	}
+	// Queued depth per region.
+	pinned := func(resRegion string) []string {
+		if resRegion == "" || resRegion == "any" {
+			regs := make([]string, 0, len(byRegion))
+			for r := range byRegion {
+				regs = append(regs, r)
+			}
+			return regs
+		}
+		if _, ok := byRegion[resRegion]; ok {
+			return []string{resRegion}
+		}
+		return nil
+	}
+	queued := map[string]int{}
+	for _, b := range s.builds {
+		if b.Org != org || b.Status != StatusQueued {
+			continue
+		}
+		for _, r := range pinned(b.Region) {
+			queued[r]++
+		}
+	}
+	for _, sim := range s.sims {
+		if sim.Org != org || sim.Status != StatusProvisioning || sim.Host != "" {
+			continue
+		}
+		for _, r := range pinned(sim.Region) {
+			queued[r]++
+		}
+	}
+	for _, emu := range s.emus {
+		if emu.Org != org || emu.Status != StatusProvisioning || emu.Host != "" {
+			continue
+		}
+		for _, r := range pinned(emu.Region) {
+			queued[r]++
+		}
+	}
+	out := make([]RegionStatus, 0, len(byRegion))
+	for _, st := range byRegion {
+		st.Queued = queued[st.Region]
+		out = append(out, *st)
+	}
+	return out
 }
 
 func itoa(n uint64) string {

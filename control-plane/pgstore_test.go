@@ -129,3 +129,86 @@ func TestPGSetGetSimTree(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestPGHeartbeatUpsertShape(t *testing.T) {
+	s, mock := newMockStore(t)
+	// RecordHeartbeat normalizes "" -> "any" and upserts on (pool, region).
+	mock.ExpectExec("INTO host_beats").
+		WithArgs("sg-1", "any").WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	s.RecordHeartbeat("sg-1", "")
+	mock.ExpectExec("INTO host_beats").
+		WithArgs("sg-1", "asia-southeast1").WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	s.RecordHeartbeat("sg-1", "asia-southeast1")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestPGFleetRegionsShape(t *testing.T) {
+	s, mock := newMockStore(t)
+	beats := pgxmock.NewRows([]string{"region", "pool", "last_seen"}).
+		AddRow("asia-southeast1", "emu-sg-1", testTime).
+		AddRow("asia-southeast1", "emu-sg-2", testTime).
+		AddRow("asia-northeast1", "emu-jp-1", testTime)
+	mock.ExpectQuery("FROM host_beats").WillReturnRows(beats)
+	mock.ExpectQuery("FROM builds").
+		WithArgs("org_a").
+		WillReturnRows(pgxmock.NewRows([]string{"region", "count"}).
+			AddRow("asia-northeast1", 2).AddRow("", 1))
+	mock.ExpectQuery("FROM sims").
+		WithArgs("org_a").
+		WillReturnRows(pgxmock.NewRows([]string{"region", "count"}))
+	mock.ExpectQuery("FROM emus").
+		WithArgs("org_a").
+		WillReturnRows(pgxmock.NewRows([]string{"region", "count"}).
+			AddRow("asia-southeast1", 3))
+	regs := s.FleetRegions("org_a")
+	if len(regs) != 2 {
+		t.Fatalf("regions = %+v, want 2", regs)
+	}
+	byRegion := map[string]RegionStatus{}
+	for _, r := range regs {
+		byRegion[r.Region] = r
+	}
+	// tokyo: 2 pinned + 1 unpinned; sg: 3 pinned + 1 unpinned.
+	if byRegion["asia-northeast1"].Queued != 3 {
+		t.Errorf("tokyo queued = %d, want 3", byRegion["asia-northeast1"].Queued)
+	}
+	if byRegion["asia-southeast1"].Queued != 4 {
+		t.Errorf("sg queued = %d, want 4", byRegion["asia-southeast1"].Queued)
+	}
+	if byRegion["asia-southeast1"].Hosts != 2 {
+		t.Errorf("sg hosts = %d, want 2", byRegion["asia-southeast1"].Hosts)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestPGShareRoundtrip(t *testing.T) {
+	s, mock := newMockStore(t)
+	mock.ExpectExec(qm(`INSERT INTO guest_shares (id, org, kind, resource_id, hash, expires_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`)).
+		WithArgs(pgxmock.AnyArg(), "org_a", "sim", "sim_1", pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+		WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	sh, secret, ok := s.CreateGuestShare("org_a", "sim", "sim_1", time.Hour)
+	if !ok || sh == nil || secret == "" {
+		t.Fatalf("mint: %+v %v", sh, ok)
+	}
+	future := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+	mock.ExpectQuery("FROM guest_shares WHERE hash=").
+		WithArgs(pgxmock.AnyArg()).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "org", "kind", "resource_id", "expires_at", "revoked", "created_at"}).
+			AddRow(sh.ID, "org_a", "sim", "sim_1", future, false, testTime))
+	got, ok := s.LookupGuestShare(secret)
+	if !ok || got.ID != sh.ID || got.ResourceID != "sim_1" {
+		t.Errorf("lookup: %+v %v", got, ok)
+	}
+	mock.ExpectExec(qm(`UPDATE guest_shares SET revoked=true WHERE id=$1 AND org=$2`)).
+		WithArgs(sh.ID, "org_a").WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+	if !s.RevokeGuestShare("org_a", sh.ID) {
+		t.Error("revoke returned false")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Error(err)
+	}
+}

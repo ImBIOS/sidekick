@@ -2,11 +2,15 @@
 # Copyright 2026 ImBIOS — licensed under FSL-1.1-ALv2, see LICENSE.md.
 services:
   control-plane:
-    build: ./control-plane
+    build:
+      context: .
+      dockerfile: ./control-plane/Dockerfile
     ports: ["8080:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://sidekick:sidekick@postgres:5432/sidekick
-      S3_ENDPOINT: http://minio:9000
       # Agent auth: either verify hosted sk_live_* keys via web, or use
       # static org:key pairs (self-host without the web console).
       # SIDEKICK_AUTH_URL: http://web:8000
@@ -22,10 +26,34 @@ services:
       POSTGRES_USER: sidekick
       POSTGRES_PASSWORD: sidekick
     volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sidekick"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  # S3-compatible blob store for future artifact offload (videos,
+  # screenshots). NOT wired into the control-plane today: blobs live inline
+  # in Postgres (bytea) up to the API caps. Kept in compose as an available
+  # endpoint; control-plane ignores S3_ENDPOINT until the offload lands.
+  # Image note (28 Oct 2026): quay.io/minio/minio needs auth from this
+  # network (401 on manifest HEAD); docker.io/minio no longer exists.
+  # If `docker compose up minio` fails to pull, leave it out — the plane
+  # boots fine without it (`--profile blobs` keeps it opt-in).
   minio:
-    image: minio/minio
-    command: server /data
-    ports: ["9000:9000"]
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles: ["blobs"] # opt-in: `docker compose --profile blobs up minio`
+    command: server /data --console-address :9001
+    environment:
+      # Minio refuses to boot without root credentials; these are throwaway
+      # self-host defaults (console not exposed). Change for real deploys.
+      MINIO_ROOT_USER: sidekick
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-sidekick-sidekick}
+    ports: ["9000:9000", "9001:9001"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   # Linux KVM fleet for Android (needs /dev/kvm on host). One container runs
   # emu-host, which boots AVDs per claimed emu (bake AVDs into the image or
   # mount them; default profile Pixel_7_API_34).
