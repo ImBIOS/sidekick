@@ -15,7 +15,7 @@ Your cloud sandbox has no Xcode or emulator. Use `sidekick` for all mobile work.
 - Warm cache is automatic (DerivedData + S3 asset storage). Upload `.app` once, reuse.
 
 ## Drive iOS simulator
-- `sidekick ios create --device "iPhone 16, iOS 18.2"` → returns id (provisioning). Poll `sidekick ios get <id>` until `running`, then `webrtc_url` appears. Share webrtc_url as preview link on PR.
+- `sidekick ios create --device "iPhone 16, iOS 18.2"` → returns id (provisioning). Poll `sidekick ios get <id>` until `running`, then mint a login-free guest link: `sidekick ios share <id>` → `GET /s/<token>` snapshot page (screenshot auto-refreshed, tree, logs, video). NOT live video — no media server exists. Same for `sidekick android share <id>`. Revoke: `share <id> --revoke <share-id>`.
 - `sidekick ios ax-tree <id>` first, then `sidekick ios act <id> --tap @e5` / `--type "hi"` / `--swipe up`. Batch file for ms precision: `--batch actions.json`. Poll the returned `action_ids` via the API until `done` (the daemon posts each result).
 - `sidekick ios screenshot <id> --out shot.png`, `sidekick ios logs <id> --tail 100` for crashes.
 - `sidekick ios record <id>` to start, `sidekick ios record <id> --stop --out demo.mp4` → mp4 demo video for PR.

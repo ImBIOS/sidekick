@@ -54,6 +54,13 @@ type Scheduler interface {
 	LookupInstanceToken(secret string) (*InstanceToken, bool)
 	ListInstanceTokens(org OrgID) []*InstanceToken
 	RevokeInstanceToken(org OrgID, id string) bool
+	CreateGuestShare(org OrgID, kind, resourceID string, ttl time.Duration) (*GuestShare, string, bool)
+	LookupGuestShare(secret string) (*GuestShare, bool)
+	RevokeGuestShare(org OrgID, id string) bool
+	GetSimAny(id string) (*Sim, bool)
+	GetEmuAny(id string) (*Emu, bool)
+	RecordHeartbeat(pool, region string)
+	FleetRegions(org OrgID) []RegionStatus
 }
 
 // NewServer builds the API with the given key verifier and scheduler.
@@ -111,6 +118,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /v1/sims/{id}", s.withAuthz(s.handleDeleteSim))
 	mux.HandleFunc("POST /v1/sims/{id}/actions", s.withAuthz(s.handleSimAction))
 	mux.HandleFunc("GET /v1/sims/{id}/actions/{aid}", s.withAuthz(s.handleGetSimAction))
+	mux.HandleFunc("POST /v1/sims/{id}/shares", s.withAuthz(s.handleCreateSimShare))
+	mux.HandleFunc("DELETE /v1/sims/{id}/shares/{sid}", s.withAuthz(s.handleRevokeSimShare))
 	mux.HandleFunc("GET /v1/sims/{id}/tree", s.withAuthz(s.handleGetSimTree))
 	mux.HandleFunc("GET /v1/sims/{id}/screenshot", s.withAuthz(s.handleGetSimShot))
 	mux.HandleFunc("GET /v1/sims/{id}/logs", s.withAuthz(s.handleGetSimLogs))
@@ -120,6 +129,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 
 	mux.HandleFunc("POST /v1/emus", s.withAuthz(s.handleCreateEmu))
 	mux.HandleFunc("GET /v1/emus", s.withAuthz(s.handleListEmus))
+	mux.HandleFunc("POST /v1/emus/{id}/shares", s.withAuthz(s.handleCreateEmuShare))
+	mux.HandleFunc("DELETE /v1/emus/{id}/shares/{sid}", s.withAuthz(s.handleRevokeEmuShare))
 	mux.HandleFunc("GET /v1/emus/{id}", s.withAuthz(s.handleGetEmu))
 	mux.HandleFunc("DELETE /v1/emus/{id}", s.withAuthz(s.handleDeleteEmu))
 	mux.HandleFunc("GET /v1/emus/{id}/tree", s.withAuthz(s.handleGetEmuTree))
@@ -139,6 +150,15 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /v1/host/emus/{id}/tree", s.withHost(s.handleHostEmuTree))
 	mux.HandleFunc("PUT /v1/host/emus/{id}/screenshot", s.withHost(s.handleHostEmuShot))
 	mux.HandleFunc("POST /v1/host/emus/{id}/logs", s.withHost(s.handleHostEmuLogs))
+
+	// Public guest surface: signed share tokens, NO auth middleware.
+	mux.HandleFunc("GET /s/{token}", s.handleGuestPage)
+	mux.HandleFunc("GET /s/{token}/screenshot", s.handleGuestShot)
+	mux.HandleFunc("GET /s/{token}/tree", s.handleGuestTree)
+	mux.HandleFunc("GET /s/{token}/logs", s.handleGuestLogs)
+	mux.HandleFunc("GET /s/{token}/video", s.handleGuestVideo)
+
+	mux.HandleFunc("GET /v1/fleet/regions", s.withAuthz(s.handleFleetRegions))
 }
 
 // GET /v1/whoami — lets `sidekick login` verify a key and learn its org.
@@ -539,7 +559,27 @@ func (s *Server) handleGetEmuLogs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"lines": lines})
 }
 
-func atoiOr(s string, dflt int) int {	if s == "" {
+// GET /v1/fleet/regions — live region map: one row per region with a
+// reporting host (heartbeat via POST /v1/host/claims/next), the pools
+// reporting there, and this org's queued depth. Empty until a host polls.
+// Org-scoped (queued counts only cover the caller's resources); unauthenticated
+// instance tokens see it too (a scoped agent must know where fleet is live).
+// Empty-vs-missing region reads back as "any".
+func (s *Server) handleFleetRegions(w http.ResponseWriter, r *http.Request) {
+	regions := s.store.FleetRegions(orgFromContext(r))
+	if regions == nil {
+		regions = []RegionStatus{}
+	}
+	for i := range regions {
+		if regions[i].Pools == nil {
+			regions[i].Pools = []string{}
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"regions": regions})
+}
+
+func atoiOr(s string, dflt int) int {
+	if s == "" {
 		return dflt
 	}
 	n := 0

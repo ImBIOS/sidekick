@@ -194,6 +194,147 @@ func TestRegionPinE2EConcurrent(t *testing.T) {
 	}
 }
 
+// TestFleetRegionsHeartbeat proves the liveness map is honest: regions only
+// appear after a host actually polls from them, empty polls (204) still
+// count as alive, queued depth is org-scoped, and cross-org queues don't
+// leak into another org's map.
+func TestFleetRegionsHeartbeat(t *testing.T) {
+	srv := testHostServer()
+
+	// Empty fleet: no heartbeats, no rows — never fake regions.
+	rec := authed(t, srv, http.MethodGet, "/v1/fleet/regions", "key-a", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("fleet: %d %s", rec.Code, rec.Body.String())
+	}
+	var empty struct {
+		Regions []RegionStatus `json:"regions"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &empty); err != nil || len(empty.Regions) != 0 {
+		t.Fatalf("empty fleet should list zero regions: %q %v", rec.Body.String(), err)
+	}
+
+	// One host poll per region, both 204 (nothing queued). Even misses record
+	// liveness — a host that phones home is alive whether or not it got work.
+	for _, tc := range []struct{ pool, region string }{
+		{"sg-1", "asia-southeast1"},
+		{"sg-2", "asia-southeast1"},
+		{"tokyo-1", "asia-northeast1"},
+	} {
+		rec := hosted(t, srv, http.MethodPost, "/v1/host/claims/next", testHostToken,
+			`{"pool":"`+tc.pool+`","region":"`+tc.region+`","kinds":["emu"]}`)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("empty poll %v: %d %s", tc, rec.Code, rec.Body.String())
+		}
+		if got := srv.store.FleetRegions("org_a"); len(got) == 0 {
+			t.Fatal("direct heartbeat check: no regions after poll")
+		}
+	}
+
+	// Queue org_a work: 1 tokyo-pinned + 1 unpinned emu; org_b queues 5 pinned
+	// builds that must NOT show up in org_a's depth.
+	rec = authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P","region":"asia-northeast1"}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("pinned emu: %d", rec.Code)
+	}
+	rec = authed(t, srv, http.MethodPost, "/v1/emus", "key-a", `{"profile":"P"}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("unpinned emu: %d", rec.Code)
+	}
+	for i := 0; i < 5; i++ {
+		srv.store.CreateBuild("org_b", "Other", "", "asia-southeast1")
+	}
+
+	rec = authed(t, srv, http.MethodGet, "/v1/fleet/regions", "key-a", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("fleet: %d %s", rec.Code, rec.Body.String())
+	}
+	var fleet struct {
+		Regions []RegionStatus `json:"regions"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &fleet); err != nil {
+		t.Fatal(err)
+	}
+	if len(fleet.Regions) != 2 {
+		t.Fatalf("want 2 live regions, got %+v", fleet.Regions)
+	}
+	byRegion := map[string]RegionStatus{}
+	for _, r := range fleet.Regions {
+		byRegion[r.Region] = r
+		if r.LastSeen.IsZero() {
+			t.Errorf("region %s has zero last_seen", r.Region)
+		}
+	}
+	sg, ok := byRegion["asia-southeast1"]
+	if !ok || sg.Hosts != 2 || len(sg.Pools) != 2 {
+		t.Errorf("sg row: %+v (want 2 hosts, 2 pools)", sg)
+	}
+	tokyo, ok := byRegion["asia-northeast1"]
+	if !ok || tokyo.Hosts != 1 {
+		t.Errorf("tokyo row: %+v (want 1 host)", tokyo)
+	}
+	// org_a depth: tokyo row sees pinned + unpinned (2); sg row sees only the
+	// unpinned emu (1). org_b's 5 builds must not leak in.
+	if tokyo.Queued != 2 {
+		t.Errorf("tokyo queued = %d, want 2", tokyo.Queued)
+	}
+	if sg.Queued != 1 {
+		t.Errorf("sg queued = %d, want 1", sg.Queued)
+	}
+
+	// Org isolation at the HTTP layer: org_b sees its own 5 builds in sg.
+	rec = authed(t, srv, http.MethodGet, "/v1/fleet/regions", "key-b", "")
+	var bFleet struct {
+		Regions []RegionStatus `json:"regions"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &bFleet); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range bFleet.Regions {
+		if r.Region == "asia-southeast1" && r.Queued != 5 {
+			t.Errorf("org_b sg queued = %d, want 5", r.Queued)
+		}
+		if r.Region == "asia-northeast1" && r.Queued != 0 {
+			t.Errorf("org_b tokyo queued = %d, want 0", r.Queued)
+		}
+	}
+
+	// Unauthenticated and wrong-key callers get 401, never a fleet map.
+	// (Host tokens authenticate /v1/host/* only; the fleet map is org-scoped.)
+	for _, key := range []string{"", "nope", testHostToken} {
+		r := hosted(t, srv, http.MethodGet, "/v1/fleet/regions", key, "")
+		if r.Code != http.StatusUnauthorized {
+			t.Errorf("key %q: got %d, want 401", key, r.Code)
+		}
+	}
+}
+
+// TestFleetRegionsConcurrency races heartbeat writers against fleet readers:
+// under -race any unsynchronized beats-map access fails the run.
+func TestFleetRegionsConcurrency(t *testing.T) {
+	srv := testHostServer()
+	var wg sync.WaitGroup
+	for w := 0; w < 8; w++ {
+		wg.Add(2)
+		go func(w int) {
+			defer wg.Done()
+			for i := 0; i < 50; i++ {
+				srv.store.RecordHeartbeat(fmt.Sprintf("pool-%d", w), "asia-southeast1")
+			}
+		}(w)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 50; i++ {
+				_ = srv.store.FleetRegions("org_a")
+			}
+		}()
+	}
+	wg.Wait()
+	regs := srv.store.FleetRegions("org_a")
+	if len(regs) != 1 || regs[0].Hosts != 8 {
+		t.Errorf("fleet after race: %+v (want 1 region, 8 hosts)", regs)
+	}
+}
+
 // percentile returns the p-th percentile of sorted nanos.
 func percentile(sorted []int64, p float64) time.Duration {
 	if len(sorted) == 0 {

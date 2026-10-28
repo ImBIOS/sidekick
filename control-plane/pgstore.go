@@ -447,10 +447,91 @@ func (s *PGStore) RevokeInstanceToken(org OrgID, id string) bool {
 	return err == nil && n == 1
 }
 
+// --- guest shares (PGStore) ---
+
+// CreateGuestShare mints a signed read-only share (see Store.CreateGuestShare
+// for the model). The org-ownership check happens in the HTTP handler (it
+// GetSim/GetEmu's first); the row write is unconditional.
+func (s *PGStore) CreateGuestShare(org OrgID, kind, resourceID string, ttl time.Duration) (*GuestShare, string, bool) {
+	if (kind != "sim" && kind != "emu") || resourceID == "" || ttl <= 0 || ttl > 30*24*time.Hour {
+		return nil, "", false
+	}
+	secret, hash, err := mintShareSecret()
+	if err != nil {
+		return nil, "", false
+	}
+	now := time.Now().UTC()
+	sh := &GuestShare{
+		ID: s.nextID("shr"), Org: org, Kind: kind, ResourceID: resourceID,
+		ExpiresAt: now.Add(ttl), CreatedAt: now,
+	}
+	_, err = s.q.Exec(context.Background(),
+		`INSERT INTO guest_shares (id, org, kind, resource_id, hash, expires_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+		sh.ID, string(org), kind, resourceID, hash, sh.ExpiresAt, sh.CreatedAt)
+	if err != nil {
+		return nil, "", false
+	}
+	return sh, secret, true
+}
+
+func scanShare(row pgx.Row) (*GuestShare, error) {
+	var sh GuestShare
+	var org string
+	err := row.Scan(&sh.ID, &org, &sh.Kind, &sh.ResourceID, &sh.ExpiresAt, &sh.Revoked, &sh.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	sh.Org = OrgID(org)
+	return &sh, nil
+}
+
+// LookupGuestShare resolves a share secret; expired/revoked read as missing.
+func (s *PGStore) LookupGuestShare(secret string) (*GuestShare, bool) {
+	sh, err := scanShare(s.q.QueryRow(context.Background(),
+		`SELECT id, org, kind, resource_id, expires_at, revoked, created_at FROM guest_shares WHERE hash=$1`,
+		hashSecret(secret)))
+	if err != nil {
+		return nil, false
+	}
+	if sh.Revoked || time.Now().UTC().After(sh.ExpiresAt) {
+		return nil, false
+	}
+	return sh, true
+}
+
+// RevokeGuestShare kills a share immediately (org-scoped).
+func (s *PGStore) RevokeGuestShare(org OrgID, id string) bool {
+	n, err := s.q.Exec(context.Background(),
+		`UPDATE guest_shares SET revoked=true WHERE id=$1 AND org=$2`, id, string(org))
+	return err == nil && n == 1
+}
+
+// GetSimAny fetches a sim without org scoping (the share is the capability).
+func (s *PGStore) GetSimAny(id string) (*Sim, bool) {
+	sim, err := scanSim(s.q.QueryRow(context.Background(),
+		`SELECT `+simCols+` FROM sims WHERE id=$1`, id))
+	if err != nil {
+		return nil, false
+	}
+	return sim, true
+}
+
+// GetEmuAny fetches an emu without org scoping (see GetSimAny).
+func (s *PGStore) GetEmuAny(id string) (*Emu, bool) {
+	emu, err := scanEmu(s.q.QueryRow(context.Background(),
+		`SELECT `+emuCols+` FROM emus WHERE id=$1`, id))
+	if err != nil {
+		return nil, false
+	}
+	return emu, true
+}
+
 // --- claims ---
 
 // ClaimNext mirrors Store.ClaimNext with SKIP LOCKED atomicity: concurrent
 // hosts in one pool can never double-claim the same build.
+// Every poll also refreshes the pool+region heartbeat backing
+// GET /v1/fleet/regions, so the fleet map reflects hosts that phone home.
 func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 	ctx := context.Background()
 	want := func(k string) bool {
@@ -474,6 +555,8 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 			Scan(&b.ID, &org, &b.Scheme, &b.Ref, &b.Status, &b.Host, &b.Region, &b.CreatedAt, &b.Log)
 		if err == nil {
 			b.Org = OrgID(org)
+			_, _ = s.q.Exec(ctx, `INSERT INTO host_beats (pool, region, last_seen) VALUES ($1,$2,now())
+				ON CONFLICT (pool, region) DO UPDATE SET last_seen=excluded.last_seen`, pool, region)
 			return &Claim{Kind: "build", Build: &b}
 		}
 	}
@@ -489,6 +572,8 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 		if err == nil {
 			sim.Org = OrgID(org)
 			sim.Tree = tree
+			_, _ = s.q.Exec(ctx, `INSERT INTO host_beats (pool, region, last_seen) VALUES ($1,$2,now())
+				ON CONFLICT (pool, region) DO UPDATE SET last_seen=excluded.last_seen`, pool, region)
 			return &Claim{Kind: "sim", Sim: &sim}
 		}
 	}
@@ -503,6 +588,8 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 		if err == nil {
 			emu.Org = OrgID(org)
 			emu.Tree = tree
+			_, _ = s.q.Exec(ctx, `INSERT INTO host_beats (pool, region, last_seen) VALUES ($1,$2,now())
+				ON CONFLICT (pool, region) DO UPDATE SET last_seen=excluded.last_seen`, pool, region)
 			return &Claim{Kind: "emu", Emu: &emu}
 		}
 	}
@@ -517,8 +604,103 @@ func (s *PGStore) ClaimNext(pool, region string, kinds []string) *Claim {
 		if err == nil {
 			a.SimID = simID
 			_ = json.Unmarshal(body, &a.Body)
+			_, _ = s.q.Exec(ctx, `INSERT INTO host_beats (pool, region, last_seen) VALUES ($1,$2,now())
+				ON CONFLICT (pool, region) DO UPDATE SET last_seen=excluded.last_seen`, pool, region)
 			return &Claim{Kind: "sim-action", Action: &a}
 		}
 	}
 	return nil
+}
+
+// RecordHeartbeat stamps pool+region liveness (upsert; empty region reads as
+// "any" so unpinned hosts still show in the fleet map).
+func (s *PGStore) RecordHeartbeat(pool, region string) {
+	if region == "" {
+		region = "any"
+	}
+	_, _ = s.q.Exec(context.Background(), `INSERT INTO host_beats (pool, region, last_seen) VALUES ($1,$2,now())
+		ON CONFLICT (pool, region) DO UPDATE SET last_seen=excluded.last_seen`, pool, region)
+}
+
+// FleetRegions folds host_beats by region for org: pools reporting, host
+// count, last-seen, plus the org's queued (unclaimed) depth per region.
+// Unpinned queued resources count toward every live region (any host could
+// claim them); region-pinned ones only toward their own live row.
+func (s *PGStore) FleetRegions(org OrgID) []RegionStatus {
+	ctx := context.Background()
+	rows, err := s.q.Query(ctx, `SELECT region, pool, last_seen FROM host_beats`)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	type beat struct {
+		region   string
+		pool     string
+		lastSeen time.Time
+	}
+	var beats []beat
+	for rows.Next() {
+		var b beat
+		if err := rows.Scan(&b.region, &b.pool, &b.lastSeen); err == nil {
+			beats = append(beats, b)
+		}
+	}
+	byRegion := map[string]*RegionStatus{}
+	poolSet := map[string]map[string]bool{}
+	for _, b := range beats {
+		st, ok := byRegion[b.region]
+		if !ok {
+			st = &RegionStatus{Region: b.region, LastSeen: b.lastSeen}
+			byRegion[b.region] = st
+		}
+		st.Hosts++
+		if st.LastSeen.Before(b.lastSeen) {
+			st.LastSeen = b.lastSeen
+		}
+		if poolSet[b.region] == nil {
+			poolSet[b.region] = map[string]bool{}
+		}
+		poolSet[b.region][b.pool] = true
+	}
+	for r, st := range byRegion {
+		for p := range poolSet[r] {
+			st.Pools = append(st.Pools, p)
+		}
+	}
+	regions := make([]string, 0, len(byRegion))
+	for r := range byRegion {
+		regions = append(regions, r)
+	}
+	queued := map[string]int{}
+	count := func(sql string) {
+		qrows, err := s.q.Query(ctx, sql, string(org))
+		if err != nil {
+			return
+		}
+		defer qrows.Close()
+		for qrows.Next() {
+			var r string
+			var n int
+			if err := qrows.Scan(&r, &n); err == nil {
+				if r == "" {
+					r = "any"
+				}
+				queued[r] += n
+			}
+		}
+	}
+	count(`SELECT region, count(*) FROM builds WHERE org=$1 AND status='queued' GROUP BY region`)
+	count(`SELECT region, count(*) FROM sims WHERE org=$1 AND status='provisioning' AND host='' GROUP BY region`)
+	count(`SELECT region, count(*) FROM emus WHERE org=$1 AND status='provisioning' AND host='' GROUP BY region`)
+	// Pinned depth only shows on its own live row; unpinned ('' or 'any')
+	// depth is claimable from every live region. Regions with no beats never
+	// appear — liveness, not configuration.
+	unpinned := queued[""] + queued["any"]
+	out := make([]RegionStatus, 0, len(byRegion))
+	for _, r := range regions {
+		st := byRegion[r]
+		st.Queued = queued[r] + unpinned
+		out = append(out, *st)
+	}
+	return out
 }

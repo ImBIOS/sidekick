@@ -78,7 +78,16 @@ function stubControlPlane() {
       seenSecrets.add(secret);
       const url = new URL(req.url);
       const [, , kind, id, sub] = url.pathname.split("/");
-      if (kind !== "sims" && kind !== "emus") return new Response("not found", { status: 404 });
+      // Fleet map double: one live row per polling pool is out of scope for
+      // the stub; return two fixed regions so the console badge has shape.
+      if (kind === "fleet" && id === "regions") {
+        return Response.json({
+          regions: [
+            { region: "asia-southeast1", pools: ["emu-sg-1"], hosts: 1, last_seen: new Date().toISOString(), queued: 0 },
+            { region: "asia-northeast1", pools: ["emu-jp-1"], hosts: 1, last_seen: new Date().toISOString(), queued: 1 },
+          ],
+        });
+      }      if (kind !== "sims" && kind !== "emus") return new Response("not found", { status: 404 });
       const store = kind === "sims" ? sims : emus;
       if (req.method === "POST" && !id) {
         const body = (await req.json().catch(() => ({}))) as Record<string, string>;
@@ -188,6 +197,34 @@ describe("devices router (click-first provisioning)", () => {
     } finally {
       if (prev === undefined) delete process.env.SIDEKICK_CONTROL_URL;
       else process.env.SIDEKICK_CONTROL_URL = prev;
+    }
+  });
+
+  test("fleet regions return live rows for the console badge", async () => {
+    const db = await testDb();
+    const auth = testAuth(db);
+    const { caller, headers } = await authedCaller(auth, db);
+    const stub = stubControlPlane();
+    const prev = process.env.SIDEKICK_CONTROL_URL;
+    process.env.SIDEKICK_CONTROL_URL = stub.url;
+    try {
+      const regions = await caller.devices.fleetRegions();
+      expect(regions.length).toBe(2);
+      expect(regions.map((r) => r.region).sort()).toEqual([
+        "asia-northeast1",
+        "asia-southeast1",
+      ]);
+      const sg = regions.find((r) => r.region === "asia-southeast1");
+      expect(sg).toMatchObject({ hosts: 1, queued: 0, pools: ["emu-sg-1"] });
+      // Ephemeral key is revoked after the fleet call too.
+      const keys = (await auth.api.listApiKeys({ headers })) as {
+        apiKeys: unknown[];
+      };
+      expect(keys.apiKeys.length).toBe(0);
+    } finally {
+      if (prev === undefined) delete process.env.SIDEKICK_CONTROL_URL;
+      else process.env.SIDEKICK_CONTROL_URL = prev;
+      stub.stop();
     }
   });
 });

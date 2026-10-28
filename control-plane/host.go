@@ -49,6 +49,9 @@ type claimReq struct {
 }
 
 // POST /v1/host/claims/next — oldest actionable claim for pool+region.
+// Every poll (hit or empty 204) refreshes the pool+region heartbeat that
+// GET /v1/fleet/regions reports, so the fleet map reflects hosts that
+// actually phone home rather than configured-but-silent pools.
 func (s *Server) handleHostClaim(w http.ResponseWriter, r *http.Request) {
 	var req claimReq
 	if !decodeJSONBody(w, r, 64<<10, &req) {
@@ -58,6 +61,7 @@ func (s *Server) handleHostClaim(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "pool is required")
 		return
 	}
+	s.store.RecordHeartbeat(req.Pool, req.Region)
 	claim := s.store.ClaimNext(req.Pool, req.Region, req.Kinds)
 	if claim == nil {
 		w.WriteHeader(http.StatusNoContent)

@@ -146,7 +146,17 @@ func devCmd() *cobra.Command {
 				printJSON(sim)
 				return nil
 			}
-			fmt.Printf("live device %s\nshare: %s\nax-tree: sidekick ios ax-tree %s\n", sim.ID, sim.WebRTCURL, sim.ID)
+			// Mint a signed guest link: login-free snapshot page (shot + tree +
+			// logs + video), NOT live video — no media server in this system.
+			var shr struct {
+				ShareToken string `json:"share_token"`
+			}
+			guestURL := sim.WebRTCURL
+			if err := conn.Call(http.MethodPost, "/v1/sims/"+sim.ID+"/shares",
+				map[string]string{"ttl": "24h"}, &shr); err == nil && shr.ShareToken != "" {
+				guestURL = strings.TrimSuffix(url, "/") + "/s/" + shr.ShareToken
+			}
+			fmt.Printf("live device %s\nshare: %s\nax-tree: sidekick ios ax-tree %s\n", sim.ID, guestURL, sim.ID)
 			return nil
 		},
 	}
